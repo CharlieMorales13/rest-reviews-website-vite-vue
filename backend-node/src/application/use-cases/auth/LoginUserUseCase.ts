@@ -1,4 +1,5 @@
 
+import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { LoginUserDTO } from '../../dtos/AuthDTO';
 import { AppError } from '../../../infrastructure/http/errors/AppError';
 import * as argon2 from 'argon2';

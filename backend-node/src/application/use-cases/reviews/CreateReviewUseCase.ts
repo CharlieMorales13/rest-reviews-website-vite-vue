@@ -3,6 +3,7 @@ import { IReviewRepository } from '../../../domain/repositories/IReviewRepositor
 import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { IEstablishmentRepository } from '../../../domain/repositories/IEstablishmentRepository';
 import { CreateReviewDTO } from '../../dtos/ReviewDTO';
+import { AppError } from '../../../infrastructure/http/errors/AppError';
 
 export class CreateReviewUseCase {
     constructor(
@@ -15,19 +16,19 @@ export class CreateReviewUseCase {
         // 1. Verify User exists and is active
         const user = await this.userRepository.findById(dto.userId);
         if (!user || user.isActive === false) {
-            throw new Error('User not found or inactive');
+            throw new AppError('User not found or inactive', 404);
         }
 
         // 2. Verify Establishment exists and is active
         const establishment = await this.establishmentRepository.findById(dto.establishmentId);
         if (!establishment || establishment.isActive === false) {
-            throw new Error('Establishment not found or inactive');
+            throw new AppError('Establishment not found or inactive', 404);
         }
 
         // 3. Verify Business Constraint PRD: One review per user per establishment
         const hasReviewed = await this.reviewRepository.hasUserReviewedEstablishment(dto.userId, dto.establishmentId);
         if (hasReviewed) {
-            throw new Error('User has already reviewed this establishment');
+            throw new AppError('User has already reviewed this establishment', 409);
         }
 
         // 4. Create Entity (this validates scores and comment length internally)

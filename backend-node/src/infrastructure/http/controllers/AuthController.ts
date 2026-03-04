@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { RegisterUserUseCase } from '../../../application/use-cases/auth/RegisterUserUseCase';
 import { LoginUserUseCase } from '../../../application/use-cases/auth/LoginUserUseCase';
 import { RegisterUserSchema, LoginUserSchema } from '../../../application/dtos/AuthDTO';
-import { z } from 'zod';
 
 export class AuthController {
     constructor(
@@ -10,7 +9,7 @@ export class AuthController {
         private loginUserUseCase: LoginUserUseCase
     ) { }
 
-    public register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public register = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
         // 1. Validate Input (DTO)
         const validatedData = RegisterUserSchema.parse(req.body);
 
@@ -30,7 +29,7 @@ export class AuthController {
         });
     };
 
-    public login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public login = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
         const validatedData = LoginUserSchema.parse(req.body);
         const result = await this.loginUserUseCase.execute(validatedData);
 
