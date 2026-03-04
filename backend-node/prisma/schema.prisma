@@ -14,18 +14,24 @@ enum UserRole {
   student
   manager
   admin
+
+  @@map("user_role")
 }
 
 enum SentimentLabel {
   positive
   negative
   neutral
+
+  @@map("sentiment_label")
 }
 
 enum TrainingStatus {
   running
   success
   failed
+
+  @@map("training_status")
 }
 
 // =========================================

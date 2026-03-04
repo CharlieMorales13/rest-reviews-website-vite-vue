@@ -28,5 +28,13 @@ The system is composed of two primary backend services:
 Refer to the **README.md** in each subdirectory for specific service setup.
 
 1. Ensure Postgres/Supabase instance is active.
-2. Initialize Node.js dependencies (`npm install` in `backend-node`).
-3. Setup Python Virtual Environment (`pip install` in `backend-analytics`).
+2. Initialize Node.js dependencies:
+   - `cd backend-node`
+   - `cp .env.example .env` (Set your credentials)
+   - `npm install`
+3. Setup Python Virtual Environment:
+   - `cd backend-analytics`
+   - `cp .env.example .env` (Set your credentials)
+   - `python -m venv venv`
+   - `venv\Scripts\activate` (Windows) or `source venv/bin/activate` (Mac/Linux)
+   - `pip install -r requirements.txt`

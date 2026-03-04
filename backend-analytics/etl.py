@@ -29,8 +29,7 @@ def extract_reviews() -> pd.DataFrame:
     engine = get_engine()
     
     query = """
-    SELECT r.id, r.food_score, r.service_score, r.price_score, r.comment, r.created_at,
-           e.name as establishment_name
+    SELECT r.id, r.food_score, r.service_score, r.price_score, r.comment, r.created_at, e.name as establishment_name
     FROM reviews r
     JOIN establishments e ON r.establishment_id = e.id
     """
