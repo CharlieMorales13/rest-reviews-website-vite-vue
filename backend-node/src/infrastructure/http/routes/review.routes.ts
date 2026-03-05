@@ -1,23 +1,12 @@
 import { Router } from 'express';
+import { container } from '../../config/container';
 import { ReviewController } from '../controllers/ReviewController';
-import { PrismaReviewRepository } from '../../repositories/PrismaReviewRepository';
-import { PrismaUserRepository } from '../../repositories/PrismaUserRepository';
-import { PrismaEstablishmentRepository } from '../../repositories/PrismaEstablishmentRepository';
-import { CreateReviewUseCase } from '../../../application/use-cases/reviews/CreateReviewUseCase';
 import { authenticateToken } from '../middlewares/AuthMiddleware';
 
 const reviewRouter = Router();
 
-// Instantiate repositories
-const reviewRepo = new PrismaReviewRepository();
-const userRepo = new PrismaUserRepository();
-const establishmentRepo = new PrismaEstablishmentRepository();
-
-// Instantiate Use Case
-const createReviewUseCase = new CreateReviewUseCase(reviewRepo, userRepo, establishmentRepo);
-
-// Instantiate Controller
-const reviewController = new ReviewController(createReviewUseCase);
+// Resolve Controller with all its dependencies automatically
+const reviewController = container.resolve(ReviewController);
 
 // Routes
 reviewRouter.post('/', authenticateToken, reviewController.create);

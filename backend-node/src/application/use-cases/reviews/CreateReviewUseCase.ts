@@ -1,3 +1,4 @@
+import { injectable, inject } from 'tsyringe';
 import { Review } from '../../../domain/entities/Review';
 import { IReviewRepository } from '../../../domain/repositories/IReviewRepository';
 import { IUserRepository } from '../../../domain/repositories/IUserRepository';
@@ -5,11 +6,12 @@ import { IEstablishmentRepository } from '../../../domain/repositories/IEstablis
 import { CreateReviewDTO } from '../../dtos/ReviewDTO';
 import { AppError } from '../../../infrastructure/http/errors/AppError';
 
+@injectable()
 export class CreateReviewUseCase {
     constructor(
-        private reviewRepository: IReviewRepository,
-        private userRepository: IUserRepository,
-        private establishmentRepository: IEstablishmentRepository
+        @inject('IReviewRepository') private reviewRepository: IReviewRepository,
+        @inject('IUserRepository') private userRepository: IUserRepository,
+        @inject('IEstablishmentRepository') private establishmentRepository: IEstablishmentRepository
     ) { }
 
     async execute(dto: CreateReviewDTO): Promise<Review> {

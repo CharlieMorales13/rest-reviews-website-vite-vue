@@ -1,26 +1,37 @@
-import 'dotenv/config';
+import 'reflect-metadata'; // Must be imported before everything else for DI to work properly
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import morgan from 'morgan';
+import pinoHttp from 'pino-http';
+import swaggerUi from 'swagger-ui-express';
 
+// Application Imports
+import { env } from '../config/env.config';
+import { logger } from '../config/logger';
+import { swaggerSpec } from '../config/swagger.config';
 import authRouter from './routes/auth.routes';
 import reviewRouter from './routes/review.routes';
 import { globalErrorHandler } from './middlewares/ErrorMiddleware';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = env.PORT;
 
 // Security & Utility Middlewares
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
-app.use(morgan('dev'));
+
+// Replace Morgan with Pino for structured logging
+app.use(pinoHttp({ logger }));
 
 // Health Check
 app.get('/health', (_req: Request, res: Response) => {
+    logger.info('Health check called');
     res.status(200).json({ status: 'OK', timestamp: new Date() });
 });
+
+// Swagger Documentation Route
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // API Routes
 app.use('/api/auth', authRouter);
@@ -32,8 +43,9 @@ app.use(globalErrorHandler);
 // Start Server (If explicitly run, not exported)
 if (require.main === module) {
     app.listen(PORT, () => {
-        console.log(`🚀 Server running on port ${PORT}`);
-        console.log(`Check health at: http://localhost:${PORT}/health`);
+        logger.info(`🚀 Server running on port ${PORT}`);
+        logger.info(`📚 Swagger docs available at: http://localhost:${PORT}/api/docs`);
+        logger.info(`💓 Check health at: http://localhost:${PORT}/health`);
     });
 }
 

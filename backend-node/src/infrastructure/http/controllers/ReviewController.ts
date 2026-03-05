@@ -1,9 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
+import { injectable, inject } from 'tsyringe';
 import { CreateReviewUseCase } from '../../../application/use-cases/reviews/CreateReviewUseCase';
 import { CreateReviewSchema } from '../../../application/dtos/ReviewDTO';
 
+@injectable()
 export class ReviewController {
-    constructor(private createReviewUseCase: CreateReviewUseCase) { }
+    constructor(@inject(CreateReviewUseCase) private createReviewUseCase: CreateReviewUseCase) { }
 
     public create = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
         // We assume the user ID comes from the JWT Auth token (req.user), 
