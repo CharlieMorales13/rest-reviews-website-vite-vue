@@ -1,14 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
-import { injectable, inject } from 'tsyringe';
 import { RegisterUserUseCase } from '../../../application/use-cases/auth/RegisterUserUseCase';
 import { LoginUserUseCase } from '../../../application/use-cases/auth/LoginUserUseCase';
 import { RegisterUserSchema, LoginUserSchema } from '../../../application/dtos/AuthDTO';
 
-@injectable()
 export class AuthController {
     constructor(
-        @inject(RegisterUserUseCase) private registerUserUseCase: RegisterUserUseCase,
-        @inject(LoginUserUseCase) private loginUserUseCase: LoginUserUseCase
+        private registerUserUseCase: RegisterUserUseCase,
+        private loginUserUseCase: LoginUserUseCase
     ) { }
 
     public register = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
