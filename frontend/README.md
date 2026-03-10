@@ -2,29 +2,59 @@
 
 Este proyecto utiliza **Feature-Sliced Design (FSD)**, una arquitectura moderna para aplicaciones frontend que escala de manera profesional y evita el acoplamiento técnico.
 
+---
+
 ## ¿Qué es FSD?
 
-FSD organiza el código por **Layers** (Capas) y **Slices** (Rebanadas), priorizando el valor de negocio sobre la distribución técnica.
+FSD organiza el código en **Capas (Layers)**, ordenadas de mayor a menor nivel de abstracción. La regla fundamental es: **una capa solo puede importar de capas inferiores**; nunca al revés.
 
-### Capas del Proyecto (De arriba hacia abajo)
+---
 
-1.  **`app/`**: Configuración global de la aplicación (entry point, App.vue, estilos globales).
-2.  **`pages/`**: Vistas de pantalla completa. Se componen uniendo varios *widgets*.
-3.  **`widgets/`**: Bloques autónomos de la interfaz (ej: Barra lateral de navegación, Dashboard principal).
-4.  **`features/`**: Interacciones del usuario que aportan valor (ej: "Enviar Reseña", "Filtrar Establecimientos").
-5.  **`entities/`**: Lógica de los objetos de negocio (ej: Usuario, Establecimiento).
-6.  **`shared/`**: Código reutilizable sin lógica de negocio (Botones genéricos, Assets, Utilidades, Temas CSS).
+## Estructura de Carpetas
 
-## Regla de Oro (Dependencias)
+```
+frontend/src/
+├── app/              ← Entrada global (App.vue, main.ts)
+├── pages/            ← Vistas completas de pantalla
+│   ├── home/
+│   └── establishments/
+├── widgets/          ← Bloques autónomos de UI
+│   ├── app-sidebar/
+│   ├── sentiment-chart/
+│   └── establishments-table/
+├── features/         ← Acciones del usuario con valor de negocio
+│   └── filter-establishments/
+├── entities/         ← Modelos del dominio
+│   ├── establishment/
+│   └── user/
+└── shared/           ← Código genérico reutilizable (CSS, utils, UI base)
+    └── assets/css/
+```
 
-Una capa **solo puede importar de capas inferiores**. Por ejemplo:
-- Una `Page` puede importar un `Widget` o una `Feature`.
-- Un `Widget` **NUNCA** puede importar algo de una `Page`.
-- Esto garantiza que no existan dependencias circulares y que el código sea extremadamente fácil de testear y mover.
+---
 
-## Cómo agregar código nuevo
+## Reglas de Dependencia
 
-Para el colega que se integra:
-- Si vas a crear un componente genérico (un botón naranja), colócalo en `shared`.
-- Si vas a crear la lógica de cómo se edita un perfil, colócalo en `features`.
-- Si vas a crear los modelos de datos de Prisma en el front, colócalos en `entities`.
+| Capa | Puede importar de |
+|------|-------------------|
+| `app` | `pages`, `widgets`, `features`, `entities`, `shared` |
+| `pages` | `widgets`, `features`, `entities`, `shared` |
+| `widgets` | `features`, `entities`, `shared` |
+| `features` | `entities`, `shared` |
+| `entities` | `shared` |
+| `shared` | — (nada) |
+
+> ⚠️ **Nunca** importes hacia arriba (ej: un `widget` no puede importar de un `page`).
+
+---
+
+## ¿Dónde pongo mi código?
+
+| Tipo de código | Carpeta |
+|---|---|
+| Componente reutilizable (botón, input) | `shared/ui/` |
+| Modelo de dato de negocio (Establishment) | `entities/` |
+| Lógica de usuario (filtrar, buscar) | `features/` |
+| Bloque de UI grande y autónomo (sidebar) | `widgets/` |
+| Vista completa de página | `pages/` |
+| Setup global de la app | `app/` |
