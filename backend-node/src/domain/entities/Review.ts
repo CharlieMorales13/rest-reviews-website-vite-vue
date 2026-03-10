@@ -6,6 +6,9 @@ export interface ReviewProps {
     serviceScore: number;
     priceScore: number;
     comment: string;
+    imageUrl?: string;
+    authorName?: string;
+    sentiment?: string;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -47,6 +50,9 @@ export class Review {
     get serviceScore(): number { return this.props.serviceScore; }
     get priceScore(): number { return this.props.priceScore; }
     get comment(): string { return this.props.comment; }
+    get imageUrl(): string | undefined { return this.props.imageUrl; }
+    get authorName(): string | undefined { return this.props.authorName; }
+    get sentiment(): string | undefined { return this.props.sentiment; }
     get createdAt(): Date | undefined { return this.props.createdAt; }
     get updatedAt(): Date | undefined { return this.props.updatedAt; }
 }

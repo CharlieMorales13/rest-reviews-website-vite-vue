@@ -4,6 +4,7 @@ import { ListUsersUseCase } from '../../../application/use-cases/users/ListUsers
 import { GetUserUseCase } from '../../../application/use-cases/users/GetUserUseCase';
 import { UpdateUserUseCase } from '../../../application/use-cases/users/UpdateUserUseCase';
 import { DeleteUserUseCase } from '../../../application/use-cases/users/DeleteUserUseCase';
+import { GetUserProfileUseCase } from '../../../application/use-cases/users/GetUserProfileUseCase';
 import { UpdateUserSchema } from '../../../application/dtos/UserDTO';
 
 @injectable()
@@ -12,7 +13,8 @@ export class UserController {
         @inject(ListUsersUseCase) private listUsersUseCase: ListUsersUseCase,
         @inject(GetUserUseCase) private getUserUseCase: GetUserUseCase,
         @inject(UpdateUserUseCase) private updateUserUseCase: UpdateUserUseCase,
-        @inject(DeleteUserUseCase) private deleteUserUseCase: DeleteUserUseCase
+        @inject(DeleteUserUseCase) private deleteUserUseCase: DeleteUserUseCase,
+        @inject(GetUserProfileUseCase) private getUserProfileUseCase: GetUserProfileUseCase
     ) { }
 
     /**
@@ -139,5 +141,30 @@ export class UserController {
         const id = req.params.id as string;
         await this.deleteUserUseCase.execute(id);
         res.status(204).send();
+    };
+
+    /**
+     * @swagger
+     * /users/{id}/profile:
+     *   get:
+     *     summary: Get public user profile and activity
+     *     tags: [Users]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *     responses:
+     *       200:
+     *         description: Public profile data
+     */
+    public getProfile = async (req: Request, res: Response): Promise<void> => {
+        const id = req.params.id as string;
+        const profile = await this.getUserProfileUseCase.execute(id);
+        res.status(200).json({
+            success: true,
+            data: profile
+        });
     };
 }

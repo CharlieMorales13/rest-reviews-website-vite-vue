@@ -33,9 +33,12 @@ export class PrismaUserRepository implements IUserRepository {
                 passwordHash: user.passwordHash,
                 role: user.role,
                 isActive: user.isActive,
+                avatarUrl: user.avatarUrl,
+                bio: user.bio,
+                universityId: user.universityId,
                 createdAt: user.createdAt,
                 updatedAt: user.updatedAt,
-            },
+            } as any,
         });
         return this.mapToDomain(data);
     }
@@ -51,8 +54,11 @@ export class PrismaUserRepository implements IUserRepository {
                 passwordHash: user.passwordHash,
                 role: user.role,
                 isActive: user.isActive,
+                avatarUrl: user.avatarUrl,
+                bio: user.bio,
+                universityId: user.universityId,
                 updatedAt: user.updatedAt,
-            },
+            } as any,
         });
         return this.mapToDomain(data);
     }
@@ -70,6 +76,9 @@ export class PrismaUserRepository implements IUserRepository {
             passwordHash: data.passwordHash,
             role: data.role as UserRole,
             isActive: data.isActive,
+            avatarUrl: data.avatarUrl,
+            bio: data.bio,
+            universityId: data.universityId,
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
         });

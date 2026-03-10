@@ -11,6 +11,9 @@ export interface UserProps {
     passwordHash: string;
     role: UserRole;
     isActive?: boolean;
+    avatarUrl?: string;
+    bio?: string;
+    universityId?: string;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -42,6 +45,9 @@ export class User {
     get passwordHash(): string { return this.props.passwordHash; }
     get role(): UserRole { return this.props.role; }
     get isActive(): boolean | undefined { return this.props.isActive; }
+    get avatarUrl(): string | undefined { return this.props.avatarUrl; }
+    get bio(): string | undefined { return this.props.bio; }
+    get universityId(): string | undefined { return this.props.universityId; }
     get createdAt(): Date | undefined { return this.props.createdAt; }
     get updatedAt(): Date | undefined { return this.props.updatedAt; }
 

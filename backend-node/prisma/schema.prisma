@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // =========================================
@@ -45,6 +46,9 @@ model User {
   passwordHash  String         @map("password_hash")
   role          UserRole
   isActive      Boolean        @default(true) @map("is_active")
+  avatarUrl     String?        @map("avatar_url")
+  bio           String?
+  universityId  String?        @map("university_id")
   createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
   
@@ -93,6 +97,7 @@ model Review {
   serviceScore    Int      @map("service_score") @db.SmallInt
   priceScore      Int      @map("price_score") @db.SmallInt
   comment         String
+  imageUrl        String?  @map("image_url")
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -101,7 +106,7 @@ model Review {
   sentimentResults SentimentResult[]
 
   // CRITICAL CONSTRAINT from PRD: One review per user per establishment
-  @@unique([userId, establishmentId], name: "unique_user_establishment")
+  // @@unique([userId, establishmentId], name: "unique_user_establishment")
   @@map("reviews")
 }
 

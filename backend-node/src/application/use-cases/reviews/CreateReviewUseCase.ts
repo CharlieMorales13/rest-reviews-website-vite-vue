@@ -41,6 +41,7 @@ export class CreateReviewUseCase {
             serviceScore: dto.serviceScore,
             priceScore: dto.priceScore,
             comment: dto.comment,
+            imageUrl: dto.imageUrl,
         });
 
         // 5. Save to database

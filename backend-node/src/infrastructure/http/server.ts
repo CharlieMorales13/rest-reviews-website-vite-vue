@@ -13,6 +13,7 @@ import authRouter from './routes/auth.routes';
 import reviewRouter from './routes/review.routes';
 import establishmentRouter from './routes/establishment.routes';
 import userRouter from './routes/user.routes';
+import metricsRouter from './routes/metrics.routes';
 import { globalErrorHandler } from './middlewares/ErrorMiddleware';
 
 const app = express();
@@ -40,6 +41,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/reviews', reviewRouter);
 app.use('/api/establishments', establishmentRouter);
 app.use('/api/users', userRouter);
+app.use('/api/metrics', metricsRouter);
 
 // Global Error Handler
 app.use(globalErrorHandler);

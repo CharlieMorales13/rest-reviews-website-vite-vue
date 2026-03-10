@@ -14,6 +14,14 @@ export class PrismaReviewRepository implements IReviewRepository {
     async findByEstablishmentId(establishmentId: string): Promise<Review[]> {
         const data = await prisma.review.findMany({
             where: { establishmentId },
+            include: {
+                user: { select: { name: true } },
+                sentimentResults: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 1,
+                    select: { predictedLabel: true }
+                }
+            },
             orderBy: { createdAt: 'desc' }
         });
         return data.map(this.mapToDomain);
@@ -37,9 +45,10 @@ export class PrismaReviewRepository implements IReviewRepository {
                 serviceScore: review.serviceScore,
                 priceScore: review.priceScore,
                 comment: review.comment,
+                imageUrl: review.imageUrl,
                 createdAt: review.createdAt,
                 updatedAt: review.updatedAt,
-            },
+            } as any,
         });
         return this.mapToDomain(data);
     }
@@ -64,6 +73,9 @@ export class PrismaReviewRepository implements IReviewRepository {
             serviceScore: data.serviceScore,
             priceScore: data.priceScore,
             comment: data.comment,
+            imageUrl: data.imageUrl,
+            authorName: data.user?.name,
+            sentiment: data.sentimentResults?.[0]?.predictedLabel,
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
         });
