@@ -17,6 +17,13 @@ export class PrismaUserRepository implements IUserRepository {
         return this.mapToDomain(data);
     }
 
+    async findAll(): Promise<User[]> {
+        const data = await prisma.user.findMany({
+            orderBy: { createdAt: 'desc' },
+        });
+        return data.map(this.mapToDomain);
+    }
+
     async save(user: User): Promise<User> {
         const data = await prisma.user.create({
             data: {
@@ -48,6 +55,10 @@ export class PrismaUserRepository implements IUserRepository {
             },
         });
         return this.mapToDomain(data);
+    }
+
+    async delete(id: string): Promise<void> {
+        await prisma.user.delete({ where: { id } });
     }
 
     // Helper method to reconstruct Domain Entity from DB Model

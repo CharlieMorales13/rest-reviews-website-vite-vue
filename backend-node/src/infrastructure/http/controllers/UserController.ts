@@ -1,0 +1,143 @@
+import { Request, Response } from 'express';
+import { injectable, inject } from 'tsyringe';
+import { ListUsersUseCase } from '../../../application/use-cases/users/ListUsersUseCase';
+import { GetUserUseCase } from '../../../application/use-cases/users/GetUserUseCase';
+import { UpdateUserUseCase } from '../../../application/use-cases/users/UpdateUserUseCase';
+import { DeleteUserUseCase } from '../../../application/use-cases/users/DeleteUserUseCase';
+import { UpdateUserSchema } from '../../../application/dtos/UserDTO';
+
+@injectable()
+export class UserController {
+    constructor(
+        @inject(ListUsersUseCase) private listUsersUseCase: ListUsersUseCase,
+        @inject(GetUserUseCase) private getUserUseCase: GetUserUseCase,
+        @inject(UpdateUserUseCase) private updateUserUseCase: UpdateUserUseCase,
+        @inject(DeleteUserUseCase) private deleteUserUseCase: DeleteUserUseCase
+    ) { }
+
+    /**
+     * @swagger
+     * /users:
+     *   get:
+     *     summary: List all users (Admin only)
+     *     tags: [Users]
+     *     security:
+     *       - bearerAuth: []
+     *     responses:
+     *       200:
+     *         description: List of users
+     */
+    public getAll = async (_req: Request, res: Response): Promise<void> => {
+        const users = await this.listUsersUseCase.execute();
+        res.status(200).json({
+            success: true,
+            data: users.map(u => ({
+                id: u.id,
+                name: u.name,
+                email: u.email,
+                role: u.role,
+                isActive: u.isActive,
+                createdAt: u.createdAt
+            }))
+        });
+    };
+
+    /**
+     * @swagger
+     * /users/{id}:
+     *   get:
+     *     summary: Get user details (Admin only)
+     *     tags: [Users]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *     responses:
+     *       200:
+     *         description: User details
+     */
+    public getById = async (req: Request, res: Response): Promise<void> => {
+        const id = req.params.id as string;
+        const user = await this.getUserUseCase.execute(id);
+        res.status(200).json({
+            success: true,
+            data: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                isActive: user.isActive,
+                createdAt: user.createdAt
+            }
+        });
+    };
+
+    /**
+     * @swagger
+     * /users/{id}:
+     *   put:
+     *     summary: Update user details (Admin only)
+     *     tags: [Users]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/UpdateUserInput'
+     *     responses:
+     *       200:
+     *         description: User updated successfully
+     */
+    public update = async (req: Request, res: Response): Promise<void> => {
+        const id = req.params.id as string;
+        const validatedData = UpdateUserSchema.parse(req.body);
+        const user = await this.updateUserUseCase.execute(id, validatedData);
+        res.status(200).json({
+            success: true,
+            message: 'User updated successfully',
+            data: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                isActive: user.isActive
+            }
+        });
+    };
+
+    /**
+     * @swagger
+     * /users/{id}:
+     *   delete:
+     *     summary: Delete a user (Admin only)
+     *     tags: [Users]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *     responses:
+     *       204:
+     *         description: User deleted
+     */
+    public delete = async (req: Request, res: Response): Promise<void> => {
+        const id = req.params.id as string;
+        await this.deleteUserUseCase.execute(id);
+        res.status(204).send();
+    };
+}

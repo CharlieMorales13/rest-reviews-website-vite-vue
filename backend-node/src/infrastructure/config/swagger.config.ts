@@ -127,6 +127,16 @@ const options: swaggerJsdoc.Options = {
                             }
                         }
                     }
+                },
+                UpdateUserInput: {
+                    type: 'object',
+                    properties: {
+                        name: { type: 'string' },
+                        email: { type: 'string', format: 'email' },
+                        role: { type: 'string', enum: ['student', 'manager', 'admin'] },
+                        isActive: { type: 'boolean' },
+                        password: { type: 'string', minLength: 6 }
+                    }
                 }
             }
         },
