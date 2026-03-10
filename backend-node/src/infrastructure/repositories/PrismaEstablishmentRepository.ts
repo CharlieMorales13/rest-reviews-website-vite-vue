@@ -1,42 +1,46 @@
-import prisma from '../database/prisma.service';
 import { IEstablishmentRepository } from '../../domain/repositories/IEstablishmentRepository';
 import { Establishment } from '../../domain/entities/Establishment';
+import { PrismaClient } from '@prisma/client';
+import { injectable } from 'tsyringe';
 
+@injectable()
 export class PrismaEstablishmentRepository implements IEstablishmentRepository {
+    private prisma: PrismaClient;
+
+    constructor() {
+        this.prisma = new PrismaClient();
+    }
+
     async findById(id: string): Promise<Establishment | null> {
-        const data = await prisma.establishment.findUnique({ where: { id } });
+        const data = await this.prisma.establishment.findUnique({ where: { id } });
         if (!data) return null;
-        return this.mapToDomain(data);
+        return this.mapToEntity(data);
     }
 
     async findAll(): Promise<Establishment[]> {
-        const data = await prisma.establishment.findMany({
-            where: { isActive: true },
-            orderBy: { name: 'asc' }
+        const data = await this.prisma.establishment.findMany({
+            orderBy: { createdAt: 'desc' }
         });
-        return data.map(this.mapToDomain);
+        return data.map(this.mapToEntity);
     }
 
     async save(establishment: Establishment): Promise<Establishment> {
-        const data = await prisma.establishment.create({
+        const data = await this.prisma.establishment.create({
             data: {
-                id: establishment.id,
                 name: establishment.name,
                 description: establishment.description,
                 category: establishment.category,
                 managerId: establishment.managerId,
                 isActive: establishment.isActive,
-                createdAt: establishment.createdAt,
-                updatedAt: establishment.updatedAt,
-            },
+            }
         });
-        return this.mapToDomain(data);
+        return this.mapToEntity(data);
     }
 
     async update(establishment: Establishment): Promise<Establishment> {
-        if (!establishment.id) throw new Error('Cannot update establishment without ID');
+        if (!establishment.id) throw new Error('Establishment ID is required for update');
 
-        const data = await prisma.establishment.update({
+        const data = await this.prisma.establishment.update({
             where: { id: establishment.id },
             data: {
                 name: establishment.name,
@@ -44,13 +48,16 @@ export class PrismaEstablishmentRepository implements IEstablishmentRepository {
                 category: establishment.category,
                 managerId: establishment.managerId,
                 isActive: establishment.isActive,
-                updatedAt: establishment.updatedAt,
-            },
+            }
         });
-        return this.mapToDomain(data);
+        return this.mapToEntity(data);
     }
 
-    private mapToDomain(data: any): Establishment {
+    async delete(id: string): Promise<void> {
+        await this.prisma.establishment.delete({ where: { id } });
+    }
+
+    private mapToEntity(data: any): Establishment {
         return Establishment.create({
             id: data.id,
             name: data.name,

@@ -1,13 +1,70 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>rest-reviews-website-vite-vue</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Sistema Anáhuac</title>
+    <link rel="stylesheet" href="estilos.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div id="app" class="contenedor-app">
+        <nav class="sidebar">
+            <div style="padding: 25px 20px; border-bottom: 1px solid #334155;">
+                <h3 style="margin:0;">U. Anáhuac</h3>
+                <small style="color: #94a3b8;">Módulo de Analítica</small>
+            </div>
+            
+            <div class="nav-menu">
+                <div class="nav-item" :class="{active: vista === 'inicio'}" @click="vista = 'inicio'">🏠 Inicio</div>
+                <div class="nav-item" :class="{active: vista === 'lugares'}" @click="vista = 'lugares'">🍴 Establecimientos</div>
+            </div>
+
+            <div class="sidebar-user-info">
+                <div style="width:35px; height:35px; background:var(--primary-color); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">SM</div>
+                <div style="overflow:hidden;">
+                    <div style="font-size:0.85em; font-weight:bold; white-space:nowrap; text-overflow:ellipsis;">Sebastián Morales</div>
+                    <div style="font-size:0.7em; color:#94a3b8;">{{ miRol }} - 6to Sem.</div>
+                </div>
+            </div>
+            
+            <div class="nav-item" @click="salir" style="color:#ef4444; border-top:1px solid #334155;">🚪 Cerrar Sesión</div>
+        </nav>
+
+        <main class="main-content">
+            <header style="margin-bottom: 30px;">
+                <h1 style="margin:0;">{{ vista === 'inicio' ? 'Resumen General' : 'Establecimientos Universitarios' }}</h1>
+                <span style="background:#dcfce7; color:#166534; padding:4px 12px; border-radius:20px; font-size:0.8em;">Sesión Activa</span>
+            </header>
+
+            <div v-if="vista === 'inicio'">
+                <div class="stats-grid">
+                    <div class="stat-card"><h3>Reseñas Totales</h3><p>1,240</p></div>
+                    <div class="stat-card"><h3>IGE Promedio</h3><p>88.5</p></div>
+                    <div class="stat-card"><h3>Tu Actividad</h3><p>12</p></div>
+                </div>
+                <div style="background:white; padding:25px; border-radius:15px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+                    <h3 style="text-align:center;">📊 Análisis de Sentimiento Global</h3>
+                    <div style="max-height:280px; display:flex; justify-content:center;"><canvas id="graficaSentimientos"></canvas></div>
+                </div>
+            </div>
+
+            <div v-else-if="vista === 'lugares'" style="background:white; padding:25px; border-radius:15px;">
+                <input type="text" v-model="busqueda" placeholder="🔍 Buscar establecimiento..." style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:20px;">
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead><tr style="text-align:left; color:#64748b; border-bottom:2px solid #f1f5f9;"><th style="padding:12px;">Nombre</th><th>Categoría</th><th>Calificación</th><th>Acción</th></tr></thead>
+                    <tbody>
+                        <tr v-for="lugar in listaFiltrada" :key="lugar.nombre" style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:15px;"><strong>{{ lugar.nombre }}</strong></td>
+                            <td>{{ lugar.categoria }}</td>
+                            <td>⭐ {{ lugar.calificacion }}</td>
+                            <td><button style="background:var(--primary-color); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">Evaluar</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
 </html>

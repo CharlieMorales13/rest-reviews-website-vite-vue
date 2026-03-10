@@ -11,6 +11,7 @@ import { logger } from '../config/logger';
 import { swaggerSpec } from '../config/swagger.config';
 import authRouter from './routes/auth.routes';
 import reviewRouter from './routes/review.routes';
+import establishmentRouter from './routes/establishment.routes';
 import { globalErrorHandler } from './middlewares/ErrorMiddleware';
 
 const app = express();
@@ -36,6 +37,7 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // API Routes
 app.use('/api/auth', authRouter);
 app.use('/api/reviews', reviewRouter);
+app.use('/api/establishments', establishmentRouter);
 
 // Global Error Handler
 app.use(globalErrorHandler);
