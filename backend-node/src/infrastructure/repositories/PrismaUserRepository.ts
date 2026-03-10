@@ -1,7 +1,9 @@
 import prisma from '../database/prisma.service';
 import { IUserRepository } from '../../domain/repositories/IUserRepository';
 import { User, UserRole } from '../../domain/entities/User';
+import { injectable } from 'tsyringe';
 
+@injectable()
 export class PrismaUserRepository implements IUserRepository {
     async findById(id: string): Promise<User | null> {
         const data = await prisma.user.findUnique({ where: { id } });

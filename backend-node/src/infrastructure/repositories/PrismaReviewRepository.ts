@@ -1,7 +1,9 @@
 import prisma from '../database/prisma.service';
 import { IReviewRepository } from '../../domain/repositories/IReviewRepository';
 import { Review } from '../../domain/entities/Review';
+import { injectable } from 'tsyringe';
 
+@injectable()
 export class PrismaReviewRepository implements IReviewRepository {
     async findById(id: string): Promise<Review | null> {
         const data = await prisma.review.findUnique({ where: { id } });

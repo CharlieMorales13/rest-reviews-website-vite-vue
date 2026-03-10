@@ -88,6 +88,45 @@ const options: swaggerJsdoc.Options = {
                             }
                         }
                     }
+                },
+                CreateEstablishmentInput: {
+                    type: 'object',
+                    required: ['name'],
+                    properties: {
+                        name: { type: 'string', maxLength: 150 },
+                        description: { type: 'string', maxLength: 500 },
+                        category: { type: 'string', maxLength: 80 },
+                        managerId: { type: 'string', format: 'uuid' }
+                    }
+                },
+                UpdateEstablishmentInput: {
+                    type: 'object',
+                    properties: {
+                        name: { type: 'string', maxLength: 150 },
+                        description: { type: 'string', maxLength: 500 },
+                        category: { type: 'string', maxLength: 80 },
+                        managerId: { type: 'string', format: 'uuid' },
+                        isActive: { type: 'boolean' }
+                    }
+                },
+                EstablishmentResponse: {
+                    type: 'object',
+                    properties: {
+                        success: { type: 'boolean' },
+                        data: {
+                            type: 'object',
+                            properties: {
+                                id: { type: 'string' },
+                                name: { type: 'string' },
+                                description: { type: 'string' },
+                                category: { type: 'string' },
+                                managerId: { type: 'string' },
+                                isActive: { type: 'boolean' },
+                                createdAt: { type: 'string', format: 'date-time' },
+                                updatedAt: { type: 'string', format: 'date-time' }
+                            }
+                        }
+                    }
                 }
             }
         },

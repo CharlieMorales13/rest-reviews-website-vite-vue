@@ -1,15 +1,11 @@
 import { IEstablishmentRepository } from '../../domain/repositories/IEstablishmentRepository';
 import { Establishment } from '../../domain/entities/Establishment';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../database/prisma.service';
 import { injectable } from 'tsyringe';
 
 @injectable()
 export class PrismaEstablishmentRepository implements IEstablishmentRepository {
-    private prisma: PrismaClient;
-
-    constructor() {
-        this.prisma = new PrismaClient();
-    }
+    private prisma = prisma;
 
     async findById(id: string): Promise<Establishment | null> {
         const data = await this.prisma.establishment.findUnique({ where: { id } });
