@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, shallowRef } from 'vue';
 import Chart from 'chart.js/auto';
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
-let chart: Chart | null = null;
+const chart = shallowRef<Chart | null>(null);
 
 onMounted(() => {
   if (!canvasRef.value) return;
-  chart = new Chart(canvasRef.value, {
+  chart.value = new Chart(canvasRef.value, {
     type: 'doughnut',
     data: {
       labels: ['Positivas', 'Neutrales', 'Negativas'],
