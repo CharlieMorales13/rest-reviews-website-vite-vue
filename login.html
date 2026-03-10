@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Acceso - Sistema Anáhuac</title>
+    <link rel="stylesheet" href="estilos.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+    <div id="app">
+        <div class="login-overlay">
+            <div class="login-card">
+                <img src="https://vinculacion.anahuac.mx/sites/default/files/logo-anahuac.png" alt="Logo" style="width: 180px; margin-bottom: 20px;">
+                <h2>Acceso al Sistema</h2>
+                <p style="color: #64748b; margin-bottom: 20px;">Análisis de Satisfacción Universitaria</p>
+                
+                <input type="email" v-model="email" placeholder="Correo institucional">
+                <input type="password" v-model="password" placeholder="Contraseña">
+                
+                <label style="display: block; text-align: left; font-size: 0.8em; color: #64748b;">Rol de Usuario:</label>
+                <select v-model="rol">
+                    <option value="Estudiante">Alumno</option>
+                    <option value="Administrativo">Administrativo</option>
+                </select>
+
+                <button class="btn-login" @click="entrar">Entrar al Sistema</button>
+                <p style="font-size: 0.8em; color: #64748b; margin-top: 15px;">¿Problemas con tu cuenta? Contacta a sistemas.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref } = Vue;
+        createApp({
+            setup() {
+                const email = ref('');
+                const password = ref('');
+                const rol = ref('Estudiante');
+
+                const entrar = () => {
+                    localStorage.setItem('user_rol', rol.value);
+                    window.location.href = 'index.html';
+                };
+                return { email, password, rol, entrar };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
