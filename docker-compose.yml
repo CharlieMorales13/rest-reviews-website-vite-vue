@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: user_admin
+      POSTGRES_PASSWORD: secure_password
+      POSTGRES_DB: satisfaction_db
+    ports:
+      - "5432:5432"
+    networks:
+      - analytics_net
+
+  backend:
+    build: ./backend
+    container_name: node_backend
+    depends_on:
+      - postgres
+    networks:
+      - analytics_net
+
+networks:
+  analytics_net:
+    driver: bridge
+
