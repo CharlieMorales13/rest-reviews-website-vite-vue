@@ -28,10 +28,7 @@ export class MetricsController {
      */
     public getSummary = async (req: AuthRequest, res: Response): Promise<void> => {
         const user = req.user;
-        if (!user) {
-            throw new AppError('Unauthorized', 0); // AuthMiddleware handles this but typing-wise we check
-        }
-
+        if (!user) throw new AppError('Unauthorized', 401);
         if (user.role === 'admin') {
             const metrics = await this.getGlobalMetricsUseCase.execute();
             res.status(200).json({ success: true, data: metrics });
@@ -41,7 +38,7 @@ export class MetricsController {
         if (user.role === 'manager') {
             const establishments = await this.getManagerEstablishmentsUseCase.execute(user.userId);
             if (establishments.length === 0) {
-                res.status(200).json({ success: true, data: { message: 'No establishments managed' } });
+                res.status(200).json({ success: true, data: { establishments: [] } });
                 return;
             }
 
@@ -50,9 +47,10 @@ export class MetricsController {
                 establishments.map(e => this.getEstablishmentMetricsUseCase.execute(e.id || ''))
             );
 
+            // Always return as an array to keep frontend logic simple and consistent
             res.status(200).json({ 
                 success: true, 
-                data: metrics.length === 1 ? metrics[0] : { establishments: metrics } 
+                data: { establishments: metrics } 
             });
             return;
         }

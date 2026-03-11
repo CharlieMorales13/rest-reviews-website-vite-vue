@@ -8,7 +8,7 @@ export class ListUsersUseCase {
         @inject('IUserRepository') private userRepository: IUserRepository
     ) { }
 
-    async execute(): Promise<User[]> {
-        return await this.userRepository.findAll();
+    async execute(pagination?: { page: number; limit: number }): Promise<{ data: User[]; total: number }> {
+        return await this.userRepository.findAll(pagination);
     }
 }

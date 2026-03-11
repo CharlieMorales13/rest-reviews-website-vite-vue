@@ -7,6 +7,8 @@ import { DeleteUserUseCase } from '../../../application/use-cases/users/DeleteUs
 import { GetUserProfileUseCase } from '../../../application/use-cases/users/GetUserProfileUseCase';
 import { UpdateUserSchema } from '../../../application/dtos/UserDTO';
 
+import { createPaginatedResponse } from '../utils/Pagination';
+
 @injectable()
 export class UserController {
     constructor(
@@ -21,27 +23,44 @@ export class UserController {
      * @swagger
      * /users:
      *   get:
-     *     summary: List all users (Admin only)
+     *     summary: List all users with pagination (Admin only)
      *     tags: [Users]
      *     security:
      *       - bearerAuth: []
+     *     parameters:
+     *       - in: query
+     *         name: page
+     *         schema:
+     *           type: integer
+     *           default: 1
+     *       - in: query
+     *         name: limit
+     *         schema:
+     *           type: integer
+     *           default: 10
      *     responses:
      *       200:
      *         description: List of users
      */
-    public getAll = async (_req: Request, res: Response): Promise<void> => {
-        const users = await this.listUsersUseCase.execute();
-        res.status(200).json({
-            success: true,
-            data: users.map(u => ({
-                id: u.id,
-                name: u.name,
-                email: u.email,
-                role: u.role,
-                isActive: u.isActive,
-                createdAt: u.createdAt
-            }))
-        });
+    public getAll = async (req: Request, res: Response): Promise<void> => {
+        const { page, limit } = req.query;
+        const pageNum = parseInt(page as string) || 1;
+        const limitNum = parseInt(limit as string) || 10;
+
+        const { data, total } = await this.listUsersUseCase.execute({ page: pageNum, limit: limitNum });
+
+        const formatted = data.map(u => ({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            role: u.role,
+            isActive: u.isActive,
+            createdAt: u.createdAt
+        }));
+
+        res.status(200).json(
+            createPaginatedResponse(formatted, total, pageNum, limitNum)
+        );
     };
 
     /**

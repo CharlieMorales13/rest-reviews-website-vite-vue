@@ -58,7 +58,7 @@ async function runTests() {
 
         // 5. Get Metrics Summary
         console.log('\n--- [ANALYTICS: METRICS] ---');
-        const metricsRes = await fetch(`${API_URL}/metrics/summary`);
+        const metricsRes = await fetch(`${API_URL}/metrics/summary`, { headers: authHeader });
         const metricsData = await metricsRes.json();
         console.log('✅ Métricas Críticas:');
         console.log(`   - Total Reseñas: ${metricsData.data.totalReviews}`);

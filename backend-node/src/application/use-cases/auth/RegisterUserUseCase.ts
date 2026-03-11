@@ -1,11 +1,15 @@
+import { injectable, inject } from 'tsyringe';
 import { User, UserRole } from '../../../domain/entities/User';
 import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { RegisterUserDTO } from '../../dtos/AuthDTO';
 import { AppError } from '../../../infrastructure/http/errors/AppError';
 import * as argon2 from 'argon2';
 
+@injectable()
 export class RegisterUserUseCase {
-    constructor(private userRepository: IUserRepository) { }
+    constructor(
+        @inject('IUserRepository') private userRepository: IUserRepository
+    ) { }
 
     async execute(dto: RegisterUserDTO): Promise<User> {
         const existingUser = await this.userRepository.findByEmail(dto.email);

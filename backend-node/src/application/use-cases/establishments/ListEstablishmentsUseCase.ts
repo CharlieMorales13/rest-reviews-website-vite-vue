@@ -8,7 +8,10 @@ export class ListEstablishmentsUseCase {
         @inject('IEstablishmentRepository') private repository: IEstablishmentRepository
     ) { }
 
-    async execute(filters?: { name?: string; universityId?: string }): Promise<Establishment[]> {
-        return await this.repository.findAll(filters);
+    async execute(
+        filters?: { name?: string; universityId?: string },
+        pagination?: { page: number; limit: number }
+    ): Promise<{ data: Establishment[]; total: number }> {
+        return await this.repository.findAll(filters, pagination);
     }
 }

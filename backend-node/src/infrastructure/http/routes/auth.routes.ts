@@ -1,67 +1,23 @@
 import { Router } from 'express';
+import { container } from '../../config/container';
 import { AuthController } from '../controllers/AuthController';
-import { PrismaUserRepository } from '../../repositories/PrismaUserRepository';
-import { RegisterUserUseCase } from '../../../application/use-cases/auth/RegisterUserUseCase';
-import { LoginUserUseCase } from '../../../application/use-cases/auth/LoginUserUseCase';
+import { authenticateToken } from '../middlewares/AuthMiddleware';
 
 const authRouter = Router();
+const authController = container.resolve(AuthController);
 
-// Instantiate dependencies (Dependency Injection)
-const userRepository = new PrismaUserRepository();
-const registerUseCase = new RegisterUserUseCase(userRepository);
-const loginUseCase = new LoginUserUseCase(userRepository);
-
-const authController = new AuthController(registerUseCase, loginUseCase);
-
-// Routes
-/**
- * @swagger
- * /auth/register:
- *   post:
- *     summary: Register a new user
- *     tags:
- *       - Authentication
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/RegisterUserInput'
- *     responses:
- *       201:
- *         description: User created successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AuthResponse'
- *       400:
- *         description: Invalid input
- */
 authRouter.post('/register', authController.register);
+authRouter.post('/login', authController.login);
 
 /**
  * @swagger
- * /auth/login:
- *   post:
- *     summary: Login a user
- *     tags:
- *       - Authentication
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/LoginUserInput'
- *     responses:
- *       200:
- *         description: User logged in successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AuthResponse'
- *       401:
- *         description: Invalid credentials
+ * /auth/me:
+ *   get:
+ *     summary: Get current authenticated user info
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
  */
-authRouter.post('/login', authController.login);
+authRouter.get('/me', authenticateToken, authController.getMe);
 
 export default authRouter;
