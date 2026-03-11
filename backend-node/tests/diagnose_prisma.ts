@@ -1,4 +1,4 @@
-import prisma from './src/infrastructure/database/prisma.service';
+import prisma from '../src/infrastructure/database/prisma.service';
 
 async function diagnose() {
     const id = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b21'; // DelyFull

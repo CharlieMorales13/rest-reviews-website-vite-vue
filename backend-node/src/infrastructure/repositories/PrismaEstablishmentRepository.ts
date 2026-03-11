@@ -77,6 +77,14 @@ export class PrismaEstablishmentRepository implements IEstablishmentRepository {
         await this.prisma.establishment.delete({ where: { id } });
     }
 
+    async findByManagerId(managerId: string): Promise<Establishment[]> {
+        const data = await this.prisma.establishment.findMany({
+            where: { managerId },
+            orderBy: { createdAt: 'desc' }
+        });
+        return data.map(this.mapToEntity);
+    }
+
     private mapToEntity(data: any): Establishment {
         return Establishment.create({
             id: data.id,

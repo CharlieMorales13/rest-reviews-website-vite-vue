@@ -6,4 +6,5 @@ export interface IEstablishmentRepository {
     save(establishment: Establishment): Promise<Establishment>;
     update(establishment: Establishment): Promise<Establishment>;
     delete(id: string): Promise<void>;
+    findByManagerId(managerId: string): Promise<Establishment[]>;
 }

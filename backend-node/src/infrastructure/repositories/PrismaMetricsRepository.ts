@@ -1,5 +1,5 @@
 import prisma from '../database/prisma.service';
-import { IMetricsRepository, GlobalMetrics } from '../../domain/repositories/IMetricsRepository';
+import { IMetricsRepository, GlobalMetrics, EstablishmentMetricSummary } from '../../domain/repositories/IMetricsRepository';
 import { injectable } from 'tsyringe';
 
 @injectable()
@@ -63,6 +63,49 @@ export class PrismaMetricsRepository implements IMetricsRepository {
             topEstablishments,
             totalReviews: reviewCount,
             totalUsers: userCount
+        };
+    }
+
+    async getEstablishmentSummary(id: string): Promise<EstablishmentMetricSummary | null> {
+        const e = await prisma.establishment.findUnique({
+            where: { id },
+            include: {
+                _count: { select: { reviews: true } },
+                reviews: {
+                    include: {
+                        sentimentResults: {
+                            orderBy: { createdAt: 'desc' },
+                            take: 1
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!e) return null;
+
+        const foodScores = e.reviews.map((r: any) => r.foodScore);
+        const serviceScores = e.reviews.map((r: any) => r.serviceScore);
+        const priceScores = e.reviews.map((r: any) => r.priceScore);
+
+        const sentimentCounts = {
+            positive: e.reviews.filter((r: any) => r.sentimentResults[0]?.predictedLabel === 'positive').length,
+            neutral: e.reviews.filter((r: any) => r.sentimentResults[0]?.predictedLabel === 'neutral').length,
+            negative: e.reviews.filter((r: any) => r.sentimentResults[0]?.predictedLabel === 'negative').length,
+            total: e._count.reviews
+        };
+
+        const positiveRatio = e._count.reviews > 0 ? (sentimentCounts.positive / e._count.reviews) * 100 : 0;
+
+        return {
+            id: e.id,
+            name: e.name,
+            avgFood: this.calculateAvg(foodScores),
+            avgService: this.calculateAvg(serviceScores),
+            avgPrice: this.calculateAvg(priceScores),
+            reviewCount: e._count.reviews,
+            sentimentScore: Number(positiveRatio.toFixed(1)),
+            sentimentDistribution: sentimentCounts
         };
     }
 

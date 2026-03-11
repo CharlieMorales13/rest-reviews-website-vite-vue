@@ -22,6 +22,11 @@ export interface GlobalMetrics {
     totalUsers: number;
 }
 
+export interface EstablishmentMetricSummary extends EstablishmentMetric {
+    sentimentDistribution: SentimentSummary;
+}
+
 export interface IMetricsRepository {
     getGlobalSummary(): Promise<GlobalMetrics>;
+    getEstablishmentSummary(id: string): Promise<EstablishmentMetricSummary | null>;
 }
