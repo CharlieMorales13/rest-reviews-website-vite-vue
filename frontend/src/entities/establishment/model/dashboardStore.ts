@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { MetricsSnapshot } from '../../core/types/review';
-import { ReviewService } from '../../infrastructure/services/ReviewService';
+import type { MetricsSnapshot } from '@/entities/review/model/types';
+import { ReviewService } from '@/entities/review/api/ReviewService';
 
 export const useDashboardStore = defineStore('dashboard', () => {
   const metrics = ref<MetricsSnapshot | null>(null);

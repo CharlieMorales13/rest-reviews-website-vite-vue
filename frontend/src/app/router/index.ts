@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { useAuthStore } from '../../application/stores/useAuthStore';
+import { useAuthStore } from '@/entities/user/model/authStore';
 
 const routes = [
   {
@@ -9,16 +9,16 @@ const routes = [
   {
     path: '/login',
     name: 'login',
-    component: () => import('../views/auth/LoginView.vue'),
+    component: () => import('@/pages/login/ui/LoginPage.vue'),
   },
   {
     path: '/register',
     name: 'register',
-    component: () => import('../views/auth/RegisterView.vue'),
+    component: () => import('@/pages/register/ui/RegisterPage.vue'),
   },
   {
     path: '/',
-    component: () => import('../layouts/AppLayout.vue'),
+    component: () => import('@/widgets/Layout/ui/AppLayout.vue'),
     meta: { requiresAuth: true },
     children: [
       {
@@ -28,18 +28,18 @@ const routes = [
       {
         path: 'dashboard',
         name: 'dashboard',
-        component: () => import('../views/dashboard/DashboardView.vue'),
+        component: () => import('@/pages/dashboard/ui/DashboardPage.vue'),
         meta: { roles: ['manager', 'admin', 'student'] }
       },
       {
         path: 'establishments',
         name: 'establishments',
-        component: () => import('../views/reviews/EstablishmentsView.vue')
+        component: () => import('@/pages/establishments/ui/EstablishmentsPage.vue')
       },
       {
         path: 'review/create/:id',
         name: 'create-review',
-        component: () => import('../views/reviews/CreateReviewView.vue'),
+        component: () => import('@/pages/create-review/ui/CreateReviewPage.vue'),
         meta: { roles: ['student'] },
         props: true
       }
@@ -52,7 +52,7 @@ export const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   const authStore = useAuthStore();
   const requiresAuth = to.meta.requiresAuth;
   const allowedRoles = to.meta.roles as string[] | undefined;

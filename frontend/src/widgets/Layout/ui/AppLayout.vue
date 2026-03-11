@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useAuthStore } from '../../application/stores/useAuthStore';
+import { useAuthStore } from '@/entities/user/model/authStore';
 import { useRoute, useRouter } from 'vue-router';
 
 const authStore = useAuthStore();
@@ -10,8 +10,10 @@ const route = useRoute();
 const userName = computed(() => authStore.user?.name || 'Usuario');
 const userInitials = computed(() => {
   const nameParts = userName.value.split(' ');
-  if (nameParts.length >= 2) return nameParts[0][0] + nameParts[1][0];
-  return nameParts[0].substring(0, 2).toUpperCase();
+  if (nameParts.length >= 2 && nameParts[0] && nameParts[1]) {
+    return (nameParts[0][0] || '') + (nameParts[1][0] || '');
+  }
+  return (nameParts[0] || '').substring(0, 2).toUpperCase();
 });
 const userRole = computed(() => {
   if (authStore.userRole === 'student') return 'ITND - 6to Sem.';

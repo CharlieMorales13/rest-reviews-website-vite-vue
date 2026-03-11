@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { useDashboardStore } from '../../../application/stores/useDashboardStore';
+import { useDashboardStore } from '@/entities/establishment/model/dashboardStore';
 import Chart from 'chart.js/auto';
 
 // In a real application, the manager might select a specific establishment or see overall stats.  

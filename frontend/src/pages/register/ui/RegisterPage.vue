@@ -1,23 +1,24 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useAuthStore } from '../../../application/stores/useAuthStore';
+import { useAuthStore } from '@/entities/user/model/authStore';
 import { useRouter } from 'vue-router';
 
 const authStore = useAuthStore();
 const router = useRouter();
 
+const name = ref('');
 const email = ref('');
 const password = ref('');
 const loading = ref(false);
 
-const handleLogin = async () => {
-  if (!email.value || !password.value) return;
+const handleRegister = async () => {
+  if (!name.value || !email.value || !password.value) return;
   loading.value = true;
   try {
-    await authStore.login({ email: email.value, password: password.value });
-    router.push('/dashboard');
+    await authStore.register({ name: name.value, email: email.value, password: password.value });
+    router.push('/login');
   } catch (e) {
-    // Error is handled and exposed by authStore
+    // Error logic is handled by store
   } finally {
     loading.value = false;
   }
@@ -28,11 +29,16 @@ const handleLogin = async () => {
   <div class="auth-container">
     <div class="glass-panel auth-card">
       <div class="auth-header">
-        <h1>Bienvenido</h1>
-        <p>Sistema de Inteligencia Operativa</p>
+        <h1>Registro</h1>
+        <p>Crea tu cuenta de estudiante</p>
       </div>
       
-      <form @submit.prevent="handleLogin" class="auth-form">
+      <form @submit.prevent="handleRegister" class="auth-form">
+        <div class="form-group">
+          <label>Nombre Completo</label>
+          <input type="text" v-model="name" required placeholder="Juan Perez" />
+        </div>
+
         <div class="form-group">
           <label>Email Universitario</label>
           <input type="email" v-model="email" required placeholder="correo@anahuac.mx" />
@@ -40,7 +46,7 @@ const handleLogin = async () => {
         
         <div class="form-group">
           <label>Contraseña</label>
-          <input type="password" v-model="password" required placeholder="••••••••" />
+          <input type="password" v-model="password" required placeholder="••••••••" minlength="6" />
         </div>
 
         <div v-if="authStore.error" class="error-msg">
@@ -48,13 +54,13 @@ const handleLogin = async () => {
         </div>
 
         <button type="submit" class="btn-primary" :disabled="loading">
-          <span v-if="loading">Cargando...</span>
-          <span v-else>Iniciar Sesión</span>
+          <span v-if="loading">Registrando...</span>
+          <span v-else>Crear Cuenta</span>
         </button>
       </form>
       
       <div class="auth-footer">
-        <p>¿No tienes cuenta? <router-link to="/register">Regístrate</router-link></p>
+        <p>¿Ya tienes cuenta? <router-link to="/login">Inicia Sesión</router-link></p>
       </div>
     </div>
   </div>

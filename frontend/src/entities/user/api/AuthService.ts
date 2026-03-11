@@ -1,5 +1,5 @@
-import { httpClient } from '../http/httpClient';
-import type { LoginRequest, RegisterRequest, LoginResponse, RegisterResponse } from '../../core/types/auth';
+import { httpClient } from '@/shared/api/httpClient';
+import type { LoginRequest, RegisterRequest, LoginResponse, RegisterResponse } from '../model/types';
 
 export class AuthService {
   static async login(request: LoginRequest): Promise<LoginResponse> {

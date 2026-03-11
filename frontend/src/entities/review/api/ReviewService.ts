@@ -1,5 +1,5 @@
-import { httpClient } from '../http/httpClient';
-import type { CreateReviewRequest, ReviewResponse, MetricsSnapshot, Establishment } from '../../core/types/review';
+import { httpClient } from '@/shared/api/httpClient';
+import type { CreateReviewRequest, ReviewResponse, MetricsSnapshot, Establishment } from '../model/types';
 
 export class ReviewService {
   static async create(request: CreateReviewRequest): Promise<ReviewResponse> {
