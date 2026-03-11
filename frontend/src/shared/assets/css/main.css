@@ -1,60 +1,37 @@
-:root {
-    --sidebar-width: 260px;
-    --primary-color: #f37021; 
-    --dark-bg: #1e293b;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-surface-dark text-white font-sans antialiased;
+  }
 }
 
-body {
-    font-family: 'Segoe UI', sans-serif;
-    margin: 0;
-    background-color: #f1f5f9;
+@layer components {
+  .glass-effect {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10;
+  }
+  
+  .btn-premium {
+    @apply relative overflow-hidden bg-anahuac-orange text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_8px_30px_rgb(255,121,0,0.4)];
+  }
+
+  .btn-premium::after {
+    content: '';
+    @apply absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-all duration-700;
+  }
+
+  .btn-premium:hover::after {
+    @apply left-full;
+  }
+
+  .glass-input {
+    @apply w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white placeholder:text-white/40 focus:outline-none focus:bg-white/10 focus:border-anahuac-orange focus:ring-4 focus:ring-anahuac-orange/10 transition-all duration-200;
+  }
 }
 
-/* LOGIN */
-.login-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-    display: flex; justify-content: center; align-items: center;
-    z-index: 1000;
+/* Custom background for auth pages */
+.auth-bg-gradient {
+  background: radial-gradient(circle at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.85) 100%);
 }
-
-.login-card {
-    background: white; padding: 40px; border-radius: 20px;
-    width: 90%; max-width: 400px; text-align: center;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-}
-
-.login-card input, .login-card select {
-    width: 100%; padding: 12px; margin: 10px 0;
-    border: 1px solid #e2e8f0; border-radius: 8px; box-sizing: border-box;
-}
-
-.btn-login {
-    background: var(--primary-color); color: white; border: none;
-    padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer;
-}
-
-/* DASHBOARD */
-.contenedor-app { display: flex; height: 100vh; width: 100vw; }
-
-.sidebar {
-    width: var(--sidebar-width); background: var(--dark-bg); color: white;
-    display: flex; flex-direction: column; height: 100vh; flex-shrink: 0;
-}
-
-.nav-menu { flex-grow: 1; }
-
-.nav-item { padding: 15px 25px; cursor: pointer; color: #94a3b8; transition: 0.3s; }
-.nav-item:hover, .nav-item.active { background: #334155; color: white; border-left: 4px solid var(--primary-color); }
-
-.sidebar-user-info {
-    padding: 12px; margin: 10px 15px; background: #334155;
-    border-radius: 12px; display: flex; align-items: center; gap: 10px;
-    cursor: pointer;
-}
-
-.main-content { flex-grow: 1; padding: 30px; overflow-y: auto; }
-
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-.stat-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
