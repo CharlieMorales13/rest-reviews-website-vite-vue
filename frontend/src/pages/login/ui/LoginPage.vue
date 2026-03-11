@@ -28,8 +28,8 @@ const handleLogin = async () => {
   <div class="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-black">
     <!-- Background Image with Overlay -->
     <div 
-      class="absolute inset-0 bg-cover bg-center blur-[2px] scale-105 transition-transform duration-1000"
-      style="background-image: url('/assets/images/university-bg.jpg');"
+      class="absolute inset-0 bg-cover bg-center blur-[1px] scale-105 transition-transform duration-1000"
+      style="background-image: url('/assets/images/university-bg.png');"
     ></div>
     <div class="absolute inset-0 bg-black/60 md:bg-black/50 lg:bg-gradient-to-r lg:from-black/80 lg:to-black/30"></div>
 

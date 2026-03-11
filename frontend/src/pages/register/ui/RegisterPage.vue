@@ -13,6 +13,12 @@ const loading = ref(false);
 
 const handleRegister = async () => {
   if (!name.value || !email.value || !password.value) return;
+  
+  if (!email.value.endsWith('@anahuac.mx')) {
+    authStore.$patch({ error: 'Solo se permiten correos institucionales (@anahuac.mx)' });
+    return;
+  }
+
   loading.value = true;
   try {
     await authStore.register({ name: name.value, email: email.value, password: password.value });
@@ -29,8 +35,8 @@ const handleRegister = async () => {
   <div class="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-black">
     <!-- Background Image with Overlay -->
     <div 
-      class="absolute inset-0 bg-cover bg-center blur-[2px] scale-105 transition-transform duration-1000"
-      style="background-image: url('/assets/images/university-bg.jpg');"
+      class="absolute inset-0 bg-cover bg-center blur-[1px] scale-105 transition-transform duration-1000"
+      style="background-image: url('/assets/images/university-bg.png');"
     ></div>
     <div class="absolute inset-0 bg-black/60 md:bg-black/50 lg:bg-gradient-to-r lg:from-black/80 lg:to-black/30"></div>
 
@@ -57,14 +63,14 @@ const handleRegister = async () => {
         
         <form @submit.prevent="handleRegister" class="space-y-4">
           <div class="space-y-2">
-            <label class="block text-xs font-medium text-white/50 ml-1 uppercase tracking-wider">Nombre Completo</label>
+            <label class="block text-xs font-medium text-white/50 ml-1 uppercase tracking-wider">Nombre de Usuario</label>
             <div class="relative group">
               <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-40 group-focus-within:opacity-100 transition-opacity">👤</span>
               <input 
                 type="text" 
                 v-model="name" 
                 required 
-                placeholder="Juan Pérez" 
+                placeholder="Nombre de Usuario"
                 class="glass-input pl-12" 
               />
             </div>
