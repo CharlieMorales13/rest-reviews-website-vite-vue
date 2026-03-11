@@ -9,10 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@prisma/client": "^7.4.2",
+    "axios": "^1.13.6",
     "chart.js": "^4.5.1",
-    "prisma": "^6.19.2",
-    "vue": "^3.5.25"
+    "jwt-decode": "^4.0.0",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.25",
+    "vue-router": "^5.0.3"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
