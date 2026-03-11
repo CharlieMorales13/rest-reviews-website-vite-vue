@@ -4,6 +4,17 @@ import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { RegisterUserDTO } from '../../dtos/AuthDTO';
 import { AppError } from '../../../infrastructure/http/errors/AppError';
 import * as argon2 from 'argon2';
+import * as jwt from 'jsonwebtoken';
+
+interface RegisterResponse {
+    user: {
+        id: string;
+        email: string;
+        role: string;
+        name: string;
+    };
+    token: string;
+}
 
 @injectable()
 export class RegisterUserUseCase {
@@ -11,7 +22,7 @@ export class RegisterUserUseCase {
         @inject('IUserRepository') private userRepository: IUserRepository
     ) { }
 
-    async execute(dto: RegisterUserDTO): Promise<User> {
+    async execute(dto: RegisterUserDTO): Promise<RegisterResponse> {
         const existingUser = await this.userRepository.findByEmail(dto.email);
         if (existingUser) {
             throw new AppError('User with this email already exists', 409);
@@ -24,9 +35,30 @@ export class RegisterUserUseCase {
             email: dto.email,
             passwordHash: hashedPassword,
             role: UserRole.STUDENT,
-            isVerified: true // Set to true by default as requested
+            isVerified: true
         });
 
-        return await this.userRepository.save(newUser);
+        const savedUser = await this.userRepository.save(newUser);
+
+        if (!savedUser.id) {
+            throw new AppError('Error creating user', 500);
+        }
+
+        const secret = process.env.JWT_SECRET || 'fallback-secret';
+        const token = jwt.sign(
+            { userId: savedUser.id, role: savedUser.role, email: savedUser.email },
+            secret,
+            { expiresIn: '24h' }
+        );
+
+        return {
+            user: {
+                id: savedUser.id,
+                email: savedUser.email,
+                name: savedUser.name,
+                role: savedUser.role
+            },
+            token
+        };
     }
 }

@@ -38,13 +38,13 @@ const handleRegister = async () => {
 
     <!-- Content -->
     <div class="relative z-10 w-full max-w-md p-6 animate-fade-in">
-      <div class="bg-white/15 backdrop-blur-2xl border border-white/20 rounded-[32px] p-8 md:p-12 shadow-2xl">
+      <div class="bg-white/5 backdrop-blur-2xl border border-white/20 rounded-[32px] p-8 md:p-12 shadow-2xl">
         <div class="text-center mb-10">
           <div class="w-16 h-16 bg-anahuac-orange text-white text-3xl font-extrabold flex items-center justify-center rounded-2xl mx-auto mb-6 shadow-lg shadow-anahuac-orange/30">
             A
           </div>
-          <h1 class="text-3xl font-bold tracking-tight text-white mb-2">Únete</h1>
-          <p class="text-white/60 text-sm">Crea tu cuenta universitaria</p>
+          <h1 class="text-3xl font-bold tracking-tight text-white mb-2">Unete León</h1>
+          <p class="text-white/60 text-sm">Crea tu cuenta y empieza a opinar</p>
         </div>
 
         <!-- Auth Tabs -->
@@ -73,7 +73,7 @@ const handleRegister = async () => {
           </div>
 
           <div class="space-y-2">
-            <label class="block text-xs font-medium text-white/50 ml-1 uppercase tracking-wider">Email Universitario</label>
+            <label class="block text-xs font-medium text-white/50 ml-1 uppercase tracking-wider">Email Institucional</label>
             <div class="relative group">
               <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-40 group-focus-within:opacity-100 transition-opacity">✉️</span>
               <input 

@@ -19,7 +19,10 @@ export interface LoginRequest {
 export interface RegisterResponse {
   success: boolean;
   message: string;
-  data: User;
+  data: {
+    user: User;
+    token: string;
+  };
 }
 
 export interface LoginResponse {

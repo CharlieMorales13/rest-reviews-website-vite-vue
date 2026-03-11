@@ -53,17 +53,18 @@ export const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to) => {
   const authStore = useAuthStore();
   const requiresAuth = to.meta.requiresAuth;
   const allowedRoles = to.meta.roles as string[] | undefined;
 
   if (requiresAuth && !authStore.isAuthenticated) {
-    next('/login');
-  } else if (requiresAuth && allowedRoles && authStore.userRole && !allowedRoles.includes(authStore.userRole)) {
-    // Role not authorized
-    next('/dashboard');
-  } else {
-    next();
+    return '/login';
   }
+
+  if (requiresAuth && allowedRoles && authStore.userRole && !allowedRoles.includes(authStore.userRole)) {
+    return '/dashboard';
+  }
+
+  return true;
 });

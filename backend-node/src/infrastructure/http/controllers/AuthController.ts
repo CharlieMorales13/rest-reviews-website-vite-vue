@@ -98,16 +98,11 @@ export class AuthController {
 
     public register = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
         const validatedData = RegisterUserSchema.parse(req.body);
-        const user = await this.registerUserUseCase.execute(validatedData);
+        const result = await this.registerUserUseCase.execute(validatedData);
         res.status(201).json({
             success: true,
             message: 'User registered successfully',
-            data: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role
-            }
+            data: result
         });
     };
 

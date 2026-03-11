@@ -1,36 +1,21 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { User, LoginRequest, RegisterRequest } from './types';
 import { AuthService } from '../api/AuthService';
+import type { User, LoginRequest, RegisterRequest } from './types';
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null);
   const token = ref<string | null>(localStorage.getItem('token'));
+  const loading = ref(false);
   const error = ref<string | null>(null);
 
   const isAuthenticated = computed(() => !!token.value);
   const userRole = computed(() => user.value?.role || null);
 
   const login = async (request: LoginRequest) => {
+    loading.value = true;
     error.value = null;
     try {
-      // Mock Login bypass for testing
-      if (request.email === 'admin@anahuac.mx' && request.password === 'admin123') {
-        const mockUser: User = {
-          id: '00458921',
-          name: 'Sebastián Morales',
-          email: request.email,
-          role: 'student',
-        };
-        const mockToken = 'mock-jwt-token-12345';
-        
-        user.value = mockUser;
-        token.value = mockToken;
-        localStorage.setItem('token', mockToken);
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        return;
-      }
-
       const response = await AuthService.login(request);
       if (response.success && response.data) {
         user.value = response.data.user;
@@ -41,32 +26,36 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Error occurred during login';
       throw err;
+    } finally {
+      loading.value = false;
     }
   };
 
   const register = async (request: RegisterRequest) => {
+    loading.value = true;
     error.value = null;
     try {
-      await AuthService.register(request);
+      const response = await AuthService.register(request);
+      if (response.success && response.data) {
+        const newUser = response.data.user;
+        const newToken = response.data.token;
+        
+        user.value = newUser;
+        token.value = newToken;
+        
+        if (newToken) {
+          localStorage.setItem('token', newToken);
+        }
+        
+        if (newUser) {
+          localStorage.setItem('user', JSON.stringify(newUser));
+        }
+      }
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Error occurred during registration';
       throw err;
-    }
-  };
-
-  const verify = async (email: string, code: string) => {
-    error.value = null;
-    try {
-      const response = await AuthService.verifyEmail({ email, code });
-      if (response.success && response.data) {
-        user.value = response.data.user;
-        token.value = response.data.token;
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-      }
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Error occurred during verification';
-      throw err;
+    } finally {
+      loading.value = false;
     }
   };
 
@@ -78,11 +67,36 @@ export const useAuthStore = defineStore('auth', () => {
   };
 
   const initAuth = () => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      user.value = JSON.parse(storedUser);
+    try {
+      const storedUser = localStorage.getItem('user');
+      const storedToken = localStorage.getItem('token');
+      
+      if (storedToken && storedToken !== 'undefined' && storedToken !== 'null') {
+        token.value = storedToken;
+      } else {
+        token.value = null;
+      }
+
+      if (storedUser && storedUser !== 'undefined' && storedUser !== 'null') {
+        user.value = JSON.parse(storedUser);
+      } else {
+        user.value = null;
+      }
+    } catch (err) {
+      logout();
     }
   };
 
-  return { user, token, error, isAuthenticated, userRole, login, register, verify, logout, initAuth };
+  return {
+    user,
+    token,
+    loading,
+    error,
+    isAuthenticated,
+    userRole,
+    login,
+    register,
+    logout,
+    initAuth
+  };
 });
