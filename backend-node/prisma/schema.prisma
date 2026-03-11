@@ -1,0 +1,182 @@
+generator client {
+  provider        = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =========================================k
+// ENUMS
+// =========================================
+
+enum UserRole {
+  student
+  manager
+  admin
+
+  @@map("user_role")
+}
+
+enum SentimentLabel {
+  positive
+  negative
+  neutral
+
+  @@map("sentiment_label")
+}
+
+enum TrainingStatus {
+  running
+  success
+  failed
+
+  @@map("training_status")
+}
+
+// =========================================
+// MODELS
+// =========================================
+
+model User {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String         @db.VarChar(120)
+  email         String         @unique @db.VarChar(150)
+  passwordHash  String         @map("password_hash")
+  role          UserRole
+  isActive      Boolean        @default(true) @map("is_active")
+  avatarUrl     String?        @map("avatar_url")
+  bio           String?
+  universityId  String?        @map("university_id")
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  
+  sessions      UserSession[]
+  establishments Establishment[] @relation("ManagedBy")
+  reviews       Review[]
+
+  @@map("users")
+}
+
+model UserSession {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  refreshToken String   @map("refresh_token")
+  isRevoked    Boolean  @default(false) @map("is_revoked")
+  expiresAt    DateTime @map("expires_at") @db.Timestamptz
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+model Establishment {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @db.VarChar(150)
+  description String?
+  category    String?  @db.VarChar(80)
+  managerId   String?  @map("manager_id") @db.Uuid
+  isActive        Boolean  @default(true) @map("is_active")
+  universityId    String?  @map("university_id")
+  locationDetails String?  @map("location_details")
+  openingHours    String?  @map("opening_hours")
+  galleryUrls     String[] @default([]) @map("gallery_urls")
+  menuUrls        String[] @default([]) @map("menu_urls")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  manager     User?    @relation("ManagedBy", fields: [managerId], references: [id], onDelete: SetNull)
+  reviews     Review[]
+  metrics     MetricsSnapshot[]
+
+  @@map("establishments")
+}
+
+model Review {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  establishmentId String   @map("establishment_id") @db.Uuid
+  foodScore       Int      @map("food_score") @db.SmallInt
+  serviceScore    Int      @map("service_score") @db.SmallInt
+  priceScore      Int      @map("price_score") @db.SmallInt
+  comment         String
+  imageUrl        String?  @map("image_url")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  establishment  Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  sentimentResults SentimentResult[]
+
+  // CRITICAL CONSTRAINT from PRD: One review per user per establishment
+  // @@unique([userId, establishmentId], name: "unique_user_establishment")
+  @@map("reviews")
+}
+
+model ModelVersion {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  version     String   @unique @db.VarChar(20)
+  accuracy    Decimal? @db.Decimal(5, 4)
+  precision   Decimal? @db.Decimal(5, 4)
+  recall      Decimal? @db.Decimal(5, 4)
+  f1          Decimal? @db.Decimal(5, 4)
+  datasetSize Int      @map("dataset_size")
+  trainedAt   DateTime @map("trained_at") @db.Timestamptz
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  sentimentResults SentimentResult[]
+  trainingRuns     TrainingRun[]
+
+  @@map("model_versions")
+}
+
+model SentimentResult {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reviewId       String         @map("review_id") @db.Uuid
+  modelVersionId String         @map("model_version_id") @db.Uuid
+  predictedLabel SentimentLabel @map("predicted_label")
+  probability    Decimal        @db.Decimal(5, 4)
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz
+
+  review       Review       @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  modelVersion ModelVersion @relation(fields: [modelVersionId], references: [id], onDelete: Cascade)
+
+  @@map("sentiment_results")
+}
+
+model MetricsSnapshot {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  establishmentId String   @map("establishment_id") @db.Uuid
+  // IGE and metrics as Decimals suitable to store 0-100 values and averages
+  ige             Decimal? @db.Decimal(5, 2)
+  avgFood         Decimal? @map("avg_food") @db.Decimal(4, 2)
+  avgService      Decimal? @map("avg_service") @db.Decimal(4, 2)
+  avgPrice        Decimal? @map("avg_price") @db.Decimal(4, 2)
+  negativeRatio   Decimal? @map("negative_ratio") @db.Decimal(5, 4)
+  totalReviews    Int      @default(0) @map("total_reviews")
+  snapshotDate    DateTime @map("snapshot_date") @db.Date
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+
+  // Constraint to keep track of one snapshot per establishment per day
+  @@unique([establishmentId, snapshotDate], name: "unique_snapshot_per_day")
+  @@map("metrics_snapshots")
+}
+
+model TrainingRun {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  modelVersionId String?        @map("model_version_id") @db.Uuid
+  startedAt      DateTime?      @map("started_at") @db.Timestamptz
+  finishedAt     DateTime?      @map("finished_at") @db.Timestamptz
+  status         TrainingStatus
+  errorMessage   String?        @map("error_message")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz
+
+  modelVersion   ModelVersion?  @relation(fields: [modelVersionId], references: [id], onDelete: SetNull)
+
+  @@map("training_runs")
+}
