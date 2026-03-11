@@ -6,6 +6,8 @@ import { ListEstablishmentsUseCase } from '../../../application/use-cases/establ
 import { UpdateEstablishmentUseCase } from '../../../application/use-cases/establishments/UpdateEstablishmentUseCase';
 import { DeleteEstablishmentUseCase } from '../../../application/use-cases/establishments/DeleteEstablishmentUseCase';
 import { CreateEstablishmentSchema, UpdateEstablishmentSchema } from '../../../application/dtos/EstablishmentDTO';
+import { createPaginatedResponse } from '../utils/Pagination';
+import { AuthRequest } from '../middlewares/AuthMiddleware';
 
 @injectable()
 export class EstablishmentController {
@@ -45,7 +47,7 @@ export class EstablishmentController {
      * @swagger
      * /establishments:
      *   get:
-     *     summary: List establishments with optional filters
+     *     summary: List establishments with optional filters and pagination
      *     tags: [Establishments]
      *     parameters:
      *       - in: query
@@ -58,17 +60,38 @@ export class EstablishmentController {
      *         schema:
      *           type: string
      *         description: Filter by university ID
+     *       - in: query
+     *         name: page
+     *         schema:
+     *           type: integer
+     *           default: 1
+     *         description: Page number
+     *       - in: query
+     *         name: limit
+     *         schema:
+     *           type: integer
+     *           default: 10
+     *         description: Results per page
      *     responses:
      *       200:
      *         description: OK
      */
     public getAll = async (req: Request, res: Response): Promise<void> => {
-        const { name, universityId } = req.query;
-        const establishments = await this.listUseCase.execute({
-            name: name as string,
-            universityId: universityId as string
-        });
-        res.status(200).json({ success: true, data: establishments });
+        const { name, universityId, page, limit } = req.query;
+        const pageNum = parseInt(page as string) || 1;
+        const limitNum = parseInt(limit as string) || 10;
+
+        const { data, total } = await this.listUseCase.execute(
+            {
+                name: name as string,
+                universityId: universityId as string
+            },
+            { page: pageNum, limit: limitNum }
+        );
+
+        res.status(200).json(
+            createPaginatedResponse(data, total, pageNum, limitNum)
+        );
     };
 
     /**
@@ -117,10 +140,16 @@ export class EstablishmentController {
      *       200:
      *         description: Updated
      */
-    public update = async (req: Request, res: Response): Promise<void> => {
+    public update = async (req: AuthRequest, res: Response): Promise<void> => {
         const id = req.params.id as string;
+        const user = req.user;
         const validatedData = UpdateEstablishmentSchema.parse(req.body);
-        const establishment = await this.updateUseCase.execute(id, validatedData);
+        
+        const establishment = await this.updateUseCase.execute(id, validatedData, user ? {
+            id: user.userId,
+            role: user.role
+        } : undefined);
+        
         res.status(200).json({ success: true, data: establishment });
     };
 
@@ -142,9 +171,15 @@ export class EstablishmentController {
      *       204:
      *         description: Deleted
      */
-    public delete = async (req: Request, res: Response): Promise<void> => {
+    public delete = async (req: AuthRequest, res: Response): Promise<void> => {
         const id = req.params.id as string;
-        await this.deleteUseCase.execute(id);
+        const user = req.user;
+
+        await this.deleteUseCase.execute(id, user ? {
+            id: user.userId,
+            role: user.role
+        } : undefined);
+        
         res.status(204).send();
     };
 }

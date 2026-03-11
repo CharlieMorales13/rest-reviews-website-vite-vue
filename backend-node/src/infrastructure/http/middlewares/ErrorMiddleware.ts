@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
+import { logger } from '../../config/logger';
 import { AppError } from '../errors/AppError';
 
 export const globalErrorHandler = (
@@ -8,7 +9,12 @@ export const globalErrorHandler = (
     res: Response,
     _next: NextFunction
 ): void => {
-    console.error('[Global Error]:', err.message || err);
+    logger.error({ 
+        message: err.message,
+        stack: err.stack,
+        path: _req.path,
+        method: _req.method
+    }, '[Global Error]');
 
     // Handle Zod Validation Errors globally
     if (err instanceof z.ZodError) {

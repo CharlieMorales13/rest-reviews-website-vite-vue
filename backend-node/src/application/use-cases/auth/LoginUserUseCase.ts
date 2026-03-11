@@ -1,4 +1,4 @@
-
+import { injectable, inject } from 'tsyringe';
 import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { LoginUserDTO } from '../../dtos/AuthDTO';
 import { AppError } from '../../../infrastructure/http/errors/AppError';
@@ -15,8 +15,11 @@ interface LoginResponse {
     token: string;
 }
 
+@injectable()
 export class LoginUserUseCase {
-    constructor(private userRepository: IUserRepository) { }
+    constructor(
+        @inject('IUserRepository') private userRepository: IUserRepository
+    ) { }
 
     async execute(dto: LoginUserDTO): Promise<LoginResponse> {
         const user = await this.userRepository.findByEmail(dto.email);

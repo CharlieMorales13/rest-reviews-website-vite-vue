@@ -11,7 +11,10 @@ export class ListEstablishmentReviewsUseCase {
         @inject('IEstablishmentRepository') private establishmentRepository: IEstablishmentRepository
     ) { }
 
-    async execute(establishmentId: string): Promise<Review[]> {
+    async execute(
+        establishmentId: string,
+        pagination?: { page: number; limit: number }
+    ): Promise<{ data: Review[]; total: number }> {
         // 1. Verify Establishment exists
         const establishment = await this.establishmentRepository.findById(establishmentId);
         if (!establishment) {
@@ -19,6 +22,6 @@ export class ListEstablishmentReviewsUseCase {
         }
 
         // 2. Fetch reviews (Rich data now included by repository)
-        return await this.reviewRepository.findByEstablishmentId(establishmentId);
+        return await this.reviewRepository.findByEstablishmentId(establishmentId, pagination);
     }
 }

@@ -13,7 +13,10 @@ export class PrismaEstablishmentRepository implements IEstablishmentRepository {
         return this.mapToEntity(data);
     }
 
-    async findAll(filters?: { name?: string; universityId?: string }): Promise<Establishment[]> {
+    async findAll(
+        filters?: { name?: string; universityId?: string },
+        pagination?: { page: number; limit: number }
+    ): Promise<{ data: Establishment[]; total: number }> {
         const where: any = {};
 
         if (filters?.name) {
@@ -27,11 +30,23 @@ export class PrismaEstablishmentRepository implements IEstablishmentRepository {
             where.universityId = filters.universityId;
         }
 
-        const data = await this.prisma.establishment.findMany({
-            where,
-            orderBy: { createdAt: 'desc' }
-        });
-        return data.map(this.mapToEntity);
+        const skip = pagination ? (pagination.page - 1) * pagination.limit : undefined;
+        const take = pagination ? pagination.limit : undefined;
+
+        const [data, total] = await Promise.all([
+            this.prisma.establishment.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take
+            }),
+            this.prisma.establishment.count({ where })
+        ]);
+
+        return {
+            data: data.map(this.mapToEntity),
+            total
+        };
     }
 
     async save(establishment: Establishment): Promise<Establishment> {

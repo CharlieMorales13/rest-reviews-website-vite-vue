@@ -11,18 +11,22 @@ describe('ListEstablishmentReviewsUseCase', () => {
         } as unknown as IEstablishmentRepository;
 
         const mockReviewRepo: IReviewRepository = {
-            findByEstablishmentId: vi.fn().mockResolvedValue([
-                { id: 'rev-1', comment: 'Good', foodScore: 5 },
-                { id: 'rev-2', comment: 'Bad', foodScore: 2 }
-            ]),
+            findByEstablishmentId: vi.fn().mockResolvedValue({
+                data: [
+                    { id: 'rev-1', comment: 'Good', foodScore: 5 },
+                    { id: 'rev-2', comment: 'Bad', foodScore: 2 }
+                ],
+                total: 2
+            }),
         } as unknown as IReviewRepository;
 
         const useCase = new ListEstablishmentReviewsUseCase(mockReviewRepo, mockEstRepo);
         const result = await useCase.execute('est-1');
 
-        expect(result).toHaveLength(2);
+        expect(result.data).toHaveLength(2);
+        expect(result.total).toBe(2);
         expect(mockEstRepo.findById).toHaveBeenCalledWith('est-1');
-        expect(mockReviewRepo.findByEstablishmentId).toHaveBeenCalledWith('est-1');
+        expect(mockReviewRepo.findByEstablishmentId).toHaveBeenCalledWith('est-1', undefined);
     });
 
     it('should throw 404 if establishment does not exist', async () => {

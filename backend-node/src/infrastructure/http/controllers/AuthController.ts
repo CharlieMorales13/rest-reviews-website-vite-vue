@@ -4,21 +4,55 @@ import { LoginUserUseCase } from '../../../application/use-cases/auth/LoginUserU
 import { RegisterUserSchema, LoginUserSchema } from '../../../application/dtos/AuthDTO';
 import { injectable, inject } from 'tsyringe';
 
+import { AuthRequest } from '../middlewares/AuthMiddleware';
+import { GetUserUseCase } from '../../../application/use-cases/users/GetUserUseCase';
+
 @injectable()
 export class AuthController {
     constructor(
         @inject(RegisterUserUseCase) private registerUserUseCase: RegisterUserUseCase,
-        @inject(LoginUserUseCase) private loginUserUseCase: LoginUserUseCase
+        @inject(LoginUserUseCase) private loginUserUseCase: LoginUserUseCase,
+        @inject(GetUserUseCase) private getUserUseCase: GetUserUseCase
     ) { }
 
+    /**
+     * @swagger
+     * /auth/me:
+     *   get:
+     *     summary: Get current authenticated user info
+     *     tags: [Auth]
+     *     security:
+     *       - bearerAuth: []
+     *     responses:
+     *       200:
+     *         description: Current user profile
+     */
+    public getMe = async (req: AuthRequest, res: Response): Promise<void> => {
+        const userId = req.user?.userId;
+        if (!userId) {
+            res.status(401).json({ success: false, message: 'Unauthorized' });
+            return;
+        }
+
+        const user = await this.getUserUseCase.execute(userId);
+        res.status(200).json({
+            success: true,
+            data: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                avatarUrl: user.avatarUrl,
+                bio: user.bio,
+                universityId: user.universityId,
+                createdAt: user.createdAt
+            }
+        });
+    };
+
     public register = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
-        // 1. Validate Input (DTO)
         const validatedData = RegisterUserSchema.parse(req.body);
-
-        // 2. Execute Application Use Case
         const user = await this.registerUserUseCase.execute(validatedData);
-
-        // 3. Return Infrastructure Response
         res.status(201).json({
             success: true,
             message: 'User registered successfully',

@@ -17,11 +17,23 @@ export class PrismaUserRepository implements IUserRepository {
         return this.mapToDomain(data);
     }
 
-    async findAll(): Promise<User[]> {
-        const data = await prisma.user.findMany({
-            orderBy: { createdAt: 'desc' },
-        });
-        return data.map(this.mapToDomain);
+    async findAll(pagination?: { page: number; limit: number }): Promise<{ data: User[]; total: number }> {
+        const skip = pagination ? (pagination.page - 1) * pagination.limit : undefined;
+        const take = pagination ? pagination.limit : undefined;
+
+        const [data, total] = await Promise.all([
+            prisma.user.findMany({
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take
+            }),
+            prisma.user.count()
+        ]);
+
+        return {
+            data: data.map(this.mapToDomain),
+            total
+        };
     }
 
     async save(user: User): Promise<User> {
