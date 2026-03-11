@@ -29,3 +29,16 @@ export interface LoginResponse {
     token: string;
   };
 }
+
+export interface VerifyRequest {
+  email: string;
+  code: string;
+}
+
+export interface VerifyResponse {
+  success: boolean;
+  data: {
+    user: User;
+    token: string;
+  };
+}

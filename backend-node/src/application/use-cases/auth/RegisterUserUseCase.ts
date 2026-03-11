@@ -23,7 +23,8 @@ export class RegisterUserUseCase {
             name: dto.name,
             email: dto.email,
             passwordHash: hashedPassword,
-            role: UserRole.STUDENT, // Default role for new registrations
+            role: UserRole.STUDENT,
+            isVerified: true // Set to true by default as requested
         });
 
         return await this.userRepository.save(newUser);

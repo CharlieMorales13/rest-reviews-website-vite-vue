@@ -14,15 +14,11 @@ const loading = ref(false);
 const handleRegister = async () => {
   if (!name.value || !email.value || !password.value) return;
   
-  if (!email.value.endsWith('@anahuac.mx')) {
-    authStore.$patch({ error: 'Solo se permiten correos institucionales (@anahuac.mx)' });
-    return;
-  }
-
   loading.value = true;
   try {
     await authStore.register({ name: name.value, email: email.value, password: password.value });
-    router.push('/login');
+    console.log('Registration successful, redirecting to dashboard...');
+    await router.push('/dashboard');
   } catch (e) {
     // Error logic is handled by store
   } finally {
@@ -42,7 +38,7 @@ const handleRegister = async () => {
 
     <!-- Content -->
     <div class="relative z-10 w-full max-w-md p-6 animate-fade-in">
-      <div class="glass-effect rounded-[32px] p-8 md:p-12 shadow-2xl">
+      <div class="bg-white/15 backdrop-blur-2xl border border-white/20 rounded-[32px] p-8 md:p-12 shadow-2xl">
         <div class="text-center mb-10">
           <div class="w-16 h-16 bg-anahuac-orange text-white text-3xl font-extrabold flex items-center justify-center rounded-2xl mx-auto mb-6 shadow-lg shadow-anahuac-orange/30">
             A

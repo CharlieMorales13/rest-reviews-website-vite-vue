@@ -54,6 +54,22 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  const verify = async (email: string, code: string) => {
+    error.value = null;
+    try {
+      const response = await AuthService.verifyEmail({ email, code });
+      if (response.success && response.data) {
+        user.value = response.data.user;
+        token.value = response.data.token;
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Error occurred during verification';
+      throw err;
+    }
+  };
+
   const logout = () => {
     user.value = null;
     token.value = null;
@@ -68,5 +84,5 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  return { user, token, error, isAuthenticated, userRole, login, register, logout, initAuth };
+  return { user, token, error, isAuthenticated, userRole, login, register, verify, logout, initAuth };
 });

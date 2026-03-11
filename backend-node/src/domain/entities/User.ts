@@ -14,6 +14,9 @@ export interface UserProps {
     avatarUrl?: string;
     bio?: string;
     universityId?: string;
+    verificationCode?: string;
+    verificationExpires?: Date;
+    isVerified?: boolean;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -25,6 +28,7 @@ export class User {
         this.props = {
             ...props,
             isActive: props.isActive ?? true,
+            isVerified: props.isVerified ?? false,
             createdAt: props.createdAt ?? new Date(),
             updatedAt: props.updatedAt ?? new Date(),
         };
@@ -48,12 +52,28 @@ export class User {
     get avatarUrl(): string | undefined { return this.props.avatarUrl; }
     get bio(): string | undefined { return this.props.bio; }
     get universityId(): string | undefined { return this.props.universityId; }
+    get verificationCode(): string | undefined { return this.props.verificationCode; }
+    get verificationExpires(): Date | undefined { return this.props.verificationExpires; }
+    get isVerified(): boolean | undefined { return this.props.isVerified; }
     get createdAt(): Date | undefined { return this.props.createdAt; }
     get updatedAt(): Date | undefined { return this.props.updatedAt; }
 
     // Setters/Mutations for Business Logic
     public deactivate(): void {
         this.props.isActive = false;
+        this.props.updatedAt = new Date();
+    }
+
+    public verify(): void {
+        this.props.isVerified = true;
+        this.props.verificationCode = undefined;
+        this.props.verificationExpires = undefined;
+        this.props.updatedAt = new Date();
+    }
+
+    public setVerificationCode(code: string, expiresAt: Date): void {
+        this.props.verificationCode = code;
+        this.props.verificationExpires = expiresAt;
         this.props.updatedAt = new Date();
     }
 }

@@ -4,6 +4,7 @@ import { PrismaUserRepository } from '../repositories/PrismaUserRepository';
 import { PrismaEstablishmentRepository } from '../repositories/PrismaEstablishmentRepository';
 import { PrismaMetricsRepository } from '../repositories/PrismaMetricsRepository';
 import { SupabaseStorageService } from '../services/SupabaseStorageService';
+import { NodemailerEmailService } from '../services/NodemailerEmailService';
 
 // Register Repositories
 container.register('IUserRepository', { useClass: PrismaUserRepository });
@@ -11,5 +12,6 @@ container.register('IEstablishmentRepository', { useClass: PrismaEstablishmentRe
 container.register('IReviewRepository', { useClass: PrismaReviewRepository });
 container.register('IMetricsRepository', { useClass: PrismaMetricsRepository });
 container.register('IStorageService', { useClass: SupabaseStorageService });
+container.register('IEmailService', { useClass: NodemailerEmailService });
 
 export { container };
