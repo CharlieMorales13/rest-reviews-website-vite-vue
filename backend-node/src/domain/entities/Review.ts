@@ -1,0 +1,58 @@
+export interface ReviewProps {
+    id?: string;
+    userId: string;
+    establishmentId: string;
+    foodScore: number;
+    serviceScore: number;
+    priceScore: number;
+    comment: string;
+    imageUrl?: string;
+    authorName?: string;
+    sentiment?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
+export class Review {
+    private props: ReviewProps;
+
+    private constructor(props: ReviewProps) {
+        this.props = {
+            ...props,
+            createdAt: props.createdAt ?? new Date(),
+            updatedAt: props.updatedAt ?? new Date(),
+        };
+    }
+
+    public static create(props: ReviewProps): Review {
+        // 1. Business Logic Rules encapsulated within the entity
+        this.validateScore(props.foodScore, 'Food');
+        this.validateScore(props.serviceScore, 'Service');
+        this.validateScore(props.priceScore, 'Price');
+
+        if (!props.comment || props.comment.trim().length < 10) {
+            throw new Error('Review comment must be at least 10 characters long');
+        }
+
+        return new Review(props);
+    }
+
+    private static validateScore(score: number, type: string): void {
+        if (score < 1 || score > 5) { // Assuming 1-5 scale. Update if 1-10.
+            throw new Error(`${type} score must be between 1 and 5`);
+        }
+    }
+
+    get id(): string | undefined { return this.props.id; }
+    get userId(): string { return this.props.userId; }
+    get establishmentId(): string { return this.props.establishmentId; }
+    get foodScore(): number { return this.props.foodScore; }
+    get serviceScore(): number { return this.props.serviceScore; }
+    get priceScore(): number { return this.props.priceScore; }
+    get comment(): string { return this.props.comment; }
+    get imageUrl(): string | undefined { return this.props.imageUrl; }
+    get authorName(): string | undefined { return this.props.authorName; }
+    get sentiment(): string | undefined { return this.props.sentiment; }
+    get createdAt(): Date | undefined { return this.props.createdAt; }
+    get updatedAt(): Date | undefined { return this.props.updatedAt; }
+}
