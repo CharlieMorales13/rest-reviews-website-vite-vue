@@ -19,5 +19,6 @@ authRouter.post('/login', authController.login);
  *       - bearerAuth: []
  */
 authRouter.get('/me', authenticateToken, authController.getMe);
+authRouter.patch('/me', authenticateToken, authController.updateMe);
 
 export default authRouter;

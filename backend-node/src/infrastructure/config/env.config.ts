@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 // Load variables from .env if needed
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 const envSchema = z.object({
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -11,6 +11,8 @@ const envSchema = z.object({
     DATABASE_URL: z.string().url('A valid DATABASE_URL must be provided'),
     JWT_SECRET: z.string().min(10, 'JWT_SECRET is required and must be secure'),
     JWT_EXPIRES_IN: z.string().default('1h'),
+    SUPABASE_URL: z.string().url('SUPABASE_URL is required for storage'),
+    SUPABASE_KEY: z.string().min(1, 'SUPABASE_KEY is required for storage'),
 });
 
 const parseEnv = () => {

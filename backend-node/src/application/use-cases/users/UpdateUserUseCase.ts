@@ -29,6 +29,9 @@ export class UpdateUserUseCase {
             passwordHash: passwordHash,
             role: dto.role ?? existingUser.role,
             isActive: dto.isActive ?? existingUser.isActive,
+            avatarUrl: dto.avatarUrl ?? existingUser.avatarUrl,
+            bio: dto.bio ?? existingUser.bio,
+            universityId: dto.universityId ?? existingUser.universityId,
             createdAt: existingUser.createdAt,
         });
 

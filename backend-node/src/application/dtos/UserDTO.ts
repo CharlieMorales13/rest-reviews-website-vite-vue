@@ -7,6 +7,9 @@ export const UpdateUserSchema = z.object({
     role: z.nativeEnum(UserRole).optional(),
     isActive: z.boolean().optional(),
     password: z.string().min(6).optional(),
+    avatarUrl: z.string().url().optional().nullable(),
+    bio: z.string().max(500).optional().nullable(),
+    universityId: z.string().optional().nullable(),
 });
 
 export type UpdateUserDTO = z.infer<typeof UpdateUserSchema>;

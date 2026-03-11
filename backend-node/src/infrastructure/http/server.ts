@@ -14,6 +14,7 @@ import reviewRouter from './routes/review.routes';
 import establishmentRouter from './routes/establishment.routes';
 import userRouter from './routes/user.routes';
 import metricsRouter from './routes/metrics.routes';
+import uploadRouter from './routes/upload.routes';
 import { globalErrorHandler } from './middlewares/ErrorMiddleware';
 
 const app = express();
@@ -42,6 +43,7 @@ app.use('/api/reviews', reviewRouter);
 app.use('/api/establishments', establishmentRouter);
 app.use('/api/users', userRouter);
 app.use('/api/metrics', metricsRouter);
+app.use('/api/upload', uploadRouter);
 
 // Global Error Handler
 app.use(globalErrorHandler);
