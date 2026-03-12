@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 
 async function testMetrics() {
     const API_URL = 'http://localhost:3000/api';
@@ -36,7 +35,7 @@ async function testMetrics() {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const historyData: any = await historyRes.json();
-            
+
             if (historyRes.ok) {
                 console.log('✅ Historial obtenido con éxito.');
                 console.log(`📊 Puntos de datos: ${historyData.data.series.length}`);

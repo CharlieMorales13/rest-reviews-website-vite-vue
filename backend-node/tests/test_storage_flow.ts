@@ -1,15 +1,10 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
-
-const API_URL = 'http://localhost:3000/api';
-
 async function testStorageFlow() {
     console.log('🚀 Iniciando Test de Flujo de Almacenamiento (Supabase)...\n');
 
     try {
         // 1. Login to get token
         console.log('--- [AUTH: LOGIN] ---');
-        const loginRes = await fetch(`${API_URL}/auth/login`, {
+        const loginRes = await fetch(`http://localhost:3000/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -20,7 +15,7 @@ async function testStorageFlow() {
         const loginData = await loginRes.json();
         console.log('🔍 Login response status:', loginRes.status);
         console.log('🔍 Login response data:', JSON.stringify(loginData, null, 2));
-        
+
         if (!loginRes.ok || !loginData.data) {
             throw new Error(`Login fallido: ${JSON.stringify(loginData)}`);
         }
@@ -36,13 +31,13 @@ async function testStorageFlow() {
         // We'll use a small buffer as a fake image for testing if no file exists
         const fakeImageBuffer = Buffer.from('fake-image-content');
         const formData = new FormData();
-        
+
         // In Node fetch, we can use Blob for file upload
         const blob = new Blob([fakeImageBuffer], { type: 'image/png' });
         formData.append('file', blob, 'test-image.png');
         formData.append('bucket', 'reviews-app-bucket');
 
-        const uploadRes = await fetch(`${API_URL}/upload`, {
+        const uploadRes = await fetch(`http://localhost:3000/api/upload`, {
             method: 'POST',
             headers: authHeader,
             body: formData
@@ -56,7 +51,7 @@ async function testStorageFlow() {
 
         // 3. Update User Profile with the new Image URL
         console.log('\n--- [USER: UPDATE PROFILE WITH AVATAR] ---');
-        const updateProfileRes = await fetch(`${API_URL}/auth/me`, {
+        const updateProfileRes = await fetch(`http://localhost:3000/api/auth/me`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -75,9 +70,9 @@ async function testStorageFlow() {
 
         // 4. Verify in Public Profile
         console.log('\n--- [SOCIAL: VERIFY PUBLIC PROFILE] ---');
-        const publicProfileRes = await fetch(`${API_URL}/users/${myId}/profile`, { headers: authHeader });
+        const publicProfileRes = await fetch(`http://localhost:3000/api/users/${myId}/profile`, { headers: authHeader });
         const publicProfileData = await publicProfileRes.json();
-        
+
         console.log('🔍 Datos recuperados:');
         console.log(`   - Avatar: ${publicProfileData.data.avatarUrl}`);
         console.log(`   - Bio: ${publicProfileData.data.bio}`);
