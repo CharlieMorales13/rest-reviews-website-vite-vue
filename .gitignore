@@ -28,3 +28,7 @@ __pycache__/
 *.pyc
 venv/
 *.env
+
+# Claude Code (herramienta de desarrollo local)
+.claude/
+CLAUDE.md
