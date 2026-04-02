@@ -9,6 +9,8 @@ export interface ReviewProps {
     imageUrl?: string;
     authorName?: string;
     sentiment?: string;
+    managerReply?: string;
+    managerReplyAt?: Date;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -53,6 +55,17 @@ export class Review {
     get imageUrl(): string | undefined { return this.props.imageUrl; }
     get authorName(): string | undefined { return this.props.authorName; }
     get sentiment(): string | undefined { return this.props.sentiment; }
+    get managerReply(): string | undefined { return this.props.managerReply; }
+    get managerReplyAt(): Date | undefined { return this.props.managerReplyAt; }
     get createdAt(): Date | undefined { return this.props.createdAt; }
     get updatedAt(): Date | undefined { return this.props.updatedAt; }
+
+    public addManagerReply(reply: string): void {
+        if (!reply || reply.trim().length < 5) {
+            throw new Error('Manager reply must be at least 5 characters long');
+        }
+        this.props.managerReply = reply.trim();
+        this.props.managerReplyAt = new Date();
+        this.props.updatedAt = new Date();
+    }
 }

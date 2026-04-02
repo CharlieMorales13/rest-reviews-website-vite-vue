@@ -98,6 +98,18 @@ export class PrismaReviewRepository implements IReviewRepository {
         return this.mapToDomain(data);
     }
 
+    async update(review: Review): Promise<Review> {
+        const data = await prisma.review.update({
+            where: { id: review.id },
+            data: {
+                managerReply: review.managerReply,
+                managerReplyAt: review.managerReplyAt,
+                updatedAt: review.updatedAt,
+            } as any,
+        });
+        return this.mapToDomain(data);
+    }
+
     async hasUserReviewedEstablishment(userId: string, establishmentId: string): Promise<boolean> {
         const count = await prisma.review.count({
             where: {
@@ -120,6 +132,8 @@ export class PrismaReviewRepository implements IReviewRepository {
             imageUrl: data.imageUrl,
             authorName: data.user?.name,
             sentiment: data.sentimentResults?.[0]?.predictedLabel,
+            managerReply: data.managerReply,
+            managerReplyAt: data.managerReplyAt,
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
         });

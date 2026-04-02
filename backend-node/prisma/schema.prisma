@@ -106,6 +106,8 @@ model Review {
   serviceScore    Int      @map("service_score") @db.SmallInt
   priceScore      Int      @map("price_score") @db.SmallInt
   comment         String
+  managerReply    String?  @map("manager_reply")
+  managerReplyAt  DateTime? @map("manager_reply_at") @db.Timestamptz
   imageUrl        String?  @map("image_url")
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz

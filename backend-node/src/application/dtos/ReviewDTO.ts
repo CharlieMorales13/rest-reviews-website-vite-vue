@@ -11,3 +11,11 @@ export const CreateReviewSchema = z.object({
 });
 
 export type CreateReviewDTO = z.infer<typeof CreateReviewSchema>;
+
+export const ReplyReviewSchema = z.object({
+    reviewId: z.string().uuid('Invalid Review ID format'),
+    managerId: z.string().uuid('Invalid Manager ID format'),
+    reply: z.string().min(5, 'Reply must be at least 5 characters long'),
+});
+
+export type ReplyReviewDTO = z.infer<typeof ReplyReviewSchema>;

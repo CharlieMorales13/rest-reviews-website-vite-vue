@@ -37,5 +37,6 @@ reviewRouter.get('/', reviewController.getAll);
  *         description: Invalid input
  */
 reviewRouter.post('/', authenticateToken, reviewController.create);
+reviewRouter.patch('/:id/reply', authenticateToken, reviewController.reply);
 
 export default reviewRouter;

@@ -3,7 +3,8 @@ import { injectable, inject } from 'tsyringe';
 import { CreateReviewUseCase } from '../../../application/use-cases/reviews/CreateReviewUseCase';
 import { ListEstablishmentReviewsUseCase } from '../../../application/use-cases/reviews/ListEstablishmentReviewsUseCase';
 import { ListReviewsUseCase } from '../../../application/use-cases/reviews/ListReviewsUseCase';
-import { CreateReviewSchema } from '../../../application/dtos/ReviewDTO';
+import { ReplyToReviewUseCase } from '../../../application/use-cases/reviews/ReplyToReviewUseCase';
+import { CreateReviewSchema, ReplyReviewSchema } from '../../../application/dtos/ReviewDTO';
 
 import { createPaginatedResponse } from '../utils/Pagination';
 
@@ -12,7 +13,8 @@ export class ReviewController {
     constructor(
         @inject(CreateReviewUseCase) private createReviewUseCase: CreateReviewUseCase,
         @inject(ListEstablishmentReviewsUseCase) private listEstablishmentReviewsUseCase: ListEstablishmentReviewsUseCase,
-        @inject(ListReviewsUseCase) private listReviewsUseCase: ListReviewsUseCase
+        @inject(ListReviewsUseCase) private listReviewsUseCase: ListReviewsUseCase,
+        @inject(ReplyToReviewUseCase) private replyToReviewUseCase: ReplyToReviewUseCase
     ) { }
 
     /**
@@ -154,6 +156,56 @@ export class ReviewController {
                 priceScore: review.priceScore,
                 imageUrl: review.imageUrl,
                 createdAt: review.createdAt
+            }
+        });
+    };
+
+    /**
+     * @swagger
+     * /reviews/{id}/reply:
+     *   patch:
+     *     summary: Reply to a review (for managers and admins)
+     *     tags: [Reviews]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               reply:
+     *                 type: string
+     *     responses:
+     *       200:
+     *         description: OK
+     */
+    public reply = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
+        const { id } = req.params;
+        const user = (req as any).user;
+        const payload = {
+            reviewId: id,
+            managerId: user.userId,
+            reply: req.body.reply
+        };
+
+        const validatedData = ReplyReviewSchema.parse(payload);
+        const review = await this.replyToReviewUseCase.execute(validatedData, user.role);
+
+        res.status(200).json({
+            success: true,
+            message: 'Manager reply added successfully',
+            data: {
+                id: review.id,
+                managerReply: review.managerReply,
+                managerReplyAt: review.managerReplyAt
             }
         });
     };

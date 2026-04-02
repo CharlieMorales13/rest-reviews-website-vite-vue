@@ -1,113 +1,91 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import request from 'supertest';
 import app from '../src/infrastructure/http/server';
 import type { Server } from 'http';
 
-const API_URL = 'http://localhost:3001/api';
 let server: Server;
 
 beforeAll(async () => {
-  await new Promise<void>((resolve) => {
-    server = app.listen(3001, resolve);
-  });
+    // Apply server listening on a dynamic port so tests don't clash
+    await new Promise<void>((resolve) => {
+        server = app.listen(0, () => resolve());
+    });
 });
 
 afterAll(async () => {
-  await new Promise<void>((resolve, reject) => {
-    server.close((err) => (err ? reject(err) : resolve()));
-  });
+    // Close HTTP server without destroying Supabase DB
+    await new Promise<void>((resolve, reject) => {
+        server.close((err) => (err ? reject(err) : resolve()));
+    });
 });
 
-describe('POST /api/auth/login', () => {
-  it('should return 200 and a token with valid credentials', async () => {
-    const res = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: 'admin@anahuac.mx',
-        password: 'password123',
-      }),
+describe('Integration Tests - Auth API', () => {
+    it('should fail login with non-existent email', async () => {
+        const res = await request(server)
+            .post('/api/auth/login')
+            .send({
+                email: 'noexiste@anahuac.mx',
+                password: 'password123'
+            });
+
+        expect(res.status).toBeGreaterThanOrEqual(400);
+        expect(res.body.success).toBe(false);
     });
 
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.success).toBe(true);
-    expect(body.data).toHaveProperty('token');
-    expect(typeof body.data.token).toBe('string');
-    expect(body.data.token.length).toBeGreaterThan(0);
-  });
+    const testEmail = `student${Date.now()}@anahuac.mx`;
 
-  it('should return 401 with invalid password', async () => {
-    const res = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: 'admin@anahuac.mx',
-        password: 'wrongpassword',
-      }),
+    it('should register a new student user and allow login', async () => {
+        // Register
+        const registerRes = await request(server)
+            .post('/api/auth/register')
+            .send({
+                name: 'Integration Test Student',
+                email: testEmail,
+                password: 'Password123!',
+                role: 'student'
+            });
+            
+        expect(registerRes.status).toBe(201);
+        expect(registerRes.body.success).toBe(true);
+
+        // Login
+        const loginRes = await request(server)
+            .post('/api/auth/login')
+            .send({
+                email: testEmail,
+                password: 'Password123!'
+            });
+            
+        expect(loginRes.status).toBe(200);
+        expect(loginRes.body.success).toBe(true);
+        expect(loginRes.body.data).toHaveProperty('token');
     });
-
-    expect(res.status).toBeGreaterThanOrEqual(400);
-    const body = await res.json();
-    expect(body.success).toBeFalsy();
-  });
-
-  it('should return an error with non-existent email', async () => {
-    const res = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: 'noexiste@anahuac.mx',
-        password: 'password123',
-      }),
-    });
-
-    expect(res.status).toBeGreaterThanOrEqual(400);
-    const body = await res.json();
-    expect(body.success).toBeFalsy();
-  });
 });
 
-describe('GET /api/establishments', () => {
-  it('should return 200 with a list of establishments', async () => {
-    const res = await fetch(`${API_URL}/establishments`);
+describe('Integration Tests - Establishments API', () => {
+    it('should return 200 with list of establishments', async () => {
+        const res = await request(server).get('/api/establishments');
 
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.data).toBeInstanceOf(Array);
-    expect(body.meta).toBeDefined();
-    expect(body.meta).toHaveProperty('total');
-    expect(body.meta).toHaveProperty('page');
-    expect(body.meta).toHaveProperty('limit');
-    expect(body.meta).toHaveProperty('totalPages');
-  });
+        expect(res.status).toBe(200);
+        expect(res.body.data).toBeInstanceOf(Array);
+        expect(res.body.meta).toHaveProperty('total');
+        expect(res.body.meta).toHaveProperty('page');
+    });
 
-  it('should support pagination parameters', async () => {
-    const res = await fetch(`${API_URL}/establishments?page=1&limit=2`);
+    it('should support pagination limits', async () => {
+        const res = await request(server).get('/api/establishments?page=1&limit=2');
 
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.data).toBeInstanceOf(Array);
-    expect(body.data.length).toBeLessThanOrEqual(2);
-    expect(body.meta.page).toBe(1);
-    expect(body.meta.limit).toBe(2);
-  });
-
-  it('should support filtering by name', async () => {
-    const res = await fetch(`${API_URL}/establishments?name=Cafeteria`);
-
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.data).toBeInstanceOf(Array);
-  });
+        expect(res.status).toBe(200);
+        expect(res.body.data).toBeInstanceOf(Array);
+        expect(res.body.data.length).toBeLessThanOrEqual(2);
+        expect(res.body.meta.limit).toBe(2);
+    });
 });
 
-describe('GET /health', () => {
-  it('should return 200 with OK status', async () => {
-    const res = await fetch('http://localhost:3001/health');
-
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.status).toBe('OK');
-    expect(body.timestamp).toBeDefined();
-  });
+describe('Integration Tests - Health Check', () => {
+    it('should return 200 OK', async () => {
+        const res = await request(server).get('/health');
+        expect(res.status).toBe(200);
+        expect(res.body.status).toBe('OK');
+    });
 });

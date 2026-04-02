@@ -1,0 +1,11 @@
+- [x] Update Prisma schema (`schema.prisma`) to add `managerReply` and `managerReplyAt`
+- [x] Sync Prisma to Database (`npx prisma db push` and `npx prisma generate`)
+- [/] Update Domain Layer (`Review.ts` entity, `IReviewRepository.ts`)
+- [x] Update Data Layer (`ReviewRepository.ts`)
+- [x] Update DTOs (`ReviewDTO.ts`)
+- [x] Create Application Layer (`ReplyToReviewUseCase.ts`)
+- [x] Update Infrastructure Layer (`ReviewController.ts`, `review.routes.ts`)
+- [x] Implement API Middleware (`RateLimitMiddleware.ts`) 
+- [x] Apply Middleware to `auth.routes.ts`
+- [x] Create Unit Tests (`ReplyToReviewUseCase.test.ts`, `ReviewController.test.ts`)
+- [x] Verify functionality (run `vitest`)

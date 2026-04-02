@@ -6,6 +6,7 @@ export interface IReviewRepository {
     findByEstablishmentId(establishmentId: string, pagination?: { page: number; limit: number }): Promise<{ data: Review[]; total: number }>;
     findByUserId(userId: string): Promise<Review[]>;
     save(review: Review): Promise<Review>;
+    update(review: Review): Promise<Review>;
 
     /**
      * PRD Requirement: Verify if a user has already reviewed an establishment
