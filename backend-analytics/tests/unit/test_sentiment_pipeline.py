@@ -169,39 +169,44 @@ class TestPredict:
 # ---------------------------------------------------------------------------
 
 class TestEvaluate:
-    """Tests for the evaluate() method."""
+    """Tests for the evaluate() method.
+
+    Uses TRAINING_DATA (181 samples) because evaluate() performs an 80/20
+    stratified split — tiny datasets produce fewer test samples than classes
+    and raise ValueError.
+    """
 
     @pytest.fixture(autouse=True)
-    def trained_pipeline(self, tmp_path, small_training_data):
-        """Train pipeline before each evaluate test."""
+    def trained_pipeline(self, tmp_path):
+        """Train pipeline on full TRAINING_DATA before each evaluate test."""
         self.pipeline = _make_pipeline(tmp_path)
-        texts, labels = _texts_labels(small_training_data)
+        texts, labels = _texts_labels(TRAINING_DATA)
         self.pipeline.load_or_train(texts, labels, force_retrain=True)
 
-    def test_evaluate_returns_model_metrics(self, small_training_data):
+    def test_evaluate_returns_model_metrics(self):
         """evaluate() must return a ModelMetrics instance."""
-        texts, labels = _texts_labels(small_training_data)
+        texts, labels = _texts_labels(TRAINING_DATA)
         result = self.pipeline.evaluate(texts, labels)
         assert isinstance(result, ModelMetrics)
 
-    def test_evaluate_returns_valid_floats(self, small_training_data):
+    def test_evaluate_returns_valid_floats(self):
         """All ModelMetrics float fields must be numeric and in [0, 1]."""
-        texts, labels = _texts_labels(small_training_data)
+        texts, labels = _texts_labels(TRAINING_DATA)
         result = self.pipeline.evaluate(texts, labels)
         for field in ("accuracy", "f1", "precision", "recall", "cv_mean"):
             value = getattr(result, field)
             assert isinstance(value, float), f"{field} is not a float"
             assert 0.0 <= value <= 1.0, f"{field}={value} is out of [0, 1]"
 
-    def test_evaluate_dataset_size_matches_input(self, small_training_data):
+    def test_evaluate_dataset_size_matches_input(self):
         """dataset_size in ModelMetrics must equal len(texts)."""
-        texts, labels = _texts_labels(small_training_data)
+        texts, labels = _texts_labels(TRAINING_DATA)
         result = self.pipeline.evaluate(texts, labels)
         assert result.dataset_size == len(texts)
 
-    def test_evaluate_cv_std_non_negative(self, small_training_data):
+    def test_evaluate_cv_std_non_negative(self):
         """cv_std must be non-negative."""
-        texts, labels = _texts_labels(small_training_data)
+        texts, labels = _texts_labels(TRAINING_DATA)
         result = self.pipeline.evaluate(texts, labels)
         assert result.cv_std >= 0.0
 
