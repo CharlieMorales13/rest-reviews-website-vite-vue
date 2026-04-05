@@ -55,13 +55,6 @@ const isActive = (path: string) => route.path.includes(path);
             Inicio
           </router-link>
           <router-link
-            to="/establishments"
-            class="transition-colors border-b-2 pb-1 text-sm"
-            :class="isActive('/establishments') ? 'text-orange-500 font-bold border-orange-500' : 'text-[#adaaad] hover:text-white border-transparent font-medium'"
-          >
-            Establecimientos
-          </router-link>
-          <router-link
             to="/my-reviews"
             class="transition-colors border-b-2 pb-1 text-sm"
             :class="isActive('/my-reviews') ? 'text-orange-500 font-bold border-orange-500' : 'text-[#adaaad] hover:text-white border-transparent font-medium'"
@@ -160,14 +153,6 @@ const isActive = (path: string) => route.path.includes(path);
             >
               <span class="material-symbols-outlined text-base">home</span>
               Inicio
-            </router-link>
-            <router-link
-              to="/establishments"
-              class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors"
-              :class="isActive('/establishments') ? 'bg-orange-500/10 text-orange-400' : 'text-[#adaaad] hover:bg-white/5 hover:text-white'"
-            >
-              <span class="material-symbols-outlined text-base">storefront</span>
-              Establecimientos
             </router-link>
             <router-link
               to="/my-reviews"
