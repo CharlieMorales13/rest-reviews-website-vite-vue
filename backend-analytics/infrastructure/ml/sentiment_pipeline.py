@@ -157,13 +157,15 @@ class SklearnSentimentPipeline(ISentimentModel):
             stratify=labels,
         )
 
-        # Fit a fresh copy for evaluation so we don't overwrite the cached model
+        # Fit a fresh copy for evaluation so we don't overwrite the cached model.
+        # min_df=1 here (not 2) so the eval split keeps a full vocabulary even
+        # when the train portion is only ~80 % of a small dataset.
         eval_pipeline = Pipeline([
             ("tfidf", TfidfVectorizer(
                 max_features=2000,
                 ngram_range=(1, 3),
                 sublinear_tf=True,
-                min_df=2,
+                min_df=1,
                 stop_words=SPANISH_STOP_WORDS,
             )),
             ("clf", LogisticRegression(
@@ -191,7 +193,7 @@ class SklearnSentimentPipeline(ISentimentModel):
                 max_features=2000,
                 ngram_range=(1, 3),
                 sublinear_tf=True,
-                min_df=2,
+                min_df=1,
                 stop_words=SPANISH_STOP_WORDS,
             )),
             ("clf", LogisticRegression(
