@@ -8,6 +8,7 @@ import { GetUserProfileUseCase } from '../../../application/use-cases/users/GetU
 import { AdminCreateUserUseCase } from '../../../application/use-cases/users/AdminCreateUserUseCase';
 import { AdminCreateUserSchema, UpdateUserSchema } from '../../../application/dtos/UserDTO';
 import { createPaginatedResponse } from '../utils/Pagination';
+import { IEstablishmentRepository } from '../../../domain/repositories/IEstablishmentRepository';
 
 @injectable()
 export class UserController {
@@ -18,6 +19,7 @@ export class UserController {
         @inject(DeleteUserUseCase) private deleteUserUseCase: DeleteUserUseCase,
         @inject(GetUserProfileUseCase) private getUserProfileUseCase: GetUserProfileUseCase,
         @inject(AdminCreateUserUseCase) private adminCreateUserUseCase: AdminCreateUserUseCase,
+        @inject('IEstablishmentRepository') private establishmentRepository: IEstablishmentRepository,
     ) { }
 
     /**
@@ -48,7 +50,17 @@ export class UserController {
         const pageNum = parseInt(page as string) || 1;
         const limitNum = parseInt(limit as string) || 10;
 
-        const { data, total } = await this.listUsersUseCase.execute({ page: pageNum, limit: limitNum });
+        const [{ data, total }, { data: establishments }] = await Promise.all([
+            this.listUsersUseCase.execute({ page: pageNum, limit: limitNum }),
+            this.establishmentRepository.findAll(),
+        ]);
+
+        // Build map: managerId -> establishment
+        const estabByManager = new Map(
+            establishments
+                .filter(e => e.managerId)
+                .map(e => [e.managerId!, { id: e.id, name: e.name }])
+        );
 
         const formatted = data.map(u => ({
             id: u.id,
@@ -56,7 +68,8 @@ export class UserController {
             email: u.email,
             role: u.role,
             isActive: u.isActive,
-            createdAt: u.createdAt
+            createdAt: u.createdAt,
+            establishment: u.id ? (estabByManager.get(u.id) ?? null) : null,
         }));
 
         res.status(200).json(

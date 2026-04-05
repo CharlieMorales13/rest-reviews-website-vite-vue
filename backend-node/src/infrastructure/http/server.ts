@@ -16,6 +16,7 @@ import userRouter from './routes/user.routes';
 import metricsRouter from './routes/metrics.routes';
 import uploadRouter from './routes/upload.routes';
 import { globalErrorHandler } from './middlewares/ErrorMiddleware';
+import { requestLoggerMiddleware } from './middlewares/RequestLoggerMiddleware';
 
 const app = express();
 const PORT = env.PORT;
@@ -27,6 +28,9 @@ app.use(express.json());
 
 // Replace Morgan with Pino for structured logging
 app.use(pinoHttp({ logger }));
+
+// In-memory request log store (admin monitoring)
+app.use(requestLoggerMiddleware);
 
 // Health Check
 app.get('/health', (_req: Request, res: Response) => {

@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { injectable, inject } from 'tsyringe';
 import { GetGlobalMetricsUseCase } from '../../../application/use-cases/metrics/GetGlobalMetricsUseCase';
 import { GetEstablishmentMetricsUseCase } from '../../../application/use-cases/metrics/GetEstablishmentMetricsUseCase';
@@ -8,6 +8,7 @@ import { RunAnalyticsUseCase } from '../../../application/use-cases/metrics/RunA
 import { AuthRequest } from '../middlewares/AuthMiddleware';
 import { AppError } from '../errors/AppError';
 import { TimeSeriesQuerySchema } from '../../../application/dtos/MetricsDTO';
+import { getLogs } from '../middlewares/RequestLogStore';
 
 @injectable()
 export class MetricsController {
@@ -161,5 +162,9 @@ export class MetricsController {
 
         const result = await this.runAnalyticsUseCase.execute();
         res.status(200).json({ success: true, data: result });
+    };
+
+    public getRequestLogs = (_req: Request, res: Response): void => {
+        res.status(200).json({ success: true, data: getLogs() });
     };
 }

@@ -6,6 +6,7 @@ export const AdminCreateUserSchema = z.object({
     email: z.string().email(),
     password: z.string().min(6).max(100),
     role: z.nativeEnum(UserRole),
+    establishmentId: z.string().uuid().optional(),
 });
 
 export type AdminCreateUserDTO = z.infer<typeof AdminCreateUserSchema>;
@@ -19,6 +20,7 @@ export const UpdateUserSchema = z.object({
     avatarUrl: z.string().url().optional().nullable(),
     bio: z.string().max(500).optional().nullable(),
     universityId: z.string().optional().nullable(),
+    establishmentId: z.string().uuid().optional().nullable(),
 });
 
 export type UpdateUserDTO = z.infer<typeof UpdateUserSchema>;
