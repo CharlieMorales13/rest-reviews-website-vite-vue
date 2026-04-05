@@ -5,54 +5,55 @@ import { ReviewService } from '@/entities/review/api/ReviewService';
 
 const route = useRoute();
 const router = useRouter();
-
 const establishmentId = route.params.id as string;
 
-const foodScore = ref(5);
-const serviceScore = ref(5);
-const priceScore = ref(5);
+// Map for purely visual mocking so the user sees the specific establishment right away
+const establishmentCache: Record<string, string> = {
+  '1': 'DelyFull',
+  '2': 'Guajaquenito',
+  '3': 'Cuckoo Coffee & Resto',
+  '4': 'Cuckoo Box'
+};
+const establishmentName = computed(() => establishmentCache[establishmentId] || 'el Establecimiento');
+
+const foodScore = ref(0);
+const serviceScore = ref(0);
+const priceScore = ref(0);
 const comment = ref('');
 const loading = ref(false);
 const error = ref<string | null>(null);
-const touched = ref(false);
 
-const COMMENT_MIN = 20;
 const COMMENT_MAX = 500;
-
 const commentLength = computed(() => comment.value.length);
-const commentTooShort = computed(() => touched.value && commentLength.value > 0 && commentLength.value < COMMENT_MIN);
-const commentTooLong = computed(() => commentLength.value > COMMENT_MAX);
-const commentValid = computed(() => commentLength.value === 0 || (commentLength.value >= COMMENT_MIN && commentLength.value <= COMMENT_MAX));
 
-const scoreValid = (score: number) => score >= 1 && score <= 5;
-const allScoresValid = computed(() => scoreValid(foodScore.value) && scoreValid(serviceScore.value) && scoreValid(priceScore.value));
+const allScoresValid = computed(() => foodScore.value > 0 && serviceScore.value > 0 && priceScore.value > 0);
+const formValid = computed(() => allScoresValid.value && !loading.value && commentLength.value <= COMMENT_MAX);
 
-const formValid = computed(() => allScoresValid.value && commentValid.value && !loading.value);
+// For mockup of drag & drop images
+const uploadedImages = ref<string[]>([]);
+const fileInput = ref<HTMLInputElement | null>(null);
 
-const localIGE = computed(() => {
-  const food = foodScore.value * 0.5;
-  const service = serviceScore.value * 0.3;
-  const price = priceScore.value * 0.2;
-  return (food + service + price).toFixed(1);
-});
+const triggerFileInput = () => {
+  fileInput.value?.click();
+};
 
-const commentCounterClass = computed(() => {
-  if (commentTooLong.value) return 'text-red-400';
-  if (commentTooShort.value) return 'text-amber-400';
-  if (commentLength.value >= COMMENT_MIN) return 'text-emerald-400';
-  return 'text-white/40';
-});
+const onFileSelect = (e: any) => {
+  const files = e.target.files;
+  if (files.length) {
+    // mock logic to show UI change
+    uploadedImages.value.push(URL.createObjectURL(files[0]));
+  }
+};
 
-const onCommentInput = () => {
-  touched.value = true;
+const removeImage = (idx: number) => {
+  uploadedImages.value.splice(idx, 1);
 };
 
 const submitReview = async () => {
-  touched.value = true;
   if (!formValid.value) return;
-
   loading.value = true;
   error.value = null;
+  
   try {
     const response = await ReviewService.create({
       establishmentId,
@@ -62,212 +63,145 @@ const submitReview = async () => {
       comment: comment.value || undefined
     });
     alert(response.message || '¡Evaluación enviada con éxito!');
-    router.push('/establishments');
-  } catch (e: unknown) {
-    const err = e as { response?: { status?: number; data?: { message?: string } } };
-    if (err.response?.status === 409) {
-      error.value = 'Ya has enviado una reseña para este establecimiento anteriormente. No puedes enviar otra.';
+    router.push(`/establishments/${establishmentId}`);
+  } catch (e: any) {
+    if (e.response?.status === 409) {
+      error.value = 'Ya has enviado una reseña para este establecimiento anteriormente.';
     } else {
-      error.value = err.response?.data?.message || 'Hubo un error al enviar tu evaluación.';
+      error.value = e.response?.data?.message || 'Hubo un error al enviar tu evaluación.';
     }
   } finally {
     loading.value = false;
   }
 };
+
+const renderStars = (score: number, hoverScore: number, max = 5) => {
+  const current = hoverScore || score;
+  return Array.from({ length: max }, (_, i) => i + 1 <= current);
+};
+
+// UI handlers for stars
+const hoveredFood = ref(0);
+const hoveredService = ref(0);
+const hoveredPrice = ref(0);
 </script>
 
 <template>
-  <div class="page-container">
-    <div class="glass-panel form-card">
-      <div class="form-header">
-        <h2>Evaluar Establecimiento</h2>
-        <router-link to="/establishments" class="btn-back">← Volver</router-link>
-      </div>
+  <div class="min-h-[85vh] flex items-center justify-center p-4 lg:p-8 animate-fade-in relative z-10 w-full">
+    
+    <div class="w-full max-w-2xl card-cream rounded-[2.5rem] overflow-hidden shadow-2xl relative border border-black/5">
+      <div class="h-2 bg-gradient-to-r from-orange-500 to-amber-500"></div>
 
-      <form @submit.prevent="submitReview" class="review-form">
-        <div class="score-group">
-          <label>Calidad de la Comida (1-5)</label>
-          <input type="range" v-model.number="foodScore" min="1" max="5" class="slider" />
-          <span class="score-val">{{ foodScore }}</span>
-        </div>
-
-        <div class="score-group">
-          <label>Servicio y Atención (1-5)</label>
-          <input type="range" v-model.number="serviceScore" min="1" max="5" class="slider" />
-          <span class="score-val">{{ serviceScore }}</span>
-        </div>
-
-        <div class="score-group">
-          <label>Relación Calidad-Precio (1-5)</label>
-          <input type="range" v-model.number="priceScore" min="1" max="5" class="slider" />
-          <span class="score-val">{{ priceScore }}</span>
-        </div>
-
-        <div class="form-group">
-          <label>Comentario (Opcional)</label>
-          <textarea
-            v-model="comment"
-            rows="4"
-            placeholder="¿Qué te pareció el lugar? (mínimo 20 caracteres si escribes algo)"
-            :maxlength="COMMENT_MAX"
-            @input="onCommentInput"
-          ></textarea>
-          <div class="comment-footer">
-            <span v-if="commentTooShort" class="validation-msg text-amber-400">
-              Mínimo {{ COMMENT_MIN }} caracteres
-            </span>
-            <span v-else-if="commentTooLong" class="validation-msg text-red-400">
-              Máximo {{ COMMENT_MAX }} caracteres
-            </span>
-            <span v-else class="validation-msg">&nbsp;</span>
-            <span :class="['char-counter', commentCounterClass]">
-              {{ commentLength }}/{{ COMMENT_MAX }}
-            </span>
+      <div class="p-8 md:p-12">
+        <div class="flex items-center gap-4 mb-8">
+          <button @click="router.back()" class="w-10 h-10 bg-black/5 hover:bg-black/10 rounded-full transition-colors flex items-center justify-center">
+             <span class="material-symbols-outlined text-[#0e0e10]">arrow_back</span>
+          </button>
+          <div class="flex-1">
+            <p class="text-xs text-orange-500 uppercase font-bold tracking-widest mb-1">Evaluación oficial</p>
+            <h2 class="text-3xl font-extrabold text-[#0e0e10] leading-tight brand">Reseña para <br/><span class="text-orange-500">{{ establishmentName }}</span></h2>
           </div>
         </div>
 
-        <div class="ige-preview">
-          Cálculo IGE local: <strong>{{ localIGE }}</strong> / 5.0
-        </div>
+        <form @submit.prevent="submitReview" class="space-y-8">
+          
+          <!-- Star Ratings Section -->
+          <div class="space-y-6 bg-[#FAF9F6] p-6 text-[#3f3f42] rounded-2xl border border-black/5 shadow-inner">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <label class="font-bold uppercase tracking-wide text-xs">Calidad de la Comida</label>
+              <div class="flex gap-1" @mouseleave="hoveredFood = 0">
+                <button 
+                  type="button" 
+                  v-for="star in 5" 
+                  :key="'f'+star"
+                  @mouseover="hoveredFood = star"
+                  @click="foodScore = star"
+                  class="focus:outline-none transition-transform hover:scale-110"
+                >
+                  <span class="material-symbols-outlined text-3xl" :style="{ color: renderStars(foodScore, hoveredFood)[star-1] ? '#f97316' : '#d1d1d6', fontVariationSettings: `'FILL' ${renderStars(foodScore, hoveredFood)[star-1] ? 1 : 0}` }">star</span>
+                </button>
+              </div>
+            </div>
 
-        <div v-if="error" class="error-msg">{{ error }}</div>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <label class="font-bold uppercase tracking-wide text-xs">Servicio y Atención</label>
+              <div class="flex gap-1" @mouseleave="hoveredService = 0">
+                <button 
+                  type="button" 
+                  v-for="star in 5" 
+                  :key="'s'+star"
+                  @mouseover="hoveredService = star"
+                  @click="serviceScore = star"
+                  class="focus:outline-none transition-transform hover:scale-110"
+                >
+                   <span class="material-symbols-outlined text-3xl" :style="{ color: renderStars(serviceScore, hoveredService)[star-1] ? '#f97316' : '#d1d1d6', fontVariationSettings: `'FILL' ${renderStars(serviceScore, hoveredService)[star-1] ? 1 : 0}` }">star</span>
+                </button>
+              </div>
+            </div>
 
-        <button type="submit" class="btn-primary" :disabled="!formValid">
-          <span v-if="loading" class="loading-content">
-            <span class="spinner"></span>
-            Enviando...
-          </span>
-          <span v-else>Enviar Reseña</span>
-        </button>
-      </form>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <label class="font-bold uppercase tracking-wide text-xs">Relación Precio/Valor</label>
+              <div class="flex gap-1" @mouseleave="hoveredPrice = 0">
+                <button 
+                  type="button" 
+                  v-for="star in 5" 
+                  :key="'p'+star"
+                  @mouseover="hoveredPrice = star"
+                  @click="priceScore = star"
+                  class="focus:outline-none transition-transform hover:scale-110"
+                >
+                   <span class="material-symbols-outlined text-3xl" :style="{ color: renderStars(priceScore, hoveredPrice)[star-1] ? '#f97316' : '#d1d1d6', fontVariationSettings: `'FILL' ${renderStars(priceScore, hoveredPrice)[star-1] ? 1 : 0}` }">star</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Text Review -->
+          <div>
+            <label class="font-bold text-[#0e0e10] mb-2 block brand">Cuéntanos más detalles</label>
+            <textarea
+              v-model="comment"
+              rows="4"
+              class="w-full bg-white rounded-xl border border-black/10 p-5 text-[#0e0e10] focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all resize-none shadow-sm"
+              placeholder="¿Qué platillo pediste? ¿Cómo estuvo el sabor? Toda crítica constructiva suma."
+              :maxlength="COMMENT_MAX"
+            ></textarea>
+            <div class="text-right text-xs text-[#adaaad] mt-1 font-bold">{{ commentLength }} / {{ COMMENT_MAX }} MAX</div>
+          </div>
+
+          <!-- Adding Images Mockup -->
+          <div>
+            <label class="font-bold text-[#0e0e10] mb-2 block brand">Añadir Evidencia (Opcional)</label>
+            <div class="border-2 border-dashed border-orange-500/30 rounded-2xl bg-orange-500/5 hover:bg-orange-500/10 transition-colors p-8 text-center cursor-pointer relative" @click="triggerFileInput">
+              <input type="file" ref="fileInput" @change="onFileSelect" class="hidden" accept="image/*" />
+              <span class="material-symbols-outlined text-orange-500 text-4xl mb-2">add_photo_alternate</span>
+              <p class="font-bold text-orange-500 mb-1 tracking-wide">Haz clic para subir fotos de tu platillo</p>
+              <p class="text-xs text-[#525155]">Soporta JPG, PNG (Toma real de los alimentos)</p>
+            </div>
+            
+            <!-- Previews -->
+            <div v-if="uploadedImages.length > 0" class="flex gap-4 mt-6 overflow-x-auto pb-2">
+              <div v-for="(img, i) in uploadedImages" :key="i" class="w-24 h-24 rounded-xl overflow-hidden relative shadow-md shrink-0 border border-black/10">
+                <img :src="img" class="w-full h-full object-cover" />
+                <button @click.prevent="removeImage(i)" class="absolute top-1 right-1 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full text-white flex items-center justify-center shadow-lg transition-colors">
+                  <span class="material-symbols-outlined text-sm">close</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="error" class="p-4 bg-red-50 text-red-600 rounded-xl text-sm font-bold text-center border border-red-200">
+            {{ error }}
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" :disabled="!formValid" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold py-5 rounded-2xl shadow-lg hover:shadow-orange-500/30 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transition-all flex items-center justify-center gap-2" style="margin-top: 2rem;">
+            <span class="material-symbols-outlined font-bold">send</span>
+            {{ loading ? 'PROCESANDO...' : 'PUBLICAR RESEÑA' }}
+          </button>
+
+        </form>
+      </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.page-container {
-  padding: 2rem;
-  display: flex;
-  justify-content: center;
-}
-.form-card {
-  width: 100%;
-  max-width: 600px;
-  padding: 2.5rem;
-}
-.form-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-.btn-back {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-.score-group {
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-.score-group label {
-  flex: 1;
-  font-weight: 500;
-}
-.slider {
-  flex: 2;
-  accent-color: var(--primary-color);
-}
-.score-val {
-  width: 30px;
-  text-align: center;
-  font-weight: bold;
-  color: var(--primary-color);
-  background: rgba(255,255,255,0.1);
-  border-radius: 4px;
-  padding: 0.2rem;
-}
-.form-group {
-  margin-bottom: 1rem;
-}
-.form-group textarea {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 0.75rem;
-  color: white;
-  resize: vertical;
-  font-family: inherit;
-  transition: border-color 0.2s;
-}
-.form-group textarea:focus {
-  outline: none;
-  border-color: var(--primary-color);
-}
-.comment-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 0.4rem;
-  font-size: 0.8rem;
-}
-.validation-msg {
-  font-weight: 500;
-}
-.char-counter {
-  font-variant-numeric: tabular-nums;
-}
-.ige-preview {
-  margin: 1.5rem 0;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-left: 4px solid var(--primary-color);
-  font-size: 1.1rem;
-}
-.error-msg {
-  color: #ff4d4f;
-  margin-bottom: 1rem;
-  font-weight: 500;
-  padding: 0.5rem;
-  background: rgba(255, 77, 79, 0.1);
-  border-radius: 4px;
-}
-.btn-primary {
-  width: 100%;
-  padding: 0.75rem 1.5rem;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.btn-primary:hover:not(:disabled) {
-  filter: brightness(1.1);
-}
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.loading-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-.spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-</style>
