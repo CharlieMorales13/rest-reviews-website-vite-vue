@@ -108,7 +108,9 @@ export class ReviewController {
             priceScore: r.priceScore,
             imageUrl: r.imageUrl,
             sentiment: r.sentiment,
-            createdAt: r.createdAt
+            managerReply: r.managerReply ?? null,
+            managerReplyAt: r.managerReplyAt ?? null,
+            createdAt: r.createdAt,
         }));
 
         res.status(200).json(
