@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/entities/user/model/authStore';
 
 const router = useRouter();
+const authStore = useAuthStore();
+const firstName = computed(() => authStore.user?.name?.split(' ')[0] || 'León');
 
 // Mock Data matching Stitch
 const establishments = ref([
@@ -34,7 +37,7 @@ const navigateToEstablishment = (id: string) => {
         
         <div class="relative z-10 px-12 md:px-24 max-w-4xl">
             <h1 class="text-5xl md:text-7xl font-extrabold text-[#0e0e10] tracking-tighter leading-tight mb-4 brand">
-                Hola, León.<br/>
+                Hola, {{ firstName }}.<br/>
                 <span class="text-orange-500">¿Dónde comeremos hoy?</span>
             </h1>
             <p class="text-[#525155] text-lg font-medium max-w-md">

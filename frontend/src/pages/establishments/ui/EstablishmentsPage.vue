@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { ReviewService } from '@/entities/review/api/ReviewService';
-import type { Establishment, PaginationMeta } from '@/entities/review/model/types';
+import type { Establishment } from '@/entities/review/model/types';
 import { useRouter } from 'vue-router';
 
 const establishments = ref<Establishment[]>([]);
@@ -9,260 +9,110 @@ const loading = ref(true);
 const errorMsg = ref<string | null>(null);
 const router = useRouter();
 
-const meta = ref<PaginationMeta>({ total: 0, page: 1, limit: 10, totalPages: 1 });
-
-const hasPrev = computed(() => meta.value.page > 1);
-const hasNext = computed(() => meta.value.page < meta.value.totalPages);
-
-const fetchEstablishments = async (page = 1) => {
+const fetchEstablishments = async () => {
   loading.value = true;
   errorMsg.value = null;
   try {
-    const result = await ReviewService.getEstablishments(page);
-    establishments.value = result.data;
-    meta.value = result.meta;
+    const result = await ReviewService.getEstablishments();
+    establishments.value = result;
   } catch {
-    errorMsg.value = 'No se pudieron cargar los establecimientos. Verifica tu conexión e intenta de nuevo.';
+    errorMsg.value = 'No se pudieron cargar los establecimientos.';
     establishments.value = [
-      { id: '1', name: 'Cucko', category: 'Restaurante', calificacion: 4.5 },
-      { id: '2', name: 'Cucko Box', category: 'Snacks', calificacion: 3.9 },
-      { id: '3', name: 'Oaxaqueñito', category: 'Restaurante', calificacion: 4.8 },
-      { id: '4', name: 'Delly Food', category: 'Comida Orgánica', calificacion: 4.2 }
-    ] as unknown as Establishment[];
-    meta.value = { total: 4, page: 1, limit: 10, totalPages: 1 };
-    errorMsg.value = null;
+      { id: '1', name: 'DelyFull', category: 'Restaurante' },
+      { id: '2', name: 'Guajaquenito', category: 'Restaurante' },
+      { id: '3', name: 'Cuckoo Coffee & Resto', category: 'Cafetería' },
+      { id: '4', name: 'Cuckoo Box', category: 'Cafetería' },
+    ];
   } finally {
     loading.value = false;
   }
 };
 
-const goToPage = (page: number) => {
-  fetchEstablishments(page);
-};
-
-onMounted(() => {
-  fetchEstablishments();
-});
+onMounted(fetchEstablishments);
 
 const goToReview = (id: string) => {
   router.push({ name: 'create-review', params: { id } });
 };
+
+const goToDetails = (id: string) => {
+  router.push({ name: 'establishment-details', params: { id } });
+};
 </script>
 
 <template>
-  <div class="page-container">
-    <div class="page-title">
-      <h2>Establecimientos Universitarios</h2>
-      <span class="active-badge">Sesión Activa</span>
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl md:text-4xl font-black tracking-tight text-white brand mb-2">
+        Establecimientos
+      </h1>
+      <p class="text-[#adaaad] text-sm">Los 4 espacios gastronómicos del campus Anáhuac Oaxaca.</p>
     </div>
 
-    <!-- Skeleton Loading State -->
-    <div v-if="loading" class="grid">
-      <div v-for="i in 4" :key="i" class="glass-panel est-card animate-pulse">
-        <div class="card-header-row">
-          <div class="h-5 bg-white/10 rounded w-2/3"></div>
-          <div class="h-5 bg-white/10 rounded w-12"></div>
-        </div>
-        <div class="h-6 bg-white/10 rounded-full w-24 mt-2 mb-6"></div>
-        <div class="mt-auto">
-          <div class="h-10 bg-white/10 rounded-lg w-full"></div>
-        </div>
+    <!-- Skeleton -->
+    <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div v-for="i in 4" :key="i" class="bg-white/5 rounded-2xl p-6 animate-pulse">
+        <div class="h-5 bg-white/10 rounded w-2/3 mb-3"></div>
+        <div class="h-4 bg-white/10 rounded-full w-20 mb-6"></div>
+        <div class="h-10 bg-white/10 rounded-xl w-full"></div>
       </div>
     </div>
 
-    <!-- Error State -->
-    <div v-else-if="errorMsg" class="error-state">
-      <div class="error-icon">!</div>
-      <p class="error-text">{{ errorMsg }}</p>
-      <button class="retry-btn" @click="fetchEstablishments()">
+    <!-- Error -->
+    <div v-else-if="errorMsg" class="flex flex-col items-center py-16 text-center">
+      <div class="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
+        <span class="material-symbols-outlined text-red-400">error</span>
+      </div>
+      <p class="text-[#adaaad] mb-4 text-sm">{{ errorMsg }}</p>
+      <button
+        @click="fetchEstablishments"
+        class="px-5 py-2 border border-orange-500/40 text-orange-400 hover:bg-orange-500 hover:text-white rounded-xl text-sm font-semibold transition-all"
+      >
         Reintentar
       </button>
     </div>
 
-    <!-- Data State -->
-    <template v-else>
-      <div class="grid">
-        <div v-for="est in establishments" :key="est.id" class="glass-panel est-card">
-          <div class="card-header-row">
-            <h3>{{ est.name }}</h3>
-            <span class="rating">{{ (est as any).calificacion }}</span>
+    <!-- Grid -->
+    <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div
+        v-for="est in establishments"
+        :key="est.id"
+        class="group bg-white/5 hover:bg-white/8 border border-white/8 hover:border-orange-500/30 rounded-2xl p-6 flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(255,145,83,0.12)]"
+      >
+        <!-- Card header -->
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-widest text-orange-500/80 mb-1 block">
+              {{ est.category }}
+            </span>
+            <h2 class="text-xl font-bold text-white brand leading-tight">{{ est.name }}</h2>
           </div>
-          <span class="category-badge">{{ est.category }}</span>
-          <div class="card-actions">
-            <button @click="goToReview(est.id)" class="btn-primary" style="width: 100%">
-              Evaluar
-            </button>
+          <div class="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-orange-400 text-lg">storefront</span>
           </div>
         </div>
-      </div>
 
-      <!-- Pagination -->
-      <div v-if="meta.totalPages > 1" class="pagination">
-        <button
-          class="page-btn"
-          :disabled="!hasPrev"
-          @click="goToPage(meta.page - 1)"
-        >
-          ← Anterior
-        </button>
-        <span class="page-info">
-          Página {{ meta.page }} de {{ meta.totalPages }}
-        </span>
-        <button
-          class="page-btn"
-          :disabled="!hasNext"
-          @click="goToPage(meta.page + 1)"
-        >
-          Siguiente →
-        </button>
+        <!-- Spacer -->
+        <div class="flex-1"></div>
+
+        <!-- Actions -->
+        <div class="flex gap-3 mt-6">
+          <button
+            @click="goToDetails(est.id)"
+            class="flex-1 py-2.5 text-sm font-semibold text-[#adaaad] hover:text-white border border-white/10 hover:border-white/20 rounded-xl transition-colors"
+          >
+            Ver Detalles
+          </button>
+          <button
+            @click="goToReview(est.id)"
+            class="flex-1 py-2.5 text-sm font-bold bg-orange-500 hover:bg-orange-400 text-white rounded-xl transition-colors active:scale-95"
+          >
+            Evaluar
+          </button>
+        </div>
       </div>
-    </template>
+    </div>
+
   </div>
 </template>
-
-<style scoped>
-.page-container {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-.page-title {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-.active-badge {
-  background: rgba(6, 214, 160, 0.2);
-  color: var(--success-color);
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.8em;
-}
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 2rem;
-}
-.est-card {
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  min-height: 160px;
-}
-.card-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 0.5rem;
-}
-.card-header-row h3 {
-  margin-bottom: 0;
-}
-.rating {
-  font-weight: bold;
-  color: #facc15;
-}
-.category-badge {
-  display: inline-block;
-  padding: 0.3rem 0.8rem;
-  background: rgba(255,255,255,0.1);
-  border-radius: 20px;
-  font-size: 0.8rem;
-  margin-bottom: 1.5rem;
-  align-self: flex-start;
-}
-.card-actions {
-  margin-top: auto;
-}
-.btn-primary {
-  padding: 0.6rem 1rem;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.btn-primary:hover {
-  filter: brightness(1.1);
-}
-
-/* Pagination */
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding: 1rem 0;
-}
-.page-btn {
-  padding: 0.5rem 1.2rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: white;
-  font-weight: 500;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.page-btn:hover:not(:disabled) {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
-}
-.page-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-.page-info {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.875rem;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Error State */
-.error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 2rem;
-  text-align: center;
-}
-.error-icon {
-  width: 48px;
-  height: 48px;
-  background: rgba(255, 77, 79, 0.15);
-  color: #ff4d4f;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-}
-.error-text {
-  color: rgba(255, 255, 255, 0.6);
-  max-width: 400px;
-  margin-bottom: 1.5rem;
-  line-height: 1.5;
-}
-.retry-btn {
-  padding: 0.6rem 1.5rem;
-  background: transparent;
-  color: var(--primary-color);
-  border: 1px solid var(--primary-color);
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.retry-btn:hover {
-  background: var(--primary-color);
-  color: white;
-}
-</style>

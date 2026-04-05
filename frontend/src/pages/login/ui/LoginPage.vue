@@ -29,7 +29,7 @@ const handleLogin = async () => {
     <!-- Background Image with Overlay -->
     <div 
       class="absolute inset-0 bg-cover bg-center blur-[1px] scale-105 transition-transform duration-1000"
-      style="background-image: url('/assets/images/university-bg.png');"
+      style="background-image: url('/assets/images/ANAHUAC-1-1160x700.jpg');"
     ></div>
     <div class="absolute inset-0 bg-black/60 md:bg-black/50 lg:bg-gradient-to-r lg:from-black/80 lg:to-black/30"></div>
 

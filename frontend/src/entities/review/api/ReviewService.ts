@@ -1,9 +1,9 @@
 import { httpClient } from '@/shared/api/httpClient';
-import type { CreateReviewRequest, ReviewResponse, MetricsSnapshot, Establishment, PaginatedResponse } from '../model/types';
+import type { CreateReviewRequest, ReviewResponse, MetricsSnapshot, Establishment } from '../model/types';
 
 export class ReviewService {
+  // TODO: conectar al API real — POST /api/reviews
   static async create(request: CreateReviewRequest): Promise<ReviewResponse> {
-    // Mock the backend creation for testing purposes
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
@@ -23,17 +23,16 @@ export class ReviewService {
     });
   }
 
-  static async getEstablishments(page = 1, limit = 10): Promise<PaginatedResponse<Establishment>> {
-    const response = await httpClient.get<PaginatedResponse<Establishment>>('/api/establishments', {
-      params: { page, limit },
-    });
-    return response.data;
+  // GET /api/establishments → { success: true, data: Establishment[] }
+  static async getEstablishments(): Promise<Establishment[]> {
+    const response = await httpClient.get<{ success: boolean; data: Establishment[] }>('/api/establishments');
+    return response.data.data;
   }
 
+  // TODO: conectar al API real — GET /api/metrics/establishment/:id
   static async getMetrics(establishmentId: string): Promise<MetricsSnapshot> {
     return new Promise((resolve) => {
       setTimeout(() => {
-        // Return mock data for the presentation (matches the 88.5 requirement)
         resolve({
           establishmentId,
           snapshotDate: new Date().toISOString(),
