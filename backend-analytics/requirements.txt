@@ -4,3 +4,8 @@ psycopg2-binary
 scikit-learn
 python-dotenv
 joblib
+numpy
+pytest
+pytest-cov
+pytest-mock
+ruff
