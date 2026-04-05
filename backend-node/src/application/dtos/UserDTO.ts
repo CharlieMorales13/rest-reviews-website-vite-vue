@@ -1,6 +1,15 @@
 import { z } from 'zod';
 import { UserRole } from '../../domain/entities/User';
 
+export const AdminCreateUserSchema = z.object({
+    name: z.string().min(2).max(120),
+    email: z.string().email(),
+    password: z.string().min(6).max(100),
+    role: z.nativeEnum(UserRole),
+});
+
+export type AdminCreateUserDTO = z.infer<typeof AdminCreateUserSchema>;
+
 export const UpdateUserSchema = z.object({
     name: z.string().min(2).max(120).optional(),
     email: z.string().email().optional(),

@@ -12,6 +12,7 @@ userRouter.use(authenticateToken);
 userRouter.get('/:id/profile', controller.getProfile);
 
 // Admin-only routes
+userRouter.post('/', requireRole(['admin']), controller.create);
 userRouter.get('/', requireRole(['admin']), controller.getAll);
 userRouter.get('/:id', requireRole(['admin']), controller.getById);
 userRouter.put('/:id', requireRole(['admin']), controller.update);

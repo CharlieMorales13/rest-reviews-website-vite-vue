@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { httpClient } from '@/shared/api/httpClient';
+import { AdminService, type AdminUser } from '@/entities/user/api/AdminService';
+import CreateUserModal from './CreateUserModal.vue';
 
 // ML Pipeline
 const pipelineRunning = ref(false);
@@ -21,23 +23,38 @@ const runPipeline = async () => {
   }
 };
 
-// Mock Data for Admin Dashboard
-
 // System Metrics
 const systemMetrics = ref([
-  { id: '1', title: 'Cuentas Totales', value: '1,248', icon: 'group', color: 'orange-500' },
+  { id: '1', title: 'Cuentas Totales', value: '—', icon: 'group', color: 'orange-500' },
   { id: '2', title: 'Establecimientos Activos', value: '4', icon: 'storefront', color: 'blue-500' },
-  { id: '3', title: 'Reseñas Procesadas', value: '8,432', icon: 'reviews', color: 'emerald-500' },
+  { id: '3', title: 'Reseñas Procesadas', value: '—', icon: 'reviews', color: 'emerald-500' },
   { id: '4', title: 'Salud de Endpoints API', value: '100%', icon: 'monitor_heart', color: 'purple-500' },
 ]);
 
-// Users List
-const users = ref([
-  { id: 'u1', name: 'Admin Principal', email: 'admin@anahuac.mx', role: 'admin', status: 'Activo' },
-  { id: 'u2', name: 'Gerente DelyFull', email: 'gerente.dely@anahuac.mx', role: 'manager', status: 'Activo' },
-  { id: 'u3', name: 'Mateo Rivera', email: 'mateo.rivera@anahuac.mx', role: 'student', status: 'Activo' },
-  { id: 'u4', name: 'Ana García', email: 'ana.garcia@anahuac.mx', role: 'student', status: 'Suspendido' },
-]);
+// Users
+const users = ref<AdminUser[]>([]);
+const usersLoading = ref(true);
+
+const loadUsers = async () => {
+  usersLoading.value = true;
+  try {
+    users.value = await AdminService.listUsers();
+    systemMetrics.value[0].value = users.value.length.toString();
+  } catch {
+    // silently keep empty
+  } finally {
+    usersLoading.value = false;
+  }
+};
+
+onMounted(() => loadUsers());
+
+// Create User Modal
+const showCreateModal = ref(false);
+
+const onUserCreated = (user: { name: string; email: string; role: string }) => {
+  loadUsers();
+};
 
 // Endpoints Status
 const endpoints = ref([
@@ -186,8 +203,11 @@ const getMethodColor = (method: string) => {
       <section class="lg:col-span-2">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-2xl font-bold tracking-tight text-white brand">Directorio de Cuentas</h2>
-          <button class="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
-            <span class="material-symbols-outlined text-sm">person_add</span>
+          <button
+            @click="showCreateModal = true"
+            class="bg-orange-500 hover:bg-orange-400 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-orange-500/20"
+          >
+            <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">person_add</span>
             Nueva Cuenta
           </button>
         </div>
@@ -204,7 +224,18 @@ const getMethodColor = (method: string) => {
                 </tr>
               </thead>
               <tbody class="divide-y divide-black/5">
-                <tr v-for="user in users" :key="user.id" class="hover:bg-white/40 transition-colors">
+                <!-- Loading skeleton -->
+                <tr v-if="usersLoading">
+                  <td colspan="4" class="p-8 text-center">
+                    <span class="material-symbols-outlined text-[#adaaad] animate-spin">progress_activity</span>
+                  </td>
+                </tr>
+                <!-- Empty state -->
+                <tr v-else-if="users.length === 0">
+                  <td colspan="4" class="p-8 text-center text-[#adaaad] text-sm">No hay cuentas registradas.</td>
+                </tr>
+                <!-- User rows -->
+                <tr v-else v-for="user in users" :key="user.id" class="hover:bg-white/40 transition-colors">
                   <td class="p-4">
                     <p class="font-bold text-[#0e0e10] brand">{{ user.name }}</p>
                     <p class="text-xs text-[#adaaad]">{{ user.email }}</p>
@@ -215,8 +246,8 @@ const getMethodColor = (method: string) => {
                     </span>
                   </td>
                   <td class="p-4">
-                    <span :class="['px-2 py-1 rounded-full text-xs font-bold', user.status === 'Activo' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700']">
-                      {{ user.status }}
+                    <span :class="['px-2 py-1 rounded-full text-xs font-bold', user.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700']">
+                      {{ user.isActive ? 'Activo' : 'Inactivo' }}
                     </span>
                   </td>
                   <td class="p-4 text-right">
@@ -266,6 +297,13 @@ const getMethodColor = (method: string) => {
 
     </div>
   </div>
+
+  <!-- Create User Modal -->
+  <CreateUserModal
+    v-if="showCreateModal"
+    @close="showCreateModal = false"
+    @created="onUserCreated"
+  />
 </template>
 
 <style scoped>
