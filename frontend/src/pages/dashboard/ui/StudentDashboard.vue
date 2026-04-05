@@ -30,7 +30,7 @@ const navigateToEstablishment = (id: string) => {
         <!-- Atmospheric Imagery (Asymmetric Editorial Style) -->
         <div class="absolute right-0 top-0 w-1/2 h-full hidden lg:block">
             <div class="relative w-full h-full">
-            <img class="w-full h-full object-cover opacity-90" src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80"/>
+            <img class="w-full h-full object-cover opacity-90" src="/assets/images/ANAHUAC-1-1160x700.jpg" alt="Campus Anáhuac Oaxaca"/>
             <div class="absolute inset-0 bg-gradient-to-r from-[#FAF9F6] via-[#FAF9F6]/40 to-transparent"></div>
             </div>
         </div>
