@@ -28,7 +28,7 @@ const fetchEstablishments = async (page = 1) => {
       { id: '2', name: 'Cucko Box', category: 'Snacks', calificacion: 3.9 },
       { id: '3', name: 'Oaxaqueñito', category: 'Restaurante', calificacion: 4.8 },
       { id: '4', name: 'Delly Food', category: 'Comida Orgánica', calificacion: 4.2 }
-    ] as Establishment[];
+    ] as unknown as Establishment[];
     meta.value = { total: 4, page: 1, limit: 10, totalPages: 1 };
     errorMsg.value = null;
   } finally {
