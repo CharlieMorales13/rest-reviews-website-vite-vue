@@ -13,6 +13,3 @@ onMounted(() => {
   <router-view />
 </template>
 
-<style>
-@import '@/shared/assets/css/main.css';
-</style>

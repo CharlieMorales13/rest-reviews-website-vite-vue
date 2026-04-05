@@ -6,21 +6,39 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+        display: ['Manrope', 'sans-serif'],
+      },
       colors: {
         anahuac: {
-          orange: '#ff7900',
-          navy: '#1a946fff',
-          sage: '#a89e45ff',
-          rust: '#ba562f',
-          cream: '#fdf0d5',
+          orange: '#ff9153',
         },
         surface: {
-          dark: '#0f172a',
-          glass: 'rgba(255, 255, 255, 0.03)',
+          DEFAULT: '#0e0e10',
+          'container-low': '#131315',
+          'container-high': '#1f1f22',
+          bright: '#2c2c2f',
+          variant: 'rgba(255, 255, 255, 0.05)',
+        },
+        primary: {
+          DEFAULT: '#ff9153',
+          container: '#ff7a23',
+        },
+        on: {
+          surface: '#f9f5f8',
+          'surface-variant': '#adaaad',
+        },
+        outline: {
+          variant: '#48474a',
         }
       },
+      boxShadow: {
+        'ambient': '0 20px 40px rgba(0, 0, 0, 0.4)',
+        'btn-primary': '0 10px 20px rgba(255, 145, 83, 0.2)',
+      },
       backdropBlur: {
-        xs: '2px',
+        'glass': '30px',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out forwards',
