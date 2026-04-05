@@ -29,8 +29,14 @@ const routes = [
       {
         path: 'dashboard',
         name: 'dashboard',
-        component: () => import('@/pages/dashboard/ui/DashboardPage.vue'),
+        component: () => import('@/pages/dashboard/ui/StudentDashboard.vue'),
         meta: { roles: ['manager', 'admin', 'student'] }
+      },
+      {
+        path: 'manager',
+        name: 'manager-dashboard',
+        component: () => import('@/pages/dashboard/ui/ManagerDashboard.vue'),
+        meta: { roles: ['manager', 'admin'] }
       },
       {
         path: 'establishments',
@@ -38,6 +44,10 @@ const routes = [
         component: () => import('@/pages/establishments/ui/EstablishmentsPage.vue')
       },
       {
+        path: 'establishments/:id',
+        name: 'establishment-details',
+        component: () => import('@/pages/establishments/ui/EstablishmentDetailsPage.vue')
+      },      {
         path: 'review/create/:id',
         name: 'create-review',
         component: () => import('@/pages/create-review/ui/CreateReviewPage.vue'),
@@ -48,6 +58,11 @@ const routes = [
         path: 'profile',
         name: 'profile',
         component: () => import('@/pages/profile/ui/ProfilePage.vue')
+      },
+      {
+        path: 'my-reviews',
+        name: 'my-reviews',
+        component: () => import('@/pages/profile/ui/MyReviewsPage.vue')
       }
     ]
   }
