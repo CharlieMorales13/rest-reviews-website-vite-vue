@@ -36,7 +36,7 @@ class SqlAlchemyMetricsRepository(IMetricsRepository):
         Returns the count of rows successfully inserted.
         """
         delete_sql = text(
-            "DELETE FROM sentiment_results WHERE review_id = :review_id::uuid"
+            "DELETE FROM sentiment_results WHERE review_id = CAST(:review_id AS uuid)"
         )
         insert_sql = text(
             """
@@ -44,8 +44,8 @@ class SqlAlchemyMetricsRepository(IMetricsRepository):
                 (review_id, model_version_id, predicted_label, probability)
             VALUES
                 (
-                    :review_id::uuid,
-                    :model_version_id::uuid,
+                    CAST(:review_id AS uuid),
+                    CAST(:model_version_id AS uuid),
                     CAST(:label AS sentiment_label),
                     :probability
                 )
@@ -97,7 +97,7 @@ class SqlAlchemyMetricsRepository(IMetricsRepository):
                  negative_ratio, total_reviews, snapshot_date)
             VALUES
                 (
-                    :establishment_id::uuid,
+                    CAST(:establishment_id AS uuid),
                     :ige,
                     :avg_food,
                     :avg_service,
@@ -120,8 +120,9 @@ class SqlAlchemyMetricsRepository(IMetricsRepository):
         delete_sql = text(
             """
             DELETE FROM metrics_snapshots
-            WHERE establishment_id = :establishment_id::uuid
+            WHERE establishment_id = CAST(:establishment_id AS uuid)
               AND snapshot_date = :snapshot_date
+
             """
         )
         insert_sql = text(
@@ -131,7 +132,7 @@ class SqlAlchemyMetricsRepository(IMetricsRepository):
                  negative_ratio, total_reviews, snapshot_date)
             VALUES
                 (
-                    :establishment_id::uuid,
+                    CAST(:establishment_id AS uuid),
                     :ige,
                     :avg_food,
                     :avg_service,

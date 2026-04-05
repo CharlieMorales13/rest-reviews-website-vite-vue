@@ -26,8 +26,14 @@ from domain.services import TextNormalizer  # noqa: F401
 
 def run_pipeline() -> None:
     """Entry point for backward compatibility. Delegates to __main__.main()."""
-    from __main__ import main
-    main()
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "analytics_main",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "__main__.py"),
+    )
+    mod = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    mod.main()
 
 
 if __name__ == "__main__":
