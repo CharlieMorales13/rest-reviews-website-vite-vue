@@ -24,6 +24,19 @@ class SqlAlchemyModelRepository(IModelRepository):
     def __init__(self, engine: Engine) -> None:
         self._engine = engine
 
+    def get_latest_model_version_id(self) -> Optional[str]:
+        """Return the UUID of the most recently trained model version, or None."""
+        sql = text(
+            "SELECT id::text FROM model_versions ORDER BY trained_at DESC LIMIT 1"
+        )
+        try:
+            with self._engine.begin() as conn:
+                row = conn.execute(sql).fetchone()
+                return row[0] if row is not None else None
+        except Exception as e:
+            logger.error("get_latest_model_version_id failed: %s", e)
+            return None
+
     def get_or_create_model_version(self, version: str, dataset_size: int) -> str:
         """Return the UUID string of the model_version row, creating it if absent."""
         select_sql = text(

@@ -29,6 +29,11 @@ class IModelRepository(ABC):
         ...
 
     @abstractmethod
+    def get_latest_model_version_id(self) -> Optional[str]:
+        """Return the UUID string of the most recently trained model version, or None."""
+        ...
+
+    @abstractmethod
     def update_model_metrics(self, version_id: str, metrics: ModelMetrics) -> None:
         ...
 
