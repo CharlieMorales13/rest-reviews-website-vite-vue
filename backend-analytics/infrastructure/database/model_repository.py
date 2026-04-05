@@ -76,7 +76,7 @@ class SqlAlchemyModelRepository(IModelRepository):
                 precision = :precision,
                 recall    = :recall,
                 f1        = :f1
-            WHERE id = :version_id::uuid
+            WHERE id = CAST(:version_id AS uuid)
             """
         )
         try:
@@ -110,7 +110,7 @@ class SqlAlchemyModelRepository(IModelRepository):
         sql = text(
             """
             INSERT INTO training_runs (model_version_id, started_at, status)
-            VALUES (:model_version_id::uuid, NOW(), 'running')
+            VALUES (CAST(:model_version_id AS uuid), NOW(), 'running')
             RETURNING id::text
             """
         )
@@ -149,7 +149,7 @@ class SqlAlchemyModelRepository(IModelRepository):
                 finished_at   = NOW(),
                 status        = CAST(:status AS training_status),
                 error_message = :error
-            WHERE id = :run_id::uuid
+            WHERE id = CAST(:run_id AS uuid)
             """
         )
         try:
