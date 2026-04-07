@@ -29,15 +29,7 @@ export class CreateReviewUseCase {
             throw new AppError('Establishment not found or inactive', 404);
         }
 
-        // 3. One review per user per establishment
-        const hasReviewed = await this.reviewRepository.hasUserReviewedEstablishment(
-            dto.userId, dto.establishmentId,
-        );
-        if (hasReviewed) {
-            throw new AppError('User has already reviewed this establishment', 409);
-        }
-
-        // 4. Create and persist the review
+        // 3. Create and persist the review
         const newReview = Review.create({
             userId: dto.userId,
             establishmentId: dto.establishmentId,
