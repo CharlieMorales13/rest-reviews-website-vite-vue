@@ -27,8 +27,21 @@ const formatDate = (iso: string) =>
 
 <template>
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
-    <h2 class="text-3xl font-extrabold text-white mb-2 text-center">Mis Reseñas</h2>
-    <p class="text-white/50 text-center mb-10">Tus evaluaciones y respuestas de los gerentes.</p>
+
+    <!-- Header con CTA -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
+      <div>
+        <h2 class="text-3xl font-extrabold text-white">Mis Reseñas</h2>
+        <p class="text-white/50 mt-1">Tus evaluaciones y respuestas de los gerentes.</p>
+      </div>
+      <RouterLink
+        to="/establishments"
+        class="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-400 text-white font-black text-base px-7 py-4 rounded-2xl shadow-lg hover:shadow-orange-500/30 hover:-translate-y-0.5 transition-all duration-200 active:scale-95 whitespace-nowrap"
+      >
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+        Evaluar ahora
+      </RouterLink>
+    </div>
 
     <!-- Skeleton -->
     <div v-if="loading" class="space-y-6">
@@ -39,8 +52,16 @@ const formatDate = (iso: string) =>
     <div v-else-if="error" class="text-center text-red-400 py-12">{{ error }}</div>
 
     <!-- Empty -->
-    <div v-else-if="reviews.length === 0" class="glass-effect rounded-3xl p-12 text-center text-white/50">
-      Aún no has escrito ninguna reseña.
+    <div v-else-if="reviews.length === 0" class="rounded-3xl p-14 text-center border border-white/10 bg-white/3">
+      <span class="material-symbols-outlined text-5xl text-white/20 mb-4 block">rate_review</span>
+      <p class="text-white/50 font-medium mb-6">Aún no has escrito ninguna reseña.</p>
+      <RouterLink
+        to="/establishments"
+        class="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-400 text-white font-black text-base px-8 py-4 rounded-2xl shadow-lg hover:shadow-orange-500/30 transition-all"
+      >
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+        Evaluar ahora
+      </RouterLink>
     </div>
 
     <div v-else class="space-y-6">

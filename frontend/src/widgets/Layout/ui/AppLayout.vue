@@ -37,50 +37,51 @@ const isActive = (path: string) => route.path.includes(path);
   <div class="min-h-screen bg-[#0e0e10] text-[#f9f5f8] font-sans flex flex-col">
 
     <!-- Top Nav -->
-    <nav class="fixed top-0 w-full z-50 bg-[#0e0e10]/80 backdrop-blur-xl border-b border-white/5 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
-      <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-8">
+    <nav class="fixed top-0 w-full z-50 bg-[#0e0e10]/85 backdrop-blur-xl border-b border-white/5 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+      <div class="flex justify-between items-center h-20 md:h-28 px-4 md:px-10">
 
         <!-- Brand -->
-        <router-link to="/dashboard" class="text-xl md:text-2xl font-black tracking-tighter text-orange-500 brand hover:opacity-80 transition-opacity">
+        <router-link to="/dashboard" class="text-2xl md:text-3xl font-black tracking-tighter text-orange-500 brand hover:opacity-80 transition-opacity">
           Anáhuac EATS
         </router-link>
 
         <!-- Desktop Nav Links -->
-        <div class="hidden md:flex items-center space-x-8 font-['Manrope'] tracking-tight">
+        <div class="hidden md:flex items-center space-x-10 font-['Manrope'] tracking-tight">
           <router-link
             to="/dashboard"
-            class="transition-colors border-b-2 pb-1 text-sm"
-            :class="isActive('/dashboard') ? 'text-orange-500 font-bold border-orange-500' : 'text-[#adaaad] hover:text-white border-transparent font-medium'"
+            class="transition-colors border-b-2 pb-1 text-lg font-semibold"
+            :class="isActive('/dashboard') ? 'text-orange-500 font-bold border-orange-500' : 'text-[#adaaad] hover:text-white border-transparent'"
           >
             Inicio
           </router-link>
           <router-link
             v-if="authStore.user?.role === 'student'"
             to="/my-reviews"
-            class="transition-colors border-b-2 pb-1 text-sm"
-            :class="isActive('/my-reviews') ? 'text-orange-500 font-bold border-orange-500' : 'text-[#adaaad] hover:text-white border-transparent font-medium'"
+            class="transition-colors border-b-2 pb-1 text-lg font-semibold"
+            :class="isActive('/my-reviews') ? 'text-orange-500 font-bold border-orange-500' : 'text-[#adaaad] hover:text-white border-transparent'"
           >
             Mis Reseñas
           </router-link>
           <router-link
             v-if="authStore.user?.role === 'admin'"
             to="/admin"
-            class="transition-colors border-b-2 pb-1 text-sm"
-            :class="isActive('/admin') ? 'text-orange-500 font-bold border-orange-500' : 'text-[#adaaad] hover:text-white border-transparent font-medium'"
+            class="transition-colors border-b-2 pb-1 text-lg font-semibold"
+            :class="isActive('/admin') ? 'text-orange-500 font-bold border-orange-500' : 'text-[#adaaad] hover:text-white border-transparent'"
           >
             Panel Admin
+          </router-link>
+          <router-link
+            v-if="authStore.user?.role === 'manager'"
+            to="/manager"
+            class="transition-colors border-b-2 pb-1 text-lg font-semibold"
+            :class="isActive('/manager') ? 'text-orange-500 font-bold border-orange-500' : 'text-[#adaaad] hover:text-white border-transparent'"
+          >
+            Mi Panel
           </router-link>
         </div>
 
         <!-- Desktop Right Actions -->
         <div class="hidden md:flex items-center space-x-4">
-          <router-link
-            v-if="authStore.user?.role === 'student'"
-            to="/establishments"
-            class="bg-orange-500 hover:bg-orange-400 text-white font-bold py-2 px-5 rounded-lg text-sm shadow-lg transition-all duration-200 active:scale-95"
-          >
-            Evaluar
-          </router-link>
 
           <!-- User Dropdown -->
           <div class="relative">
@@ -88,7 +89,7 @@ const isActive = (path: string) => route.path.includes(path);
               class="flex items-center space-x-2 cursor-pointer group"
               @click="showDropdown = !showDropdown"
             >
-              <div class="w-9 h-9 rounded-full bg-orange-500/20 border border-orange-500/40 group-hover:border-orange-500 transition-all flex items-center justify-center text-orange-400 font-bold text-sm">
+              <div class="w-11 h-11 rounded-full bg-orange-500/20 border border-orange-500/40 group-hover:border-orange-500 transition-all flex items-center justify-center text-orange-400 font-bold text-base">
                 {{ userInitials }}
               </div>
             </button>
@@ -125,7 +126,7 @@ const isActive = (path: string) => route.path.includes(path);
 
         <!-- Mobile: User initials + Hamburger -->
         <div class="flex md:hidden items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-400 font-bold text-xs">
+          <div class="w-9 h-9 rounded-full bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-400 font-bold text-sm">
             {{ userInitials }}
           </div>
           <button
@@ -209,7 +210,7 @@ const isActive = (path: string) => route.path.includes(path);
     </nav>
 
     <!-- Main Content -->
-    <main class="flex-1 w-full pt-16 md:pt-20">
+    <main class="flex-1 w-full pt-20 md:pt-28">
       <router-view />
     </main>
 
