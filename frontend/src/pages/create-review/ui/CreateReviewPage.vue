@@ -2,7 +2,6 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ReviewService } from '@/entities/review/api/ReviewService';
-import { httpClient } from '@/shared/api/httpClient';
 
 const route = useRoute();
 const router = useRouter();
@@ -68,16 +67,17 @@ const onFileSelect = async (e: any) => {
   try {
     const formData = new FormData();
     formData.append('file', file);
-    // Eliminar Content-Type del header para que axios calcule
-    // automáticamente el boundary de multipart/form-data
-    const { data } = await httpClient.post<{ success: boolean; data: { url: string } }>(
-      '/api/upload',
-      formData,
-      { headers: { 'Content-Type': undefined } }
-    );
-    entry.remoteUrl = data.data.url;
+    const token = localStorage.getItem('token');
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    if (!res.ok) throw new Error('Upload failed');
+    const json = await res.json() as { success: boolean; data: { url: string } };
+    entry.remoteUrl = json.data.url;
   } catch {
-    // Si falla el upload, mostrar error en la imagen y permitir quitar
     entry.remoteUrl = null;
   } finally {
     entry.uploading = false;
