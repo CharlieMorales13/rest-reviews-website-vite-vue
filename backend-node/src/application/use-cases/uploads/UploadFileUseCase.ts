@@ -15,7 +15,8 @@ export class UploadFileUseCase {
         }
 
         // Generate a unique file name to avoid collisions
-        const extension = originalName.split('.').pop();
+        const parts = originalName.split('.');
+        const extension = parts.length > 1 ? parts.pop()!.toLowerCase() : 'jpg';
         const fileName = `${uuidv4()}.${extension}`;
 
         return await this.storageService.uploadFile(file, fileName, bucketName, contentType);
