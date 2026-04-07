@@ -50,11 +50,14 @@ const triggerFileInput = () => {
 const onFileSelect = async (e: any) => {
   const files: FileList = e.target.files;
   if (!files.length) return;
-  // Reset el input para permitir seleccionar el mismo archivo de nuevo
-  e.target.value = '';
 
+  // Capturar el File ANTES de limpiar el input,
+  // porque FileList es un live object que se vacía al hacer reset.
   const file = files[0];
   if (!file) return;
+
+  // Reset el input para permitir seleccionar el mismo archivo de nuevo
+  e.target.value = '';
 
   const idx = uploadedImages.value.length;
   uploadedImages.value.push({
