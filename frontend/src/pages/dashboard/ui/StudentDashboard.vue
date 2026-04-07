@@ -52,27 +52,34 @@ const navigateToEstablishment = (id: string) => {
 
 <template>
   <div class="w-full">
-    <!-- Welcome Banner (Stitch HTML) -->
-    <section class="relative w-full h-[400px] flex items-center overflow-hidden mb-12">
+    <!-- Welcome Banner -->
+    <section class="relative w-full h-[520px] md:h-[600px] flex items-center overflow-hidden mb-12">
         <!-- Creamy Background Layer -->
         <div class="absolute inset-0 bg-[#FAF9F6]"></div>
-        
-        <!-- Atmospheric Imagery (Asymmetric Editorial Style) -->
-        <div class="absolute right-0 top-0 w-1/2 h-full hidden lg:block">
+
+        <!-- Atmospheric Imagery — más ancha, menos degradado -->
+        <div class="absolute right-0 top-0 w-3/5 h-full">
             <div class="relative w-full h-full">
-            <img class="w-full h-full object-cover opacity-90" src="/assets/images/ANAHUAC-1-1160x700.jpg" alt="Campus Anáhuac Oaxaca"/>
-            <div class="absolute inset-0 bg-gradient-to-r from-[#FAF9F6] via-[#FAF9F6]/40 to-transparent"></div>
+                <img class="w-full h-full object-cover" src="/assets/images/ANAHUAC-1-1160x700.jpg" alt="Campus Anáhuac Oaxaca"/>
+                <div class="absolute inset-0 bg-gradient-to-r from-[#FAF9F6] via-[#FAF9F6]/30 to-transparent"></div>
             </div>
         </div>
-        
-        <div class="relative z-10 px-12 md:px-24 max-w-4xl">
+
+        <div class="relative z-10 px-10 md:px-20 max-w-3xl">
             <h1 class="text-5xl md:text-7xl font-extrabold text-[#0e0e10] tracking-tighter leading-tight mb-4 brand">
                 Hola, {{ firstName }}.<br/>
                 <span class="text-orange-500">¿Dónde comeremos hoy?</span>
             </h1>
-            <p class="text-[#525155] text-lg font-medium max-w-md">
+            <p class="text-[#525155] text-lg font-medium max-w-md mb-8">
                 Explora las mejores experiencias culinarias dentro de tu campus. Calidad, sabor y comunidad en un solo lugar.
             </p>
+            <RouterLink
+                to="/establishments"
+                class="inline-flex items-center gap-3 bg-orange-500 hover:bg-orange-400 text-white font-black text-xl px-10 py-5 rounded-2xl shadow-xl hover:shadow-orange-500/40 hover:-translate-y-1 transition-all duration-200 active:scale-95"
+            >
+                <span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">star</span>
+                Evaluar ahora
+            </RouterLink>
         </div>
     </section>
 
