@@ -14,6 +14,7 @@ const est = ref<Establishment | null>(null);
 const reviews = ref<EstablishmentReview[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+const alreadyReviewed = ref(false);
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
 
@@ -30,12 +31,15 @@ const ige = computed(() => {
 
 onMounted(async () => {
   try {
-    const [establishment, reviewsResult] = await Promise.all([
+    const isStudent = authStore.user?.role === 'student';
+    const [establishment, reviewsResult, myReviews] = await Promise.all([
       ReviewService.getEstablishment(establishmentId),
       ReviewService.getEstablishmentReviews(establishmentId, 1, 50),
+      isStudent ? ReviewService.getMyReviews() : Promise.resolve([]),
     ]);
     est.value = establishment;
     reviews.value = reviewsResult.data;
+    alreadyReviewed.value = myReviews.some(r => r.establishmentId === establishmentId);
   } catch (e: any) {
     error.value = e.response?.data?.message || 'No se pudo cargar el establecimiento.';
   } finally {
@@ -117,10 +121,21 @@ const initials = (name: string | null) => {
 
         <!-- CTA -->
         <div v-if="authStore.user?.role === 'student'" class="flex justify-center my-8">
-          <button @click="goToReview" class="w-full md:w-2/3 py-5 text-xl tracking-wide bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-2xl shadow-lg hover:shadow-orange-500/30 hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
+          <button
+            v-if="!alreadyReviewed"
+            @click="goToReview"
+            class="w-full md:w-2/3 py-5 text-xl tracking-wide bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-2xl shadow-lg hover:shadow-orange-500/30 hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
+          >
             <span class="material-symbols-outlined font-bold">edit_square</span>
             Escribir una Reseña
           </button>
+          <div
+            v-else
+            class="w-full md:w-2/3 py-5 flex items-center justify-center gap-3 rounded-2xl border-2 border-orange-500/30 bg-orange-500/5 text-orange-500 font-bold text-lg"
+          >
+            <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">check_circle</span>
+            Ya evaluaste este establecimiento
+          </div>
         </div>
 
         <!-- Galería -->
