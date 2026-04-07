@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { injectable, inject } from 'tsyringe';
 import { CreateEstablishmentUseCase } from '../../../application/use-cases/establishments/CreateEstablishmentUseCase';
 import { ListEstablishmentsUseCase } from '../../../application/use-cases/establishments/ListEstablishmentsUseCase';
+import { GetEstablishmentUseCase } from '../../../application/use-cases/establishments/GetEstablishmentUseCase';
 import { UpdateEstablishmentUseCase } from '../../../application/use-cases/establishments/UpdateEstablishmentUseCase';
 import { DeleteEstablishmentUseCase } from '../../../application/use-cases/establishments/DeleteEstablishmentUseCase';
 import { CreateEstablishmentSchema, UpdateEstablishmentSchema } from '../../../application/dtos/EstablishmentDTO';
@@ -12,6 +13,7 @@ export class EstablishmentController {
     constructor(
         @inject(CreateEstablishmentUseCase) private createUseCase: CreateEstablishmentUseCase,
         @inject(ListEstablishmentsUseCase) private listUseCase: ListEstablishmentsUseCase,
+        @inject(GetEstablishmentUseCase) private getUseCase: GetEstablishmentUseCase,
         @inject(UpdateEstablishmentUseCase) private updateUseCase: UpdateEstablishmentUseCase,
         @inject(DeleteEstablishmentUseCase) private deleteUseCase: DeleteEstablishmentUseCase
     ) { }
@@ -50,6 +52,20 @@ export class EstablishmentController {
      *       200:
      *         description: Array of all establishments
      */
+    public getOne = async (req: Request, res: Response): Promise<void> => {
+        const { id } = req.params;
+        const e = await this.getUseCase.execute(id);
+        res.status(200).json({
+            success: true,
+            data: {
+                id: e.id, name: e.name, description: e.description,
+                category: e.category, managerId: e.managerId, isActive: e.isActive,
+                locationDetails: e.locationDetails, openingHours: e.openingHours,
+                galleryUrls: e.galleryUrls, menuUrls: e.menuUrls, createdAt: e.createdAt,
+            }
+        });
+    };
+
     public getAll = async (_req: Request, res: Response): Promise<void> => {
         const { data } = await this.listUseCase.execute();
         const mapped = data.map(e => ({

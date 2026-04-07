@@ -4,8 +4,20 @@ export interface Review {
   foodScore: number;
   serviceScore: number;
   priceScore: number;
-  comment?: string;
+  comment?: string | null;
+  imageUrl?: string | null;
+  sentiment?: string | null;
+  managerReply?: string | null;
+  managerReplyAt?: string | null;
   createdAt: string;
+}
+
+export interface MyReview extends Review {
+  establishmentName: string | null;
+}
+
+export interface EstablishmentReview extends Review {
+  author: string | null;
 }
 
 export interface CreateReviewRequest {
@@ -27,8 +39,12 @@ export interface Establishment {
   name: string;
   category: string;
   managerId?: string;
+  description?: string;
+  locationDetails?: string;
+  openingHours?: string;
+  galleryUrls?: string[];
+  menuUrls?: string[];
 }
-
 
 export interface MetricsSnapshot {
   establishmentId: string;

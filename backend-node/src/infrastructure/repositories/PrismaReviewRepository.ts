@@ -75,6 +75,14 @@ export class PrismaReviewRepository implements IReviewRepository {
     async findByUserId(userId: string): Promise<Review[]> {
         const data = await prisma.review.findMany({
             where: { userId },
+            include: {
+                establishment: { select: { name: true } },
+                sentimentResults: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 1,
+                    select: { predictedLabel: true }
+                }
+            },
             orderBy: { createdAt: 'desc' }
         });
         return data.map(this.mapToDomain);
@@ -131,6 +139,7 @@ export class PrismaReviewRepository implements IReviewRepository {
             comment: data.comment,
             imageUrl: data.imageUrl,
             authorName: data.user?.name,
+            establishmentName: data.establishment?.name,
             sentiment: data.sentimentResults?.[0]?.predictedLabel,
             managerReply: data.managerReply,
             managerReplyAt: data.managerReplyAt,

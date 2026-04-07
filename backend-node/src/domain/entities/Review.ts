@@ -5,9 +5,10 @@ export interface ReviewProps {
     foodScore: number;
     serviceScore: number;
     priceScore: number;
-    comment: string;
+    comment?: string;
     imageUrl?: string;
     authorName?: string;
+    establishmentName?: string;
     sentiment?: string;
     managerReply?: string;
     managerReplyAt?: Date;
@@ -32,7 +33,7 @@ export class Review {
         this.validateScore(props.serviceScore, 'Service');
         this.validateScore(props.priceScore, 'Price');
 
-        if (!props.comment || props.comment.trim().length < 10) {
+        if (props.comment && props.comment.trim().length < 10) {
             throw new Error('Review comment must be at least 10 characters long');
         }
 
@@ -51,9 +52,10 @@ export class Review {
     get foodScore(): number { return this.props.foodScore; }
     get serviceScore(): number { return this.props.serviceScore; }
     get priceScore(): number { return this.props.priceScore; }
-    get comment(): string { return this.props.comment; }
+    get comment(): string | undefined { return this.props.comment; }
     get imageUrl(): string | undefined { return this.props.imageUrl; }
     get authorName(): string | undefined { return this.props.authorName; }
+    get establishmentName(): string | undefined { return this.props.establishmentName; }
     get sentiment(): string | undefined { return this.props.sentiment; }
     get managerReply(): string | undefined { return this.props.managerReply; }
     get managerReplyAt(): Date | undefined { return this.props.managerReplyAt; }

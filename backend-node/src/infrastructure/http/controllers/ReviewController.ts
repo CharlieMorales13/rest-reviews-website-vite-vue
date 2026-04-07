@@ -3,8 +3,10 @@ import { injectable, inject } from 'tsyringe';
 import { CreateReviewUseCase } from '../../../application/use-cases/reviews/CreateReviewUseCase';
 import { ListEstablishmentReviewsUseCase } from '../../../application/use-cases/reviews/ListEstablishmentReviewsUseCase';
 import { ListReviewsUseCase } from '../../../application/use-cases/reviews/ListReviewsUseCase';
+import { ListUserReviewsUseCase } from '../../../application/use-cases/reviews/ListUserReviewsUseCase';
 import { ReplyToReviewUseCase } from '../../../application/use-cases/reviews/ReplyToReviewUseCase';
 import { CreateReviewSchema, ReplyReviewSchema } from '../../../application/dtos/ReviewDTO';
+import { AuthRequest } from '../middlewares/AuthMiddleware';
 
 import { createPaginatedResponse } from '../utils/Pagination';
 
@@ -14,6 +16,7 @@ export class ReviewController {
         @inject(CreateReviewUseCase) private createReviewUseCase: CreateReviewUseCase,
         @inject(ListEstablishmentReviewsUseCase) private listEstablishmentReviewsUseCase: ListEstablishmentReviewsUseCase,
         @inject(ListReviewsUseCase) private listReviewsUseCase: ListReviewsUseCase,
+        @inject(ListUserReviewsUseCase) private listUserReviewsUseCase: ListUserReviewsUseCase,
         @inject(ReplyToReviewUseCase) private replyToReviewUseCase: ReplyToReviewUseCase
     ) { }
 
@@ -189,6 +192,30 @@ export class ReviewController {
      *       200:
      *         description: OK
      */
+    public getMyReviews = async (req: AuthRequest, res: Response): Promise<void> => {
+        const userId = req.user?.userId;
+        if (!userId) {
+            res.status(401).json({ success: false, message: 'Unauthorized' });
+            return;
+        }
+        const reviews = await this.listUserReviewsUseCase.execute(userId);
+        const formatted = reviews.map(r => ({
+            id: r.id,
+            establishmentId: r.establishmentId,
+            establishmentName: r.establishmentName ?? null,
+            comment: r.comment ?? null,
+            foodScore: r.foodScore,
+            serviceScore: r.serviceScore,
+            priceScore: r.priceScore,
+            imageUrl: r.imageUrl ?? null,
+            sentiment: r.sentiment ?? null,
+            managerReply: r.managerReply ?? null,
+            managerReplyAt: r.managerReplyAt ?? null,
+            createdAt: r.createdAt,
+        }));
+        res.status(200).json({ success: true, data: formatted });
+    };
+
     public reply = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
         const { id } = req.params;
         const user = (req as any).user;

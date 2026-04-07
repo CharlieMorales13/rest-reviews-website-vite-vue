@@ -10,6 +10,7 @@ const reviewController = container.resolve(ReviewController);
 
 // Routes
 reviewRouter.get('/', reviewController.getAll);
+reviewRouter.get('/my', authenticateToken, reviewController.getMyReviews);
 
 /**
  * @swagger
