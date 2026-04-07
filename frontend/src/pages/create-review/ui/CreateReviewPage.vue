@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ReviewService } from '@/entities/review/api/ReviewService';
+import { httpClient } from '@/shared/api/httpClient';
 
 const route = useRoute();
 const router = useRouter();
@@ -32,38 +33,76 @@ const commentTooShort = computed(() => comment.value.length > 0 && comment.value
 const allScoresValid = computed(() => foodScore.value > 0 && serviceScore.value > 0 && priceScore.value > 0);
 const formValid = computed(() => allScoresValid.value && !loading.value && commentLength.value <= COMMENT_MAX && !commentTooShort.value);
 
-// For mockup of drag & drop images
-const uploadedImages = ref<string[]>([]);
+// Upload de imagen real
+interface UploadedImage {
+  previewUrl: string;   // blob URL local para el preview
+  remoteUrl: string | null; // URL de Supabase (null mientras sube)
+  uploading: boolean;
+  file: File;
+}
+
+const uploadedImages = ref<UploadedImage[]>([]);
 const fileInput = ref<HTMLInputElement | null>(null);
 
 const triggerFileInput = () => {
   fileInput.value?.click();
 };
 
-const onFileSelect = (e: any) => {
-  const files = e.target.files;
-  if (files.length) {
-    // mock logic to show UI change
-    uploadedImages.value.push(URL.createObjectURL(files[0]));
+const onFileSelect = async (e: any) => {
+  const files: FileList = e.target.files;
+  if (!files.length) return;
+  // Reset el input para permitir seleccionar el mismo archivo de nuevo
+  e.target.value = '';
+
+  const file = files[0];
+  const entry: UploadedImage = {
+    previewUrl: URL.createObjectURL(file),
+    remoteUrl: null,
+    uploading: true,
+    file,
+  };
+  uploadedImages.value.push(entry);
+  const idx = uploadedImages.value.length - 1;
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const { data } = await httpClient.post<{ success: boolean; data: { url: string } }>(
+      '/api/upload',
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    uploadedImages.value[idx].remoteUrl = data.data.url;
+  } catch {
+    // Si falla el upload, mostrar error en la imagen y permitir quitar
+    uploadedImages.value[idx].remoteUrl = null;
+  } finally {
+    uploadedImages.value[idx].uploading = false;
   }
 };
 
 const removeImage = (idx: number) => {
+  URL.revokeObjectURL(uploadedImages.value[idx].previewUrl);
   uploadedImages.value.splice(idx, 1);
 };
 
 const submitReview = async () => {
   if (!formValid.value) return;
+  // No enviar si alguna imagen aún está subiendo
+  if (uploadedImages.value.some(img => img.uploading)) return;
+
   loading.value = true;
   error.value = null;
-  
+
   try {
+    const imageUrl = uploadedImages.value.find(img => img.remoteUrl)?.remoteUrl ?? undefined;
     const response = await ReviewService.create({
       establishmentId,
       foodScore: foodScore.value,
       serviceScore: serviceScore.value,
       priceScore: priceScore.value,
-      comment: comment.value || undefined
+      comment: comment.value || undefined,
+      imageUrl,
     });
     alert(response.message || '¡Evaluación enviada con éxito!');
     router.push(`/establishments/${establishmentId}`);
@@ -176,24 +215,44 @@ const hoveredPrice = ref(0);
             </div>
           </div>
 
-          <!-- Adding Images Mockup -->
+          <!-- Upload de imagen real -->
           <div>
             <label class="font-bold text-[#0e0e10] mb-2 block brand">Añadir Evidencia (Opcional)</label>
-            <div class="border-2 border-dashed border-orange-500/30 rounded-2xl bg-orange-500/5 hover:bg-orange-500/10 transition-colors p-8 text-center cursor-pointer relative" @click="triggerFileInput">
+            <div
+              v-if="uploadedImages.length === 0"
+              class="border-2 border-dashed border-orange-500/30 rounded-2xl bg-orange-500/5 hover:bg-orange-500/10 transition-colors p-8 text-center cursor-pointer relative"
+              @click="triggerFileInput"
+            >
               <input type="file" ref="fileInput" @change="onFileSelect" class="hidden" accept="image/*" />
               <span class="material-symbols-outlined text-orange-500 text-4xl mb-2">add_photo_alternate</span>
-              <p class="font-bold text-orange-500 mb-1 tracking-wide">Haz clic para subir fotos de tu platillo</p>
-              <p class="text-xs text-[#525155]">Soporta JPG, PNG (Toma real de los alimentos)</p>
+              <p class="font-bold text-orange-500 mb-1 tracking-wide">Haz clic para subir una foto de tu platillo</p>
+              <p class="text-xs text-[#525155]">Soporta JPG, PNG — máx. 5 MB</p>
             </div>
-            
-            <!-- Previews -->
-            <div v-if="uploadedImages.length > 0" class="flex gap-4 mt-6 overflow-x-auto pb-2">
-              <div v-for="(img, i) in uploadedImages" :key="i" class="w-24 h-24 rounded-xl overflow-hidden relative shadow-md shrink-0 border border-black/10">
-                <img :src="img" class="w-full h-full object-cover" />
-                <button @click.prevent="removeImage(i)" class="absolute top-1 right-1 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full text-white flex items-center justify-center shadow-lg transition-colors">
+
+            <!-- Previews con estado de upload -->
+            <div v-if="uploadedImages.length > 0" class="flex gap-4 mt-4 overflow-x-auto pb-2">
+              <div v-for="(img, i) in uploadedImages" :key="i" class="w-28 h-28 rounded-xl overflow-hidden relative shadow-md shrink-0 border border-black/10 bg-black/5">
+                <img :src="img.previewUrl" class="w-full h-full object-cover" />
+                <!-- Overlay: subiendo -->
+                <div v-if="img.uploading" class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-1">
+                  <span class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                  <span class="text-white text-[10px] font-bold">Subiendo…</span>
+                </div>
+                <!-- Overlay: error -->
+                <div v-else-if="!img.remoteUrl" class="absolute inset-0 bg-red-500/70 flex flex-col items-center justify-center gap-1">
+                  <span class="material-symbols-outlined text-white text-lg">error</span>
+                  <span class="text-white text-[10px] font-bold">Error</span>
+                </div>
+                <!-- Check: subido OK -->
+                <div v-else class="absolute top-1 left-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow">
+                  <span class="material-symbols-outlined text-white text-xs" style="font-size:12px">check</span>
+                </div>
+                <button @click.prevent="removeImage(i)" class="absolute top-1 right-1 w-6 h-6 bg-black/60 hover:bg-red-500 rounded-full text-white flex items-center justify-center shadow-lg transition-colors">
                   <span class="material-symbols-outlined text-sm">close</span>
                 </button>
               </div>
+              <!-- Aviso de imagen pendiente -->
+              <p v-if="uploadedImages.some(img => img.uploading)" class="text-xs text-[#525155] self-end pb-2">Espera a que termine la subida antes de publicar</p>
             </div>
           </div>
 
@@ -202,7 +261,12 @@ const hoveredPrice = ref(0);
           </div>
 
           <!-- Submit Button -->
-          <button type="submit" :disabled="!formValid" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold py-5 rounded-2xl shadow-lg hover:shadow-orange-500/30 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transition-all flex items-center justify-center gap-2" style="margin-top: 2rem;">
+          <button
+            type="submit"
+            :disabled="!formValid || uploadedImages.some(img => img.uploading)"
+            class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold py-5 rounded-2xl shadow-lg hover:shadow-orange-500/30 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transition-all flex items-center justify-center gap-2"
+            style="margin-top: 2rem;"
+          >
             <span class="material-symbols-outlined font-bold">send</span>
             {{ loading ? 'PROCESANDO...' : 'PUBLICAR RESEÑA' }}
           </button>

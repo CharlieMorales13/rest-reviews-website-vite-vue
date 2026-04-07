@@ -26,6 +26,7 @@ export interface CreateReviewRequest {
   serviceScore: number;
   priceScore: number;
   comment?: string;
+  imageUrl?: string;
 }
 
 export interface ReviewResponse {
