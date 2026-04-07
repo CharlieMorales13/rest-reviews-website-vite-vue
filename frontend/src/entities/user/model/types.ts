@@ -3,6 +3,9 @@ export interface User {
   name: string;
   email: string;
   role: 'student' | 'manager' | 'admin';
+  avatarUrl?: string | null;
+  bio?: string | null;
+  universityId?: string | null;
 }
 
 export interface RegisterRequest {

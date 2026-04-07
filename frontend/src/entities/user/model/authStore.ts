@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { AuthService } from '../api/AuthService';
+import type { UpdateProfileRequest } from '../api/AuthService';
 import type { User, LoginRequest, RegisterRequest } from './types';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -66,6 +67,23 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('user');
   };
 
+  const fetchProfile = async () => {
+    if (!token.value) return;
+    try {
+      const freshUser = await AuthService.getMe();
+      user.value = freshUser;
+      localStorage.setItem('user', JSON.stringify(freshUser));
+    } catch {
+      // Si falla (token expirado, etc.) no interrumpir la sesión
+    }
+  };
+
+  const updateProfile = async (payload: UpdateProfileRequest): Promise<void> => {
+    const updated = await AuthService.updateMe(payload);
+    user.value = updated;
+    localStorage.setItem('user', JSON.stringify(updated));
+  };
+
   const initAuth = () => {
     try {
       const storedUser = localStorage.getItem('user');
@@ -97,6 +115,8 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     register,
     logout,
-    initAuth
+    initAuth,
+    fetchProfile,
+    updateProfile,
   };
 });
