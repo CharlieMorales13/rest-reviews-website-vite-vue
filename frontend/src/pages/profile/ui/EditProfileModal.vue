@@ -69,7 +69,7 @@ const handleSave = async () => {
             v-model="name"
             type="text"
             maxlength="120"
-            class="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 text-on-surface font-sans placeholder-on-surface-variant/50 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all shadow-inner"
+            class="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 text-black font-sans placeholder-on-surface-variant/100 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all shadow-inner"
             placeholder="Tu nombre completo"
           />
         </div>
@@ -80,7 +80,7 @@ const handleSave = async () => {
             v-model="bio"
             rows="3"
             maxlength="500"
-            class="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 text-on-surface font-sans placeholder-on-surface-variant/50 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all resize-none shadow-inner"
+            class="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 text-black  font-sans placeholder-on-surface-variant/100 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all resize-none shadow-inner"
             placeholder="Cuéntanos sobre ti…"
           ></textarea>
           <span class="text-right text-xs text-on-surface-variant/50">{{ bio.length }} / 500</span>
