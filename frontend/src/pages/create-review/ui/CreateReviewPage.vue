@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ReviewService } from '@/entities/review/api/ReviewService';
 
@@ -7,14 +7,16 @@ const route = useRoute();
 const router = useRouter();
 const establishmentId = route.params.id as string;
 
-// Map for purely visual mocking so the user sees the specific establishment right away
-const establishmentCache: Record<string, string> = {
-  '1': 'DelyFull',
-  '2': 'Guajaquenito',
-  '3': 'Cuckoo Coffee & Resto',
-  '4': 'Cuckoo Box'
-};
-const establishmentName = computed(() => establishmentCache[establishmentId] || 'el Establecimiento');
+const establishmentName = ref('el Establecimiento');
+onMounted(async () => {
+  try {
+    const establishments = await ReviewService.getEstablishments();
+    const found = establishments.find(e => e.id === establishmentId);
+    if (found) establishmentName.value = found.name;
+  } catch {
+    // fallback ya está en el valor por defecto
+  }
+});
 
 const foodScore = ref(0);
 const serviceScore = ref(0);
@@ -25,9 +27,10 @@ const error = ref<string | null>(null);
 
 const COMMENT_MAX = 500;
 const commentLength = computed(() => comment.value.length);
+const commentTooShort = computed(() => comment.value.length > 0 && comment.value.length < 10);
 
 const allScoresValid = computed(() => foodScore.value > 0 && serviceScore.value > 0 && priceScore.value > 0);
-const formValid = computed(() => allScoresValid.value && !loading.value && commentLength.value <= COMMENT_MAX);
+const formValid = computed(() => allScoresValid.value && !loading.value && commentLength.value <= COMMENT_MAX && !commentTooShort.value);
 
 // For mockup of drag & drop images
 const uploadedImages = ref<string[]>([]);
@@ -166,7 +169,11 @@ const hoveredPrice = ref(0);
               placeholder="¿Qué platillo pediste? ¿Cómo estuvo el sabor? Toda crítica constructiva suma."
               :maxlength="COMMENT_MAX"
             ></textarea>
-            <div class="text-right text-xs text-[#adaaad] mt-1 font-bold">{{ commentLength }} / {{ COMMENT_MAX }} MAX</div>
+            <div class="flex justify-between mt-1">
+              <span v-if="commentTooShort" class="text-xs text-red-500 font-bold">Mínimo 10 caracteres si escribes un comentario</span>
+              <span v-else class="flex-1"></span>
+              <span class="text-xs text-[#adaaad] font-bold">{{ commentLength }} / {{ COMMENT_MAX }} MAX</span>
+            </div>
           </div>
 
           <!-- Adding Images Mockup -->

@@ -1,19 +1,49 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/entities/user/model/authStore';
+import { ReviewService } from '@/entities/review/api/ReviewService';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const firstName = computed(() => authStore.user?.name?.split(' ')[0] || 'León');
 
-// Mock Data matching Stitch
-const establishments = ref([
-  { id: '1', name: 'DelyFull', category: 'Restaurante', rating: 4.8, description: 'Comida saludable y antojitos 100% oaxaqueños (tlayudas, tacos, opciones veganas).', location: 'Campus Norte', img: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' },
-  { id: '2', name: 'Guajaquenito', category: 'Restaurante', rating: 4.5, description: 'El corazón de Oaxaca en cada bocado. Molotes, memelas y recetas tradicionales.', location: 'Patio de Comidas', img: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' },
-  { id: '3', name: 'Cuckoo Coffee & Resto', category: 'Cafetería', rating: 4.2, description: 'Especialistas en café, chilaquiles y desayunos perfectos para acompañar tus horas de estudio.', location: 'Ala de Biblioteca', img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' },
-  { id: '4', name: 'Cuckoo Box', category: 'Cafetería', rating: 3.9, description: 'Comida rápida para llevar: Hamburguesas, tortas y opciones listas para comer entre clases.', location: 'Centro Deportivo', img: 'https://images.unsplash.com/photo-1550547660-d9450f859349?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' }
-]);
+const FALLBACK_IMAGES = [
+  'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1550547660-d9450f859349?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+];
+
+interface EstablishmentCard {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  location: string;
+  img: string;
+}
+
+const establishments = ref<EstablishmentCard[]>([]);
+const loadingEstablishments = ref(true);
+
+onMounted(async () => {
+  try {
+    const data = await ReviewService.getEstablishments();
+    establishments.value = data.map((e, i) => ({
+      id: e.id,
+      name: e.name,
+      category: e.category || 'Establecimiento',
+      description: (e as any).description || 'Disfruta de una experiencia gastronómica única en el campus Anáhuac Oaxaca.',
+      location: (e as any).locationDetails || 'Campus Anáhuac Oaxaca',
+      img: ((e as any).galleryUrls as string[])?.[0] || FALLBACK_IMAGES[i % FALLBACK_IMAGES.length],
+    }));
+  } catch {
+    // Si falla la API, la grid queda vacía — el error se ve claramente
+  } finally {
+    loadingEstablishments.value = false;
+  }
+});
 
 const navigateToEstablishment = (id: string) => {
   router.push(`/establishments/${id}`);
@@ -60,23 +90,32 @@ const navigateToEstablishment = (id: string) => {
             </div>
         </div>
 
+        <!-- Skeleton loading -->
+        <div v-if="loadingEstablishments" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div v-for="i in 4" :key="i" class="card-cream rounded-2xl overflow-hidden shadow-sm animate-pulse">
+                <div class="h-56 bg-black/10"></div>
+                <div class="p-6 space-y-3">
+                    <div class="h-3 bg-black/10 rounded w-1/3"></div>
+                    <div class="h-5 bg-black/10 rounded w-2/3"></div>
+                    <div class="h-3 bg-black/10 rounded w-full"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- Bento-style Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div 
-                v-for="est in establishments" 
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div
+                v-for="est in establishments"
                 :key="est.id"
                 @click="navigateToEstablishment(est.id)"
                 class="group cursor-pointer"
             >
                 <div class="card-cream rounded-2xl overflow-hidden shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(249,115,22,0.15)]">
                     <div class="relative h-56 overflow-hidden">
-                        <img 
-                            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                        <img
+                            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             :src="est.img"
                         />
-                        <div class="absolute top-4 right-4 bg-orange-500 text-white font-black px-3 py-1 rounded-full text-sm shadow-md">
-                            {{ est.rating.toFixed(1) }} IGE
-                        </div>
                     </div>
                     <div class="p-6">
                         <div class="text-xs font-bold uppercase tracking-widest text-orange-500 mb-1">{{ est.category }}</div>
