@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { httpClient } from '@/shared/api/httpClient';
 import { AdminService, type AdminUser, type PaginationMeta } from '@/entities/user/api/AdminService';
 import CreateUserModal from './CreateUserModal.vue';
@@ -45,7 +45,9 @@ const loadUsers = async (page = currentPage.value) => {
     users.value = result.data;
     pagination.value = result.meta;
     currentPage.value = page;
-    systemMetrics.value[0].value = result.meta.total.toString();
+    if (systemMetrics.value[0]) {
+      systemMetrics.value[0].value = result.meta.total.toString();
+    }
   } catch {
     // keep empty
   } finally {

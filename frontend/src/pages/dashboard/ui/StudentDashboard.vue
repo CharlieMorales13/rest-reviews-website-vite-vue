@@ -30,14 +30,17 @@ const loadingEstablishments = ref(true);
 onMounted(async () => {
   try {
     const data = await ReviewService.getEstablishments();
-    establishments.value = data.map((e, i) => ({
-      id: e.id,
-      name: e.name,
-      category: e.category || 'Establecimiento',
-      description: (e as any).description || 'Disfruta de una experiencia gastronómica única en el campus Anáhuac Oaxaca.',
-      location: (e as any).locationDetails || 'Campus Anáhuac Oaxaca',
-      img: ((e as any).galleryUrls as string[])?.[0] || FALLBACK_IMAGES[i % FALLBACK_IMAGES.length],
-    }));
+    establishments.value = data.map((e, i) => {
+      const fallbackIdx = i % FALLBACK_IMAGES.length;
+      return {
+        id: e.id,
+        name: e.name,
+        category: e.category || 'Establecimiento',
+        description: e.description || 'Disfruta de una experiencia gastronómica única en el campus Anáhuac Oaxaca.',
+        location: e.locationDetails || 'Campus Anáhuac Oaxaca',
+        img: e.galleryUrls?.[0] || FALLBACK_IMAGES[fallbackIdx] || FALLBACK_IMAGES[0]!,
+      };
+    });
   } catch {
     // Si falla la API, la grid queda vacía — el error se ve claramente
   } finally {

@@ -40,8 +40,8 @@ const handleRegister = async () => {
     <div class="relative z-10 w-full max-w-md p-6 animate-fade-in">
       <div class="bg-white/5 backdrop-blur-2xl border border-white/20 rounded-[32px] p-8 md:p-12 shadow-2xl">
         <div class="text-center mb-10">
-          <div class="w-16 h-16 bg-anahuac-orange text-white text-3xl font-extrabold flex items-center justify-center rounded-2xl mx-auto mb-6 shadow-lg shadow-anahuac-orange/30">
-            A
+          <div class="inline-flex items-center gap-2 px-4 py-2 bg-anahuac-orange/20 border border-anahuac-orange/30 rounded-full mb-6">
+            <span class="text-anahuac-orange font-extrabold text-lg tracking-tight brand">Anáhuac EATS</span>
           </div>
           <h1 class="text-3xl font-bold tracking-tight text-white mb-2">Unete León</h1>
           <p class="text-white/60 text-sm">Crea tu cuenta y empieza a opinar</p>

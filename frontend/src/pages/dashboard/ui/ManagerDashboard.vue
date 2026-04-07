@@ -51,9 +51,10 @@ const loadMetrics = async () => {
   try {
     const res = await httpClient.get<{ success: boolean; data: { establishments: EstablishmentMetrics[] } }>('/api/metrics/summary');
     const estabs = res.data.data.establishments;
-    if (estabs && estabs.length > 0) {
-      establishment.value = estabs[0];
-      await loadReviews(estabs[0].id);
+    const firstEstab = estabs?.[0];
+    if (firstEstab) {
+      establishment.value = firstEstab;
+      await loadReviews(firstEstab.id);
     } else {
       metricsError.value = 'No tienes establecimientos asignados. Contacta al administrador.';
     }
