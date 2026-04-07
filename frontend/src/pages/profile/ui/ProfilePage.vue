@@ -1,11 +1,18 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useAuthStore } from '@/entities/user/model/authStore';
 import EditProfileModal from './EditProfileModal.vue';
 
 const authStore = useAuthStore();
 
-const userName = computed(() => authStore.user?.name || 'Mateo Rivera');
+onMounted(() => {
+  authStore.fetchProfile();
+});
+
+const userName = computed(() => authStore.user?.name || '');
+const userBio = computed(() => authStore.user?.bio || null);
+const userAvatar = computed(() => authStore.user?.avatarUrl || null);
+
 const userInitials = computed(() => {
   const parts = userName.value.split(' ');
   if (parts.length >= 2 && parts[0] && parts[1]) {
@@ -15,10 +22,6 @@ const userInitials = computed(() => {
 });
 
 const isEditModalOpen = ref(false);
-
-const handleSaveProfile = (data: { name: string, bio: string }) => {
-  console.log("Profile updated:", data);
-};
 </script>
 
 <template>
@@ -28,11 +31,11 @@ const handleSaveProfile = (data: { name: string, bio: string }) => {
         <div class="flex flex-col md:flex-row items-center md:items-end gap-8">
             <div class="relative">
                 <div class="w-32 h-32 rounded-3xl overflow-hidden ring-4 ring-primary/20 shadow-2xl bg-surface-variant flex items-center justify-center">
-                    <img 
-                        v-if="true" 
-                        class="w-full h-full object-cover" 
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDo4tzeI366UCEEqbqdIf28XgzaLDRoal2DrBwg9UReZ-Qdw3L5fTxnGCjn4xB8dHcXz6p3SGAYJyVx_zyhFj_lFPvWgQOMSWweLeEiN9Sc-074bBZZrHg2XUFsW0EehaI8X4ZA1ZcS9zrLWCbakqBzbn7wTc-mqHqH0MOxOeWw3-12QSYV7U9WioxDrlv9Z_Pib6BPcc6ivGcVmHPplTQ8AdYOUgGpemGpid7Od1nUTdO2PdViMDCfTC2Aa5YNw9WKSf62P6S-nH3-" 
-                        alt="Profile Picture"
+                    <img
+                        v-if="userAvatar"
+                        class="w-full h-full object-cover"
+                        :src="userAvatar"
+                        alt="Foto de perfil"
                     />
                     <span v-else class="text-4xl font-display font-black text-primary">{{ userInitials }}</span>
                 </div>
@@ -45,6 +48,7 @@ const handleSaveProfile = (data: { name: string, bio: string }) => {
                     <div>
                         <h2 class="text-4xl font-headline font-extrabold tracking-tight text-on-surface brand">{{ userName }}</h2>
                         <p class="text-primary font-headline font-medium tracking-wide mt-1">León Anáhuac</p>
+                        <p v-if="userBio" class="text-on-surface-variant text-sm mt-2 max-w-xs leading-relaxed">{{ userBio }}</p>
                     </div>
                     <button @click="isEditModalOpen = true" class="px-6 py-2.5 rounded-xl border border-outline-variant/30 text-on-surface-variant font-medium hover:bg-surface-variant hover:text-on-surface transition-all active:scale-95">
                         Editar Perfil
@@ -166,11 +170,12 @@ const handleSaveProfile = (data: { name: string, bio: string }) => {
     </section>
 
     <!-- Edit Profile Modal Integration -->
-    <EditProfileModal 
-      :isOpen="isEditModalOpen" 
+    <EditProfileModal
+      :isOpen="isEditModalOpen"
       :initialName="userName"
+      :initialBio="userBio ?? undefined"
       @close="isEditModalOpen = false"
-      @save="handleSaveProfile"
+      @saved="isEditModalOpen = false"
     />
   </div>
 </template>
