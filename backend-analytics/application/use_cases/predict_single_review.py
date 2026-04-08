@@ -41,7 +41,7 @@ class PredictSingleReviewUseCase:
         except Exception:
             pass  # load_or_train with empty lists won't train if no cache
 
-        if self._model._pipeline is None:  # type: ignore[attr-defined]
+        if not self._model.is_loaded():
             logger.warning(
                 "predict_single: no cached model found for review_id=%s — "
                 "admin must run the full pipeline first",

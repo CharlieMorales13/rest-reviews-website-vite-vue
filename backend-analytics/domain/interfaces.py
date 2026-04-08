@@ -73,6 +73,11 @@ class ISentimentModel(ABC):
         ...
 
     @abstractmethod
+    def is_loaded(self) -> bool:
+        """Return True if the model is ready to predict."""
+        ...
+
+    @abstractmethod
     def predict(self, texts: List[str]) -> List[SentimentPrediction]:
         ...
 
