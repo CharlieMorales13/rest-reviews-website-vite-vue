@@ -26,14 +26,21 @@ def _build_deps():
     from infrastructure.database.review_repository import SqlAlchemyReviewRepository
     from infrastructure.database.model_repository import SqlAlchemyModelRepository
     from infrastructure.database.metrics_repository import SqlAlchemyMetricsRepository
-    from infrastructure.ml.sentiment_pipeline import SklearnSentimentPipeline
 
     engine = get_engine()
+
+    if config.MODEL_BACKEND == "transformer":
+        from infrastructure.ml.transformer_pipeline import TransformerSentimentPipeline
+        model = TransformerSentimentPipeline(config.TRANSFORMER_MODEL_NAME)
+    else:
+        from infrastructure.ml.sentiment_pipeline import SklearnSentimentPipeline
+        model = SklearnSentimentPipeline(config.MODEL_PATH)
+
     return dict(
         review_repo=SqlAlchemyReviewRepository(engine),
         model_repo=SqlAlchemyModelRepository(engine),
         metrics_repo=SqlAlchemyMetricsRepository(engine),
-        model=SklearnSentimentPipeline(config.MODEL_PATH),
+        model=model,
     )
 
 

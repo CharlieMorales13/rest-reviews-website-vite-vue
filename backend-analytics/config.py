@@ -12,6 +12,16 @@ class Config:
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "models"),
         "sentiment_pipeline.joblib",
     )
+    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
+    SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
+    SUPABASE_MODEL_BUCKET: str = "ml-models"
+    SUPABASE_MODEL_OBJECT: str = "sentiment_pipeline.joblib"
+    # Model backend: "sklearn" (default) | "transformer"
+    MODEL_BACKEND: str = os.getenv("MODEL_BACKEND", "sklearn")
+    TRANSFORMER_MODEL_NAME: str = os.getenv(
+        "TRANSFORMER_MODEL_NAME",
+        "pysentimiento/robertuito-sentiment-analysis",
+    )
     
     # Sanitize DATABASE_URL for SQLAlchemy if needed
     @property
