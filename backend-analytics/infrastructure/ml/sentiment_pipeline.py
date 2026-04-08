@@ -33,6 +33,9 @@ class SklearnSentimentPipeline(ISentimentModel):
     # ISentimentModel implementation                                       #
     # ------------------------------------------------------------------ #
 
+    def is_loaded(self) -> bool:
+        return self._pipeline is not None
+
     def load_or_train(
         self,
         texts: List[str],
