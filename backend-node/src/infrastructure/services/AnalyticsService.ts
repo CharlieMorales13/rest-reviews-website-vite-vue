@@ -1,18 +1,14 @@
-import { spawn } from 'child_process';
-import path from 'path';
 import { injectable } from 'tsyringe';
 import { IAnalyticsService, AnalyticsResult, PredictResult } from '../../domain/services/IAnalyticsService';
 import { AppError } from '../http/errors/AppError';
-
-const PYTHON_PATH = path.join(__dirname, '../../../../backend-analytics/venv/Scripts/python.exe');
-const SCRIPT_PATH = path.join(__dirname, '../../../../backend-analytics/sentiment_model.py');
+import { env } from '../config/env.config';
 
 @injectable()
 export class AnalyticsService implements IAnalyticsService {
 
     /** Full pipeline — triggered manually by admin via POST /api/metrics/run */
     async runSentimentAnalysis(): Promise<AnalyticsResult> {
-        const result = await this._callPython({ mode: 'train' });
+        const result = await this._post('/train', {});
         if (result.error) {
             throw new AppError(result.error, 500);
         }
@@ -22,12 +18,10 @@ export class AnalyticsService implements IAnalyticsService {
     /**
      * Single-review inference — called automatically on every POST /reviews.
      * Non-blocking from the caller's perspective (fire-and-forget pattern).
-     * Loads the cached model; does NOT retrain.
      */
     async classifyReview(reviewId: string, text: string): Promise<PredictResult> {
-        const result = await this._callPython({ mode: 'predict', review_id: reviewId, text });
+        const result = await this._post('/predict', { review_id: reviewId, text });
         if (result.error) {
-            // Degraded gracefully — model may not be trained yet
             return {
                 review_id: reviewId,
                 label: 'neutral',
@@ -38,39 +32,22 @@ export class AnalyticsService implements IAnalyticsService {
         return result as PredictResult;
     }
 
-    /** Spawn the Python process, write payload to stdin, collect stdout JSON. */
-    private _callPython(payload: Record<string, string>): Promise<Record<string, any>> {
-        return new Promise((resolve, reject) => {
-            const python = spawn(PYTHON_PATH, [SCRIPT_PATH]);
-
-            let stdout = '';
-            let stderr = '';
-
-            python.stdout.on('data', (d) => { stdout += d.toString(); });
-            python.stderr.on('data', (d) => { stderr += d.toString(); });
-
-            python.on('close', (code) => {
-                if (code !== 0) {
-                    reject(new AppError(
-                        `Analytics process exited with code ${code}: ${stderr.slice(0, 200)}`,
-                        500,
-                    ));
-                    return;
-                }
-                try {
-                    resolve(JSON.parse(stdout));
-                } catch {
-                    reject(new AppError('Analytics returned invalid JSON', 500));
-                }
+    private async _post(path: string, body: Record<string, unknown>): Promise<Record<string, any>> {
+        const url = `${env.ANALYTICS_URL}${path}`;
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
             });
-
-            python.on('error', (err) => {
-                reject(new AppError(`Failed to spawn analytics process: ${err.message}`, 500));
-            });
-
-            // Send payload via stdin and close the pipe
-            python.stdin.write(JSON.stringify(payload));
-            python.stdin.end();
-        });
+            if (!response.ok) {
+                const text = await response.text();
+                throw new AppError(`Analytics service error ${response.status}: ${text.slice(0, 200)}`, 500);
+            }
+            return await response.json();
+        } catch (err: any) {
+            if (err instanceof AppError) throw err;
+            throw new AppError(`Analytics service unreachable: ${err.message}`, 500);
+        }
     }
 }

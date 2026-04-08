@@ -13,6 +13,7 @@ const envSchema = z.object({
     JWT_EXPIRES_IN: z.string().default('1h'),
     SUPABASE_URL: z.string().url('SUPABASE_URL is required for storage'),
     SUPABASE_KEY: z.string().min(1, 'SUPABASE_KEY is required for storage'),
+    ANALYTICS_URL: z.string().url().default('http://localhost:8001'),
 });
 
 const parseEnv = () => {
