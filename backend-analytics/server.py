@@ -37,15 +37,10 @@ def _build_deps() -> dict:
     from infrastructure.database.review_repository import SqlAlchemyReviewRepository
     from infrastructure.database.model_repository import SqlAlchemyModelRepository
     from infrastructure.database.metrics_repository import SqlAlchemyMetricsRepository
+    from infrastructure.ml.transformer_pipeline import TransformerSentimentPipeline
 
     engine = get_engine()
-
-    if config.MODEL_BACKEND == "transformer":
-        from infrastructure.ml.transformer_pipeline import TransformerSentimentPipeline
-        model = TransformerSentimentPipeline(config.TRANSFORMER_MODEL_NAME)
-    else:
-        from infrastructure.ml.sentiment_pipeline import SklearnSentimentPipeline
-        model = SklearnSentimentPipeline(config.MODEL_PATH)
+    model = TransformerSentimentPipeline(config.TRANSFORMER_MODEL_NAME)
 
     return dict(
         review_repo=SqlAlchemyReviewRepository(engine),
@@ -58,15 +53,12 @@ def _build_deps() -> dict:
 @app.on_event("startup")
 async def startup() -> None:
     global _deps
-    logger.info("Starting analytics server — backend=%s", config.MODEL_BACKEND)
+    logger.info("Starting analytics server — model=%s", config.TRANSFORMER_MODEL_NAME)
     _deps = _build_deps()
 
     # Pre-load model into memory so first request is fast
-    from infrastructure.ml.training_data import TRAINING_DATA
-    texts = [t for t, _ in TRAINING_DATA]
-    labels = [lbl for _, lbl in TRAINING_DATA]
     try:
-        _deps["model"].load_or_train(texts, labels, force_retrain=False)
+        _deps["model"].load_or_train([], [])
         logger.info("Model pre-loaded at startup")
     except Exception as e:
         logger.warning("Could not pre-load model at startup: %s", e)
@@ -124,4 +116,4 @@ async def train(req: TrainRequest = TrainRequest()) -> dict:
 
 @app.get("/health")
 async def health() -> dict:
-    return {"status": "ok", "model_loaded": _deps.get("model", None) is not None and _deps["model"].is_loaded()}
+    return {"status": "ok", "model_loaded": _deps.get("model") is not None and _deps["model"].is_loaded()}

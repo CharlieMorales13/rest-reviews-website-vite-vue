@@ -3,9 +3,6 @@ SQLAlchemy
 psycopg2-binary
 scikit-learn
 python-dotenv
-joblib
-numpy
-supabase==2.10.0
 transformers>=4.36.0
 torch>=2.0.0
 sentencepiece

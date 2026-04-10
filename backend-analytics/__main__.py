@@ -1,7 +1,8 @@
 """
 Analytics Pipeline — Entry Point (Composition Root)
 
-Node.js invokes sentiment_model.py which delegates here.
+Node.js (AnalyticsService.ts) delegates to the FastAPI server (server.py).
+This module is kept for direct CLI invocation and debugging.
 
 Modes (dispatched via stdin JSON):
   - {"mode": "train"}                              → full pipeline (retrain + IGE snapshots)
@@ -26,15 +27,10 @@ def _build_deps():
     from infrastructure.database.review_repository import SqlAlchemyReviewRepository
     from infrastructure.database.model_repository import SqlAlchemyModelRepository
     from infrastructure.database.metrics_repository import SqlAlchemyMetricsRepository
+    from infrastructure.ml.transformer_pipeline import TransformerSentimentPipeline
 
     engine = get_engine()
-
-    if config.MODEL_BACKEND == "transformer":
-        from infrastructure.ml.transformer_pipeline import TransformerSentimentPipeline
-        model = TransformerSentimentPipeline(config.TRANSFORMER_MODEL_NAME)
-    else:
-        from infrastructure.ml.sentiment_pipeline import SklearnSentimentPipeline
-        model = SklearnSentimentPipeline(config.MODEL_PATH)
+    model = TransformerSentimentPipeline(config.TRANSFORMER_MODEL_NAME)
 
     return dict(
         review_repo=SqlAlchemyReviewRepository(engine),
@@ -45,7 +41,7 @@ def _build_deps():
 
 
 def run_train() -> dict:
-    """Full pipeline: retrain model + classify all reviews + IGE snapshots."""
+    """Full pipeline: load model + classify all reviews + IGE snapshots."""
     from infrastructure.ml.training_data import TRAINING_DATA
     from domain.value_objects import IGEWeights
     from application.use_cases.evaluate_model import EvaluateModelUseCase
@@ -70,7 +66,7 @@ def run_train() -> dict:
 
 
 def run_predict(review_id: str, text: str) -> dict:
-    """Single-review inference: load cached model, classify, persist."""
+    """Single-review inference: load model, classify, persist."""
     from application.use_cases.predict_single_review import PredictSingleReviewUseCase
 
     deps = _build_deps()

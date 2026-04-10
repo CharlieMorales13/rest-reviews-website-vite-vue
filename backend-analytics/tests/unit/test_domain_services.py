@@ -1,7 +1,7 @@
 """
 Unit tests for domain/services.py
 
-Tests TextNormalizer (static normalization) and IGECalculator (IGE scoring).
+Tests IGECalculator (IGE scoring).
 """
 import sys
 import os
@@ -11,70 +11,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 import pytest
 import pandas as pd
 
-from domain.services import TextNormalizer, IGECalculator
+from domain.services import IGECalculator
 from domain.value_objects import IGEWeights
-
-
-class TestTextNormalizer:
-    """Tests for TextNormalizer.normalize() static method."""
-
-    def test_normalize_lowercase(self):
-        """Uppercase text must be converted to lowercase."""
-        assert TextNormalizer.normalize("HOLA") == "hola"
-
-    def test_normalize_removes_accents(self):
-        """Accented characters must be replaced with their base ASCII equivalents."""
-        assert TextNormalizer.normalize("café") == "cafe"
-
-    def test_normalize_removes_accents_uppercase(self):
-        """Accented uppercase characters must also be stripped correctly."""
-        assert TextNormalizer.normalize("CAFÉ") == "cafe"
-
-    def test_normalize_removes_special_chars(self):
-        """Exclamation marks and special characters must be removed."""
-        result = TextNormalizer.normalize("bien!!!")
-        assert result == "bien"
-
-    def test_normalize_handles_none(self):
-        """None input must return an empty string without raising an exception."""
-        assert TextNormalizer.normalize(None) == ""
-
-    def test_normalize_handles_empty_string(self):
-        """An empty string must return an empty string."""
-        assert TextNormalizer.normalize("") == ""
-
-    def test_normalize_handles_non_string(self):
-        """Non-string input (e.g. int) must return an empty string."""
-        assert TextNormalizer.normalize(123) == ""
-
-    def test_normalize_handles_non_string_float(self):
-        """Float input must also return an empty string."""
-        assert TextNormalizer.normalize(3.14) == ""
-
-    def test_normalize_handles_non_string_list(self):
-        """List input must return an empty string."""
-        assert TextNormalizer.normalize(["hola"]) == ""
-
-    def test_normalize_combined(self):
-        """Full normalization: accents, special characters, and emojis are stripped."""
-        result = TextNormalizer.normalize("¡Excelente servicio! 😊")
-        assert result == "excelente servicio"
-
-    def test_normalize_keeps_numbers(self):
-        """Digits must be preserved after normalization."""
-        result = TextNormalizer.normalize("5 estrellas")
-        assert "5" in result
-        assert "estrellas" in result
-
-    def test_normalize_trims_whitespace(self):
-        """Leading and trailing whitespace must be stripped."""
-        result = TextNormalizer.normalize("  hola mundo  ")
-        assert result == "hola mundo"
-
-    def test_normalize_multiple_spaces(self):
-        """Text with only special characters and spaces is reduced cleanly."""
-        result = TextNormalizer.normalize("!!!   ???")
-        assert result == ""
 
 
 class TestIGECalculator:

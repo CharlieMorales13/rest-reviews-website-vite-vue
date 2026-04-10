@@ -1,7 +1,6 @@
 import logging
 from collections import Counter
 
-from application.errors import AnalyticsError, PipelineError
 from application.use_cases.generate_snapshots import GenerateMetricsSnapshotsUseCase
 from application.use_cases.train_model import TrainModelUseCase
 from domain.interfaces import IMetricsRepository, IReviewRepository, ISentimentModel

@@ -1,24 +1,6 @@
-import re
-import unicodedata
-
 import pandas as pd
 
 from .value_objects import IGEWeights
-
-
-class TextNormalizer:
-    @staticmethod
-    def normalize(text: object) -> str:
-        if not isinstance(text, str) or text is None:
-            return ""
-        # Lowercase
-        text = text.lower()
-        # Remove accents via NFD decomposition, filtering combining marks (Mn category)
-        nfd = unicodedata.normalize("NFD", text)
-        text = "".join(ch for ch in nfd if unicodedata.category(ch) != "Mn")
-        # Remove special characters — keep only alphanumeric and whitespace
-        text = re.sub(r"[^a-z0-9\s]", "", text)
-        return text.strip()
 
 
 class IGECalculator:
