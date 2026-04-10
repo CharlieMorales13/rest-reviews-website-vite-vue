@@ -20,6 +20,7 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
 )
+from transformers import pipeline as hf_pipeline
 
 from domain.entities import ModelMetrics, SentimentPrediction
 from domain.interfaces import ISentimentModel
@@ -58,8 +59,7 @@ class TransformerSentimentPipeline(ISentimentModel):
             return
 
         logger.info("Loading transformer model: %s", self._model_name)
-        from transformers import pipeline
-        self._classifier = pipeline(
+        self._classifier = hf_pipeline(
             "sentiment-analysis",
             model=self._model_name,
             tokenizer=self._model_name,
