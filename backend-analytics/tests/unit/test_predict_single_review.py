@@ -74,7 +74,7 @@ class TestPredictSingleReview:
 
     def test_model_not_ready_when_pipeline_is_none(self, mock_model_repo, mock_metrics_repo):
         model = MagicMock(spec=ISentimentModel)
-        model._pipeline = None  # no cached model
+        model.is_loaded.return_value = False  # model not yet loaded
         uc = PredictSingleReviewUseCase(model, mock_model_repo, mock_metrics_repo)
         result = uc.execute("rev-1", "texto")
         assert result["model_ready"] is False
@@ -82,7 +82,7 @@ class TestPredictSingleReview:
 
     def test_model_not_ready_skips_db_save(self, mock_model_repo, mock_metrics_repo):
         model = MagicMock(spec=ISentimentModel)
-        model._pipeline = None
+        model.is_loaded.return_value = False
         uc = PredictSingleReviewUseCase(model, mock_model_repo, mock_metrics_repo)
         uc.execute("rev-1", "texto")
         mock_metrics_repo.save_predictions.assert_not_called()
