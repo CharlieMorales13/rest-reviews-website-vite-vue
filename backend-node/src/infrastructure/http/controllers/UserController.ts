@@ -48,7 +48,7 @@ export class UserController {
     public getAll = async (req: Request, res: Response): Promise<void> => {
         const { page, limit } = req.query;
         const pageNum = parseInt(page as string) || 1;
-        const limitNum = parseInt(limit as string) || 10;
+        const limitNum = Math.min(parseInt(limit as string) || 10, 100);
 
         const [{ data, total }, { data: establishments }] = await Promise.all([
             this.listUsersUseCase.execute({ page: pageNum, limit: limitNum }),

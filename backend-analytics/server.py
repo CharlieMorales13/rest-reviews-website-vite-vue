@@ -17,7 +17,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Security
+from fastapi.security.api_key import APIKeyHeader
 from pydantic import BaseModel
 
 from infrastructure.logging_config import setup_logging
@@ -27,6 +28,17 @@ setup_logging(config.LOG_LEVEL)
 logger = logging.getLogger("analytics.server")
 
 app = FastAPI(title="Analytics Sentiment Service")
+
+_api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+async def _require_api_key(api_key: str | None = Security(_api_key_header)) -> None:
+    """Reject requests that don't carry the shared API key (when one is configured)."""
+    expected = config.ANALYTICS_API_KEY
+    if not expected:
+        return  # key not configured → open (dev / local)
+    if api_key != expected:
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
 # ── Dependency container — built once at startup ──────────────────────────
 _deps: dict = {}
@@ -80,7 +92,7 @@ class TrainRequest(BaseModel):
 
 # ── Endpoints ─────────────────────────────────────────────────────────────
 
-@app.post("/predict")
+@app.post("/predict", dependencies=[Security(_require_api_key)])
 async def predict(req: PredictRequest) -> dict:
     from application.use_cases.predict_single_review import PredictSingleReviewUseCase
     uc = PredictSingleReviewUseCase(_deps["model"], _deps["model_repo"], _deps["metrics_repo"])
@@ -93,7 +105,7 @@ async def predict(req: PredictRequest) -> dict:
     return result
 
 
-@app.post("/train")
+@app.post("/train", dependencies=[Security(_require_api_key)])
 async def train(req: TrainRequest = TrainRequest()) -> dict:
     from infrastructure.ml.training_data import TRAINING_DATA
     from domain.value_objects import IGEWeights

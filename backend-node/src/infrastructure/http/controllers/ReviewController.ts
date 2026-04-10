@@ -46,7 +46,7 @@ export class ReviewController {
     public getAll = async (req: Request, res: Response): Promise<void> => {
         const { page, limit } = req.query;
         const pageNum = parseInt(page as string) || 1;
-        const limitNum = parseInt(limit as string) || 10;
+        const limitNum = Math.min(parseInt(limit as string) || 10, 100);
 
         const { data, total } = await this.listReviewsUseCase.execute({ page: pageNum, limit: limitNum });
 
@@ -98,7 +98,7 @@ export class ReviewController {
         const { id } = req.params;
         const { page, limit } = req.query;
         const pageNum = parseInt(page as string) || 1;
-        const limitNum = parseInt(limit as string) || 10;
+        const limitNum = Math.min(parseInt(limit as string) || 10, 100);
 
         const { data, total } = await this.listEstablishmentReviewsUseCase.execute(id as string, { page: pageNum, limit: limitNum });
 
@@ -140,12 +140,12 @@ export class ReviewController {
      *         description: Created
      */
     public create = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
-        // We assume the user ID comes from the JWT Auth token (req.user), 
-        // but the schema asks for it. We'll merge it with body.
-        const payload = {
-            ...req.body,
-            userId: (req as any).user?.userId || req.body.userId // Fallback to body for now if JWT not fully attached
-        };
+        const userId = (req as any).user?.userId;
+        if (!userId) {
+            res.status(401).json({ success: false, message: 'Unauthorized' });
+            return;
+        }
+        const payload = { ...req.body, userId };
 
         const validatedData = CreateReviewSchema.parse(payload);
         const review = await this.createReviewUseCase.execute(validatedData);

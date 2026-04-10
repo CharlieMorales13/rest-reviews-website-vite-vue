@@ -36,13 +36,12 @@ export class UploadController {
      */
     public uploadFile = async (req: Request, res: Response): Promise<void> => {
         const file = req.file;
-        const { bucket } = req.body;
 
         if (!file) {
             throw new AppError('No file provided', 400);
         }
 
-        const bucketName = bucket || 'reviews-app-bucket';
+        const bucketName = 'reviews-app-bucket';
 
         const publicUrl = await this.uploadUseCase.execute(
             file.buffer,

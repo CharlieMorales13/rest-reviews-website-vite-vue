@@ -4,6 +4,7 @@ import { LoginUserDTO } from '../../dtos/AuthDTO';
 import { AppError } from '../../../infrastructure/http/errors/AppError';
 import * as argon2 from 'argon2';
 import * as jwt from 'jsonwebtoken';
+import { env } from '../../../infrastructure/config/env.config';
 import prisma from '../../../infrastructure/database/prisma.service';
 
 interface LoginResponse {
@@ -36,17 +37,15 @@ export class LoginUserUseCase {
             throw new AppError('Invalid credentials', 401);
         }
 
-        const secret = process.env.JWT_SECRET || 'fallback-secret';
-
         const token = jwt.sign(
             { userId: user.id, role: user.role, email: user.email },
-            secret,
+            env.JWT_SECRET,
             { expiresIn: '24h' }
         );
 
         const refreshToken = jwt.sign(
             { userId: user.id, type: 'refresh' },
-            secret,
+            env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 

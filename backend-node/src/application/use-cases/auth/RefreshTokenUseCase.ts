@@ -4,6 +4,7 @@ import { RefreshTokenDTO } from '../../dtos/AuthDTO';
 import { AppError } from '../../../infrastructure/http/errors/AppError';
 import * as jwt from 'jsonwebtoken';
 import prisma from '../../../infrastructure/database/prisma.service';
+import { env } from '../../../infrastructure/config/env.config';
 
 interface RefreshResponse {
     token: string;
@@ -17,11 +18,9 @@ export class RefreshTokenUseCase {
     ) { }
 
     async execute(dto: RefreshTokenDTO): Promise<RefreshResponse> {
-        const secret = process.env.JWT_SECRET || 'fallback-secret';
-
         let payload: { userId: string; type: string };
         try {
-            payload = jwt.verify(dto.refreshToken, secret) as { userId: string; type: string };
+            payload = jwt.verify(dto.refreshToken, env.JWT_SECRET) as { userId: string; type: string };
         } catch {
             throw new AppError('Invalid or expired refresh token', 401);
         }
@@ -56,14 +55,14 @@ export class RefreshTokenUseCase {
 
         const token = jwt.sign(
             { userId: user.id, role: user.role, email: user.email },
-            secret,
+            env.JWT_SECRET,
             { expiresIn: '24h' }
         );
 
         // Issue a new rotated refresh token
         const newRefreshToken = jwt.sign(
             { userId: user.id, type: 'refresh' },
-            secret,
+            env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 

@@ -8,7 +8,7 @@ import { injectable, inject } from 'tsyringe';
 import { AuthRequest } from '../middlewares/AuthMiddleware';
 import { GetUserUseCase } from '../../../application/use-cases/users/GetUserUseCase';
 import { UpdateUserUseCase } from '../../../application/use-cases/users/UpdateUserUseCase';
-import { UpdateUserSchema } from '../../../application/dtos/UserDTO';
+import { UpdateProfileSchema } from '../../../application/dtos/UserDTO';
 
 @injectable()
 export class AuthController {
@@ -45,7 +45,7 @@ export class AuthController {
             return;
         }
 
-        const validatedData = UpdateUserSchema.parse(req.body);
+        const validatedData = UpdateProfileSchema.parse(req.body);
         const user = await this.updateUserUseCase.execute(userId, validatedData);
 
         res.status(200).json({

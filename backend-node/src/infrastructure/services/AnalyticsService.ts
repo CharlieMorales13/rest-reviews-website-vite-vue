@@ -46,10 +46,12 @@ export class AnalyticsService implements IAnalyticsService {
 
     private async _post(path: string, body: Record<string, unknown>): Promise<Record<string, any>> {
         const url = `${env.ANALYTICS_URL}${path}`;
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (env.ANALYTICS_API_KEY) headers['X-API-Key'] = env.ANALYTICS_API_KEY;
         try {
             const response = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify(body),
             });
             if (!response.ok) {

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const CreateReviewSchema = z.object({
-    userId: z.string().uuid('Invalid User ID format'),
+    userId: z.string().uuid('Invalid User ID format'), // populated server-side from JWT; not accepted from client
     establishmentId: z.string().uuid('Invalid Establishment ID format'),
     foodScore: z.number().int().min(1).max(5),
     serviceScore: z.number().int().min(1).max(5),

@@ -5,6 +5,7 @@ import { RegisterUserDTO } from '../../dtos/AuthDTO';
 import { AppError } from '../../../infrastructure/http/errors/AppError';
 import * as argon2 from 'argon2';
 import * as jwt from 'jsonwebtoken';
+import { env } from '../../../infrastructure/config/env.config';
 
 interface RegisterResponse {
     user: {
@@ -44,10 +45,9 @@ export class RegisterUserUseCase {
             throw new AppError('Error creating user', 500);
         }
 
-        const secret = process.env.JWT_SECRET || 'fallback-secret';
         const token = jwt.sign(
             { userId: savedUser.id, role: savedUser.role, email: savedUser.email },
-            secret,
+            env.JWT_SECRET,
             { expiresIn: '24h' }
         );
 

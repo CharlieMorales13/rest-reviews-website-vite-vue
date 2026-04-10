@@ -23,7 +23,10 @@ const PORT = env.PORT;
 
 // Security & Utility Middlewares
 app.use(helmet());
-app.use(cors());
+const allowedOrigins = env.NODE_ENV === 'production'
+    ? (process.env.CORS_ORIGINS ?? '').split(',').map(o => o.trim()).filter(Boolean)
+    : ['http://localhost:5173', 'http://localhost:4173'];
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 
 // Replace Morgan with Pino for structured logging
@@ -38,8 +41,10 @@ app.get('/health', (_req: Request, res: Response) => {
     res.status(200).json({ status: 'OK', timestamp: new Date() });
 });
 
-// Swagger Documentation Route
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// Swagger Documentation Route — disabled in production
+if (env.NODE_ENV !== 'production') {
+    app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+}
 
 // API Routes
 app.use('/api/auth', authRouter);

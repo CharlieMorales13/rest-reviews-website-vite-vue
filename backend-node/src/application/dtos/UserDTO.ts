@@ -25,6 +25,16 @@ export const UpdateUserSchema = z.object({
 
 export type UpdateUserDTO = z.infer<typeof UpdateUserSchema>;
 
+// Safe subset for self-service profile updates — never allows role/isActive/establishmentId
+export const UpdateProfileSchema = z.object({
+    name: z.string().min(2).max(120).optional(),
+    avatarUrl: z.string().url().optional().nullable(),
+    bio: z.string().max(500).optional().nullable(),
+    universityId: z.string().optional().nullable(),
+});
+
+export type UpdateProfileDTO = z.infer<typeof UpdateProfileSchema>;
+
 export const UserResponseSchema = z.object({
     id: z.string().uuid(),
     name: z.string(),
