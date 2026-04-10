@@ -5,6 +5,7 @@ from domain.entities import MetricsSnapshot
 from domain.interfaces import IMetricsRepository, IReviewRepository, ISentimentModel
 from domain.services import IGECalculator
 from domain.value_objects import IGEWeights
+from application.use_cases.extract_negative_terms import ExtractNegativeTermsUseCase
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +55,11 @@ class GenerateMetricsSnapshotsUseCase:
 
                 comments = df["comment"].fillna("").tolist()
                 predictions = self._model.predict(comments)
-                negative_count = sum(1 for p in predictions if p.label == "negative")
+                labels = [p.label for p in predictions]
+                negative_count = sum(1 for l in labels if l == "negative")
                 negative_ratio = round(negative_count / total_reviews, 4) if total_reviews else 0.0
+
+                negative_terms = ExtractNegativeTermsUseCase.execute(comments, labels)
 
                 snapshot = MetricsSnapshot(
                     establishment_id=est_id,
@@ -66,6 +70,7 @@ class GenerateMetricsSnapshotsUseCase:
                     negative_ratio=negative_ratio,
                     total_reviews=total_reviews,
                     snapshot_date=datetime.date.today(),
+                    negative_terms=negative_terms,
                 )
                 self._metrics_repo.save_metrics_snapshot(snapshot)
                 saved += 1

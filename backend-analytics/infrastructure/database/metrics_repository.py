@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import List
 
@@ -90,11 +91,13 @@ class SqlAlchemyMetricsRepository(IMetricsRepository):
         If the constraint is absent, the implementation falls back to a
         DELETE + INSERT pattern to achieve idempotency.
         """
+        negative_terms_json = json.dumps(snapshot.negative_terms or [])
+
         upsert_sql = text(
             """
             INSERT INTO metrics_snapshots
                 (establishment_id, ige, avg_food, avg_service, avg_price,
-                 negative_ratio, total_reviews, snapshot_date)
+                 negative_ratio, total_reviews, negative_terms, snapshot_date)
             VALUES
                 (
                     CAST(:establishment_id AS uuid),
@@ -104,6 +107,7 @@ class SqlAlchemyMetricsRepository(IMetricsRepository):
                     :avg_price,
                     :negative_ratio,
                     :total_reviews,
+                    CAST(:negative_terms AS jsonb),
                     :snapshot_date
                 )
             ON CONFLICT (establishment_id, snapshot_date)
@@ -113,7 +117,8 @@ class SqlAlchemyMetricsRepository(IMetricsRepository):
                 avg_service    = EXCLUDED.avg_service,
                 avg_price      = EXCLUDED.avg_price,
                 negative_ratio = EXCLUDED.negative_ratio,
-                total_reviews  = EXCLUDED.total_reviews
+                total_reviews  = EXCLUDED.total_reviews,
+                negative_terms = EXCLUDED.negative_terms
             """
         )
         # Fallback: used when the unique constraint does not exist.
@@ -122,14 +127,13 @@ class SqlAlchemyMetricsRepository(IMetricsRepository):
             DELETE FROM metrics_snapshots
             WHERE establishment_id = CAST(:establishment_id AS uuid)
               AND snapshot_date = :snapshot_date
-
             """
         )
         insert_sql = text(
             """
             INSERT INTO metrics_snapshots
                 (establishment_id, ige, avg_food, avg_service, avg_price,
-                 negative_ratio, total_reviews, snapshot_date)
+                 negative_ratio, total_reviews, negative_terms, snapshot_date)
             VALUES
                 (
                     CAST(:establishment_id AS uuid),
@@ -139,6 +143,7 @@ class SqlAlchemyMetricsRepository(IMetricsRepository):
                     :avg_price,
                     :negative_ratio,
                     :total_reviews,
+                    CAST(:negative_terms AS jsonb),
                     :snapshot_date
                 )
             """
@@ -151,6 +156,7 @@ class SqlAlchemyMetricsRepository(IMetricsRepository):
             "avg_price": snapshot.avg_price,
             "negative_ratio": snapshot.negative_ratio,
             "total_reviews": snapshot.total_reviews,
+            "negative_terms": negative_terms_json,
             "snapshot_date": snapshot.snapshot_date,
         }
         try:

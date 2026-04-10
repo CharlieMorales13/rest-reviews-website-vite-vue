@@ -5,6 +5,20 @@ export interface SentimentSummary {
     total: number;
 }
 
+export interface NegativeTerm {
+    term: string;
+    mentions: number;
+}
+
+/** Distribution of reviews per score (1–5) for one dimension. Index 0 = score 1. */
+export type ScoreBins = [number, number, number, number, number];
+
+export interface ScoreDistribution {
+    food: ScoreBins;
+    service: ScoreBins;
+    price: ScoreBins;
+}
+
 export interface EstablishmentMetric {
     id: string;
     name: string;
@@ -24,6 +38,9 @@ export interface GlobalMetrics {
 
 export interface EstablishmentMetricSummary extends EstablishmentMetric {
     sentimentDistribution: SentimentSummary;
+    reviewsThisMonth: number;
+    scoreDistribution: ScoreDistribution;
+    negativeTerms: NegativeTerm[];
 }
 
 export interface IMetricsRepository {

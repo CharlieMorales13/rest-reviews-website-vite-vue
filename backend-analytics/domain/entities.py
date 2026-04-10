@@ -42,3 +42,4 @@ class MetricsSnapshot:
     negative_ratio: float
     total_reviews: int
     snapshot_date: Any  # datetime.date
+    negative_terms: Any = None  # list[{"term": str, "mentions": int}] | None

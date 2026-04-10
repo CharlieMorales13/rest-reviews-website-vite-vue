@@ -162,6 +162,7 @@ model MetricsSnapshot {
   avgPrice        Decimal? @map("avg_price") @db.Decimal(4, 2)
   negativeRatio   Decimal? @map("negative_ratio") @db.Decimal(5, 4)
   totalReviews    Int      @default(0) @map("total_reviews")
+  negativeTerms   Json?    @map("negative_terms")
   snapshotDate    DateTime @map("snapshot_date") @db.Date
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
 

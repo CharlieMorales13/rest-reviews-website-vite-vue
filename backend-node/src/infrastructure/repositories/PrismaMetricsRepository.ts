@@ -1,5 +1,5 @@
 import prisma from '../database/prisma.service';
-import { IMetricsRepository, GlobalMetrics, EstablishmentMetricSummary } from '../../domain/repositories/IMetricsRepository';
+import { IMetricsRepository, GlobalMetrics, EstablishmentMetricSummary, NegativeTerm, ScoreBins } from '../../domain/repositories/IMetricsRepository';
 import { injectable } from 'tsyringe';
 
 @injectable()
@@ -67,20 +67,37 @@ export class PrismaMetricsRepository implements IMetricsRepository {
     }
 
     async getEstablishmentSummary(id: string): Promise<EstablishmentMetricSummary | null> {
-        const e = await prisma.establishment.findUnique({
-            where: { id },
-            include: {
-                _count: { select: { reviews: true } },
-                reviews: {
-                    include: {
-                        sentimentResults: {
-                            orderBy: { createdAt: 'desc' },
-                            take: 1
-                        }
-                    }
-                }
-            }
-        });
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        const [e, reviewsThisMonth, latestSnapshot] = await Promise.all([
+            prisma.establishment.findUnique({
+                where: { id },
+                include: {
+                    _count: { select: { reviews: true } },
+                    reviews: {
+                        select: {
+                            foodScore: true,
+                            serviceScore: true,
+                            priceScore: true,
+                            sentimentResults: {
+                                orderBy: { createdAt: 'desc' },
+                                take: 1,
+                                select: { predictedLabel: true },
+                            },
+                        },
+                    },
+                },
+            }),
+            prisma.review.count({
+                where: { establishmentId: id, createdAt: { gte: startOfMonth } },
+            }),
+            prisma.metricsSnapshot.findFirst({
+                where: { establishmentId: id },
+                orderBy: { snapshotDate: 'desc' },
+                select: { negativeTerms: true },
+            }),
+        ]);
 
         if (!e) return null;
 
@@ -92,10 +109,25 @@ export class PrismaMetricsRepository implements IMetricsRepository {
             positive: e.reviews.filter((r: any) => r.sentimentResults[0]?.predictedLabel === 'positive').length,
             neutral: e.reviews.filter((r: any) => r.sentimentResults[0]?.predictedLabel === 'neutral').length,
             negative: e.reviews.filter((r: any) => r.sentimentResults[0]?.predictedLabel === 'negative').length,
-            total: e._count.reviews
+            total: e._count.reviews,
         };
 
         const positiveRatio = e._count.reviews > 0 ? (sentimentCounts.positive / e._count.reviews) * 100 : 0;
+
+        // Score distribution: bins[0] = # reviews with score 1, ..., bins[4] = score 5
+        const foodBins: ScoreBins = [0, 0, 0, 0, 0];
+        const serviceBins: ScoreBins = [0, 0, 0, 0, 0];
+        const priceBins: ScoreBins = [0, 0, 0, 0, 0];
+        for (const r of e.reviews) {
+            foodBins[(r as any).foodScore - 1]++;
+            serviceBins[(r as any).serviceScore - 1]++;
+            priceBins[(r as any).priceScore - 1]++;
+        }
+
+        const negativeTerms: NegativeTerm[] =
+            Array.isArray(latestSnapshot?.negativeTerms)
+                ? (latestSnapshot.negativeTerms as unknown as NegativeTerm[])
+                : [];
 
         return {
             id: e.id,
@@ -105,7 +137,10 @@ export class PrismaMetricsRepository implements IMetricsRepository {
             avgPrice: this.calculateAvg(priceScores),
             reviewCount: e._count.reviews,
             sentimentScore: Number(positiveRatio.toFixed(1)),
-            sentimentDistribution: sentimentCounts
+            sentimentDistribution: sentimentCounts,
+            reviewsThisMonth,
+            scoreDistribution: { food: foodBins, service: serviceBins, price: priceBins },
+            negativeTerms,
         };
     }
 
