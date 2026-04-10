@@ -24,6 +24,7 @@ const priceScore = ref(0);
 const comment = ref('');
 const loading = ref(false);
 const error = ref<string | null>(null);
+const showTips = ref(false);
 
 const COMMENT_MIN = 60;
 const COMMENT_MAX = 500;
@@ -214,7 +215,42 @@ const hoveredPrice = ref(0);
 
           <!-- Text Review -->
           <div>
-            <label class="font-bold text-[#0e0e10] mb-2 block brand">Cuéntanos más detalles</label>
+            <div class="flex items-center justify-between mb-2">
+              <label class="font-bold text-[#0e0e10] brand">Cuéntanos más detalles</label>
+              <button
+                type="button"
+                @click="showTips = !showTips"
+                class="flex items-center gap-1 text-xs text-orange-500 font-bold hover:text-orange-600 transition-colors"
+              >
+                <span class="material-symbols-outlined text-sm">lightbulb</span>
+                Consejos para tu reseña
+              </button>
+            </div>
+
+            <!-- Tips panel -->
+            <div v-if="showTips" class="mb-3 rounded-2xl border border-orange-500/20 bg-orange-500/5 p-4 text-sm space-y-3">
+              <p class="font-extrabold text-[#0e0e10]">¿Qué hace que una reseña sea excelente?</p>
+              <div class="space-y-1">
+                <p class="font-bold text-green-700 flex items-center gap-1"><span class="material-symbols-outlined text-base">check_circle</span>Lo que sí debes hacer</p>
+                <ul class="text-[#3f3f42] space-y-1 pl-6 list-disc">
+                  <li>Menciona qué platillo o bebida pediste</li>
+                  <li>Habla del sabor, la temperatura y la presentación</li>
+                  <li>Comenta el tiempo de espera y la atención del personal</li>
+                  <li>Comparte si el precio te pareció justo para lo que recibiste</li>
+                  <li>Sé específico — "los tacos estaban fríos" es más útil que "estuvo mal"</li>
+                </ul>
+              </div>
+              <div class="space-y-1">
+                <p class="font-bold text-red-600 flex items-center gap-1"><span class="material-symbols-outlined text-base">cancel</span>Lo que no debes hacer</p>
+                <ul class="text-[#3f3f42] space-y-1 pl-6 list-disc">
+                  <li>Insultar al personal o a otros estudiantes</li>
+                  <li>Escribir todo en MAYÚSCULAS</li>
+                  <li>Publicar información personal de otras personas</li>
+                  <li>Escribir reseñas de experiencias que no son tuyas</li>
+                </ul>
+              </div>
+            </div>
+
             <textarea
               v-model="comment"
               rows="4"
