@@ -147,15 +147,6 @@ const netSentiment = computed(() => {
 
 const netBarWidth = (value: number) => `${Math.min(Math.abs(value) / 2, 50)}%`;
 
-// ── Section 3 — Alertas Operativas ────────────────────────────────────────────
-const sortedNegativeTerms = computed<NegativeTerm[]>(() =>
-  [...(establishment.value?.negativeTerms ?? [])].sort((a, b) => b.mentions - a.mentions)
-);
-
-const maxMentions = computed(() => sortedNegativeTerms.value[0]?.mentions ?? 1);
-const mentionBarWidth = (mentions: number) =>
-  `${Math.round((mentions / maxMentions.value) * 100)}%`;
-
 // ── Data fetching ──────────────────────────────────────────────────────────────
 const loadMetrics = async () => {
   metricsLoading.value = true;
@@ -501,55 +492,6 @@ const sentimentLabel = (s: string | null) => {
         </div>
       </section>
 
-      <!-- ══════════════════════════════════════════════════════════════════════
-           SECCIÓN 3 — Alertas Operativas
-      ══════════════════════════════════════════════════════════════════════════ -->
-      <section class="mb-16">
-        <h2 class="text-2xl font-bold tracking-tight text-white mb-6 brand">Alertas Operativas</h2>
-
-        <div class="card-cream rounded-[1.5rem] p-6 border border-black/5 shadow-sm">
-          <p class="text-xs text-[#525155] font-bold uppercase tracking-widest mb-4">
-            Términos más frecuentes en reseñas negativas
-          </p>
-
-          <div v-if="sortedNegativeTerms.length === 0" class="py-12 text-center space-y-2">
-            <span class="material-symbols-outlined text-3xl text-[#adaaad]">manage_search</span>
-            <p class="text-sm text-[#adaaad] font-bold">
-              Datos disponibles tras ejecutar el pipeline de analítica.
-            </p>
-          </div>
-
-          <table v-else class="w-full text-sm">
-            <thead>
-              <tr class="text-left border-b border-black/5">
-                <th class="pb-3 text-xs font-bold uppercase tracking-widest text-[#525155] w-8">#</th>
-                <th class="pb-3 text-xs font-bold uppercase tracking-widest text-[#525155]">Término</th>
-                <th class="pb-3 text-xs font-bold uppercase tracking-widest text-[#525155]">Menciones</th>
-                <th class="pb-3 text-xs font-bold uppercase tracking-widest text-[#525155] w-1/3">Frecuencia relativa</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="(term, idx) in sortedNegativeTerms"
-                :key="term.term"
-                class="border-b border-black/5 last:border-0"
-              >
-                <td class="py-3 text-[#adaaad] font-bold">{{ idx + 1 }}</td>
-                <td class="py-3 font-bold text-[#0e0e10]">{{ term.term }}</td>
-                <td class="py-3 font-black text-red-500">{{ term.mentions }}</td>
-                <td class="py-3">
-                  <div class="w-full h-2 rounded-full bg-black/5 overflow-hidden">
-                    <div
-                      class="h-full bg-red-400 rounded-full transition-all duration-500"
-                      :style="{ width: mentionBarWidth(term.mentions) }"
-                    ></div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
 
       <!-- ══════════════════════════════════════════════════════════════════════
            RESEÑAS — Búsqueda, paginación y modal de respuesta
