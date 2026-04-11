@@ -2,7 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { RegisterUserUseCase } from '../../../application/use-cases/auth/RegisterUserUseCase';
 import { LoginUserUseCase } from '../../../application/use-cases/auth/LoginUserUseCase';
 import { RefreshTokenUseCase } from '../../../application/use-cases/auth/RefreshTokenUseCase';
-import { RegisterUserSchema, LoginUserSchema, RefreshTokenSchema } from '../../../application/dtos/AuthDTO';
+import { ChangePasswordUseCase } from '../../../application/use-cases/auth/ChangePasswordUseCase';
+import { RegisterUserSchema, LoginUserSchema, RefreshTokenSchema, ChangePasswordSchema } from '../../../application/dtos/AuthDTO';
 import { injectable, inject } from 'tsyringe';
 
 import { AuthRequest } from '../middlewares/AuthMiddleware';
@@ -17,7 +18,8 @@ export class AuthController {
         @inject(LoginUserUseCase) private loginUserUseCase: LoginUserUseCase,
         @inject(RefreshTokenUseCase) private refreshTokenUseCase: RefreshTokenUseCase,
         @inject(GetUserUseCase) private getUserUseCase: GetUserUseCase,
-        @inject(UpdateUserUseCase) private updateUserUseCase: UpdateUserUseCase
+        @inject(UpdateUserUseCase) private updateUserUseCase: UpdateUserUseCase,
+        @inject(ChangePasswordUseCase) private changePasswordUseCase: ChangePasswordUseCase,
     ) { }
 
     /**
@@ -145,6 +147,17 @@ export class AuthController {
      *       429:
      *         description: Too many requests
      */
+    public changePassword = async (req: AuthRequest, res: Response): Promise<void> => {
+        const userId = req.user?.userId;
+        if (!userId) {
+            res.status(401).json({ success: false, message: 'Unauthorized' });
+            return;
+        }
+        const dto = ChangePasswordSchema.parse(req.body);
+        await this.changePasswordUseCase.execute(userId, dto);
+        res.status(200).json({ success: true, message: 'Contraseña actualizada correctamente' });
+    };
+
     public refresh = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
         const validatedData = RefreshTokenSchema.parse(req.body);
         const result = await this.refreshTokenUseCase.execute(validatedData);

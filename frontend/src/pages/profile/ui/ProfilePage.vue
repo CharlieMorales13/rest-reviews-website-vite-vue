@@ -3,6 +3,7 @@ import { computed, ref, onMounted } from 'vue';
 import { useAuthStore } from '@/entities/user/model/authStore';
 import { ReviewService } from '@/entities/review/api/ReviewService';
 import EditProfileModal from './EditProfileModal.vue';
+import ChangePasswordModal from './ChangePasswordModal.vue';
 
 const authStore = useAuthStore();
 const reviewCount = ref<number | null>(null);
@@ -31,6 +32,7 @@ const userInitials = computed(() => {
 });
 
 const isEditModalOpen = ref(false);
+const isChangePasswordOpen = ref(false);
 </script>
 
 <template>
@@ -82,6 +84,25 @@ const isEditModalOpen = ref(false);
         </div>
     </section>
 
+    <!-- Security section -->
+    <section class="mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-2xl font-headline font-bold text-[#f9f5f8] brand">Seguridad</h3>
+        </div>
+        <button @click="isChangePasswordOpen = true" class="w-full flex items-center justify-between p-6 card-cream rounded-2xl border border-black/5 shadow-sm hover:shadow-md transition-all group">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+                    <span class="material-symbols-outlined text-2xl">lock</span>
+                </div>
+                <div class="text-left">
+                    <p class="font-bold text-[#0e0e10] brand">Cambiar contraseña</p>
+                    <p class="text-sm text-[#adaaad]">Actualiza tu contraseña de acceso</p>
+                </div>
+            </div>
+            <span class="material-symbols-outlined text-[#adaaad] group-hover:text-blue-500 transition-colors">chevron_right</span>
+        </button>
+    </section>
+
     <!-- Link to My Reviews page -->
     <section>
         <div class="flex items-center justify-between mb-6">
@@ -100,6 +121,11 @@ const isEditModalOpen = ref(false);
             <span class="material-symbols-outlined text-[#adaaad] group-hover:text-orange-500 transition-colors">chevron_right</span>
         </RouterLink>
     </section>
+
+    <ChangePasswordModal
+      :isOpen="isChangePasswordOpen"
+      @close="isChangePasswordOpen = false"
+    />
 
     <!-- Edit Profile Modal Integration -->
     <EditProfileModal

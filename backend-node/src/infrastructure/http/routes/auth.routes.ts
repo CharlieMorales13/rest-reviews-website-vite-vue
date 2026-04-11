@@ -22,5 +22,6 @@ authRouter.post('/refresh', authRateLimiter, authController.refresh);
  */
 authRouter.get('/me', authenticateToken, authController.getMe);
 authRouter.patch('/me', authenticateToken, authController.updateMe);
+authRouter.patch('/me/password', authenticateToken, authController.changePassword);
 
 export default authRouter;

@@ -78,4 +78,9 @@ export class User {
         this.props.verificationExpires = expiresAt;
         this.props.updatedAt = new Date();
     }
+
+    public updatePasswordHash(newHash: string): void {
+        this.props.passwordHash = newHash;
+        this.props.updatedAt = new Date();
+    }
 }
