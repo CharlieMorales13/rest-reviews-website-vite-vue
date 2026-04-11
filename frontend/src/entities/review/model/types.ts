@@ -22,6 +22,14 @@ export interface EstablishmentReview extends Review {
   authorCarrera?: string | null;
 }
 
+export interface UpdateReviewRequest {
+  foodScore?: number;
+  serviceScore?: number;
+  priceScore?: number;
+  title?: string;
+  comment?: string;
+}
+
 export interface CreateReviewRequest {
   establishmentId: string;
   foodScore: number;

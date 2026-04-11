@@ -66,6 +66,30 @@ export class Review {
     get createdAt(): Date | undefined { return this.props.createdAt; }
     get updatedAt(): Date | undefined { return this.props.updatedAt; }
 
+    public updateContent(data: {
+        foodScore?: number;
+        serviceScore?: number;
+        priceScore?: number;
+        title?: string;
+        comment?: string;
+    }): void {
+        if (data.foodScore !== undefined) {
+            Review.validateScore(data.foodScore, 'Food');
+            this.props.foodScore = data.foodScore;
+        }
+        if (data.serviceScore !== undefined) {
+            Review.validateScore(data.serviceScore, 'Service');
+            this.props.serviceScore = data.serviceScore;
+        }
+        if (data.priceScore !== undefined) {
+            Review.validateScore(data.priceScore, 'Price');
+            this.props.priceScore = data.priceScore;
+        }
+        if (data.title !== undefined) this.props.title = data.title;
+        if (data.comment !== undefined) this.props.comment = data.comment;
+        this.props.updatedAt = new Date();
+    }
+
     public addManagerReply(reply: string): void {
         if (!reply || reply.trim().length < 5) {
             throw new Error('Manager reply must be at least 5 characters long');

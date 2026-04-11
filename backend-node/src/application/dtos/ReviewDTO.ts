@@ -13,6 +13,16 @@ export const CreateReviewSchema = z.object({
 
 export type CreateReviewDTO = z.infer<typeof CreateReviewSchema>;
 
+export const UpdateReviewSchema = z.object({
+    foodScore: z.number().int().min(1).max(5).optional(),
+    serviceScore: z.number().int().min(1).max(5).optional(),
+    priceScore: z.number().int().min(1).max(5).optional(),
+    title: z.string().min(5).max(100).optional(),
+    comment: z.string().min(10).optional(),
+});
+
+export type UpdateReviewDTO = z.infer<typeof UpdateReviewSchema>;
+
 export const ReplyReviewSchema = z.object({
     reviewId: z.string().uuid('Invalid Review ID format'),
     managerId: z.string().uuid('Invalid Manager ID format'),

@@ -112,6 +112,11 @@ export class PrismaReviewRepository implements IReviewRepository {
         const data = await prisma.review.update({
             where: { id: review.id },
             data: {
+                foodScore: review.foodScore,
+                serviceScore: review.serviceScore,
+                priceScore: review.priceScore,
+                title: review.title,
+                comment: review.comment,
                 managerReply: review.managerReply,
                 managerReplyAt: review.managerReplyAt,
                 updatedAt: review.updatedAt,

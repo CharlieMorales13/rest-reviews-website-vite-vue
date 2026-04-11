@@ -1,5 +1,5 @@
 import { httpClient } from '@/shared/api/httpClient';
-import type { CreateReviewRequest, ReviewResponse, MetricsSnapshot, Establishment, MyReview, EstablishmentReview } from '../model/types';
+import type { CreateReviewRequest, UpdateReviewRequest, ReviewResponse, MetricsSnapshot, Establishment, MyReview, EstablishmentReview } from '../model/types';
 
 export class ReviewService {
   static async create(request: CreateReviewRequest): Promise<ReviewResponse> {
@@ -22,6 +22,10 @@ export class ReviewService {
       `/api/establishments/${id}/reviews?page=${page}&limit=${limit}`
     );
     return { data: response.data.data, total: response.data.meta?.total ?? 0 };
+  }
+
+  static async updateReview(id: string, request: UpdateReviewRequest): Promise<void> {
+    await httpClient.patch(`/api/reviews/${id}`, request);
   }
 
   static async getMyReviews(): Promise<MyReview[]> {

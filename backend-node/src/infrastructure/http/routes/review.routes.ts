@@ -39,6 +39,7 @@ reviewRouter.get('/my', authenticateToken, reviewController.getMyReviews);
  *         description: Invalid input
  */
 reviewRouter.post('/', authenticateToken, requireRole(['student']), reviewRateLimiter, reviewController.create);
+reviewRouter.patch('/:id', authenticateToken, requireRole(['student']), reviewController.updateUserReview);
 reviewRouter.patch('/:id/reply', authenticateToken, requireRole(['admin', 'manager']), reviewController.reply);
 
 export default reviewRouter;

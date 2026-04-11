@@ -5,7 +5,8 @@ import { ListEstablishmentReviewsUseCase } from '../../../application/use-cases/
 import { ListReviewsUseCase } from '../../../application/use-cases/reviews/ListReviewsUseCase';
 import { ListUserReviewsUseCase } from '../../../application/use-cases/reviews/ListUserReviewsUseCase';
 import { ReplyToReviewUseCase } from '../../../application/use-cases/reviews/ReplyToReviewUseCase';
-import { CreateReviewSchema, ReplyReviewSchema } from '../../../application/dtos/ReviewDTO';
+import { UpdateReviewUseCase } from '../../../application/use-cases/reviews/UpdateReviewUseCase';
+import { CreateReviewSchema, ReplyReviewSchema, UpdateReviewSchema } from '../../../application/dtos/ReviewDTO';
 import { AuthRequest } from '../middlewares/AuthMiddleware';
 
 import { createPaginatedResponse } from '../utils/Pagination';
@@ -17,7 +18,8 @@ export class ReviewController {
         @inject(ListEstablishmentReviewsUseCase) private listEstablishmentReviewsUseCase: ListEstablishmentReviewsUseCase,
         @inject(ListReviewsUseCase) private listReviewsUseCase: ListReviewsUseCase,
         @inject(ListUserReviewsUseCase) private listUserReviewsUseCase: ListUserReviewsUseCase,
-        @inject(ReplyToReviewUseCase) private replyToReviewUseCase: ReplyToReviewUseCase
+        @inject(ReplyToReviewUseCase) private replyToReviewUseCase: ReplyToReviewUseCase,
+        @inject(UpdateReviewUseCase) private updateReviewUseCase: UpdateReviewUseCase
     ) { }
 
     /**
@@ -205,6 +207,7 @@ export class ReviewController {
             id: r.id,
             establishmentId: r.establishmentId,
             establishmentName: r.establishmentName ?? null,
+            title: r.title ?? null,
             comment: r.comment ?? null,
             foodScore: r.foodScore,
             serviceScore: r.serviceScore,
@@ -237,6 +240,29 @@ export class ReviewController {
                 id: review.id,
                 managerReply: review.managerReply,
                 managerReplyAt: review.managerReplyAt
+            }
+        });
+    };
+
+    public updateUserReview = async (req: AuthRequest, res: Response): Promise<void> => {
+        const userId = req.user?.userId;
+        if (!userId) {
+            res.status(401).json({ success: false, message: 'Unauthorized' });
+            return;
+        }
+        const { id } = req.params;
+        const dto = UpdateReviewSchema.parse(req.body);
+        const review = await this.updateReviewUseCase.execute(id, userId, dto);
+        res.status(200).json({
+            success: true,
+            data: {
+                id: review.id,
+                foodScore: review.foodScore,
+                serviceScore: review.serviceScore,
+                priceScore: review.priceScore,
+                title: review.title ?? null,
+                comment: review.comment ?? null,
+                updatedAt: review.updatedAt,
             }
         });
     };
