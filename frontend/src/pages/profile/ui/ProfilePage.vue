@@ -56,7 +56,9 @@ const isEditModalOpen = ref(false);
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h2 class="text-4xl font-headline font-extrabold tracking-tight text-on-surface brand">{{ userName }}</h2>
-                        <p class="text-primary font-headline font-medium tracking-wide mt-1">León Anáhuac</p>
+                        <p class="text-primary font-headline font-medium tracking-wide mt-1">
+                          {{ userCarrera ? userCarrera : 'Alumno' }} · UAO
+                        </p>
                         <p v-if="userBio" class="text-on-surface-variant text-sm mt-2 max-w-xs leading-relaxed">{{ userBio }}</p>
                     </div>
                     <button @click="isEditModalOpen = true" class="px-6 py-2.5 rounded-xl border border-outline-variant/30 text-on-surface-variant font-medium hover:bg-surface-variant hover:text-on-surface transition-all active:scale-95">
@@ -105,6 +107,7 @@ const isEditModalOpen = ref(false);
       :initialName="userName"
       :initialBio="userBio ?? undefined"
       :initialCarrera="userCarrera"
+      :initialAvatarUrl="userAvatar"
       @close="isEditModalOpen = false"
       @saved="isEditModalOpen = false"
     />

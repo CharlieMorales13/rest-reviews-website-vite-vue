@@ -67,7 +67,7 @@ const handleRegister = async () => {
           <div class="inline-flex items-center gap-2 px-4 py-2 bg-anahuac-orange/20 border border-anahuac-orange/30 rounded-full mb-6">
             <span class="text-anahuac-orange font-extrabold text-lg tracking-tight brand">Anáhuac EATS</span>
           </div>
-          <h1 class="text-3xl font-bold tracking-tight text-white mb-2">Unete León</h1>
+          <h1 class="text-3xl font-bold tracking-tight text-white mb-2">Únete Alumno</h1>
           <p class="text-white/60 text-sm">Crea tu cuenta y empieza a opinar</p>
         </div>
 
