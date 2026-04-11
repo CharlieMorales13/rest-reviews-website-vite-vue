@@ -20,6 +20,7 @@ onMounted(async () => {
 const userName = computed(() => authStore.user?.name || '');
 const userBio = computed(() => authStore.user?.bio || null);
 const userAvatar = computed(() => authStore.user?.avatarUrl || null);
+const userCarrera = computed(() => authStore.user?.carrera || null);
 
 const userInitials = computed(() => {
   const parts = userName.value.split(' ');
@@ -103,6 +104,7 @@ const isEditModalOpen = ref(false);
       :isOpen="isEditModalOpen"
       :initialName="userName"
       :initialBio="userBio ?? undefined"
+      :initialCarrera="userCarrera"
       @close="isEditModalOpen = false"
       @saved="isEditModalOpen = false"
     />

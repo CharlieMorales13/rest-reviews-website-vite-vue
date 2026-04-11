@@ -58,6 +58,7 @@ export class AuthController {
                 avatarUrl: user.avatarUrl,
                 bio: user.bio,
                 universityId: user.universityId,
+                carrera: user.carrera,
                 updatedAt: user.updatedAt
             }
         });
@@ -93,6 +94,7 @@ export class AuthController {
                 avatarUrl: user.avatarUrl,
                 bio: user.bio,
                 universityId: user.universityId,
+                carrera: user.carrera,
                 createdAt: user.createdAt
             }
         });

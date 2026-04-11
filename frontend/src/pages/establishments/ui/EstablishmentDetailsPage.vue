@@ -227,6 +227,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
                   </div>
                   <div>
                     <h4 class="font-bold text-[#0e0e10] text-lg leading-none brand">{{ rev.author || 'Estudiante' }}</h4>
+                    <p class="text-xs text-orange-500 font-semibold mt-0.5" v-if="rev.authorCarrera">{{ rev.authorCarrera }} · UAO</p>
                     <p class="text-xs text-[#adaaad] mt-0.5">{{ new Date(rev.createdAt).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' }) }}</p>
                   </div>
                 </div>

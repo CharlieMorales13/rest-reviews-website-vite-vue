@@ -2,10 +2,34 @@
 import { ref, watch } from 'vue';
 import { useAuthStore } from '@/entities/user/model/authStore';
 
+const CARRERAS = [
+  'Administración de Empresas',
+  'Colaboradores',
+  'Comunicación',
+  'Derecho',
+  'Diseño de Moda e Innovación',
+  'Diseño Gráfico',
+  'Diseño Industrial',
+  'Diseño Multimedia',
+  'Egresados',
+  'Finanzas y Contaduría Pública',
+  'Turismo',
+  'Gastronomía',
+  'Ingeniería Biomédica',
+  'Ingeniería Civil',
+  'Ingeniería Industrial para la Dirección',
+  'Ingeniería Mecatrónica',
+  'Ingeniería en Tecnologías de la Información y Negocios Digitales',
+  'Médico Cirujano',
+  'Mercadotecnia Estratégica',
+  'Psicología',
+];
+
 const props = defineProps<{
   isOpen: boolean;
   initialName?: string;
   initialBio?: string;
+  initialCarrera?: string | null;
 }>();
 
 const emit = defineEmits(['close', 'saved']);
@@ -14,6 +38,7 @@ const authStore = useAuthStore();
 
 const name = ref(props.initialName || '');
 const bio = ref(props.initialBio || '');
+const carrera = ref(props.initialCarrera || '');
 const saving = ref(false);
 const saveError = ref<string | null>(null);
 
@@ -22,6 +47,7 @@ watch(() => props.isOpen, (open) => {
   if (open) {
     name.value = props.initialName || '';
     bio.value = props.initialBio || '';
+    carrera.value = props.initialCarrera || '';
     saveError.value = null;
   }
 });
@@ -38,6 +64,7 @@ const handleSave = async () => {
     await authStore.updateProfile({
       name: name.value.trim(),
       bio: bio.value.trim() || null,
+      carrera: carrera.value || null,
     });
     emit('saved');
     emit('close');
@@ -84,6 +111,20 @@ const handleSave = async () => {
             placeholder="Cuéntanos sobre ti…"
           ></textarea>
           <span class="text-right text-xs text-on-surface-variant/50">{{ bio.length }} / 500</span>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest">Carrera</label>
+          <div class="relative">
+            <select
+              v-model="carrera"
+              class="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 text-black font-sans focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all appearance-none"
+            >
+              <option value="">Sin especificar</option>
+              <option v-for="c in CARRERAS" :key="c" :value="c">{{ c }}</option>
+            </select>
+            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-black/40 pointer-events-none">▾</span>
+          </div>
         </div>
 
         <div v-if="saveError" class="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm">

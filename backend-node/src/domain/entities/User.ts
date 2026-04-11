@@ -14,6 +14,7 @@ export interface UserProps {
     avatarUrl?: string;
     bio?: string;
     universityId?: string;
+    carrera?: string;
     verificationCode?: string;
     verificationExpires?: Date;
     isVerified?: boolean;
@@ -52,6 +53,7 @@ export class User {
     get avatarUrl(): string | undefined { return this.props.avatarUrl; }
     get bio(): string | undefined { return this.props.bio; }
     get universityId(): string | undefined { return this.props.universityId; }
+    get carrera(): string | undefined { return this.props.carrera; }
     get verificationCode(): string | undefined { return this.props.verificationCode; }
     get verificationExpires(): Date | undefined { return this.props.verificationExpires; }
     get isVerified(): boolean | undefined { return this.props.isVerified; }

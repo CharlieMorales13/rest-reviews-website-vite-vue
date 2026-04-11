@@ -6,17 +6,41 @@ import { useRouter } from 'vue-router';
 const authStore = useAuthStore();
 const router = useRouter();
 
+const CARRERAS = [
+  'Administración de Empresas',
+  'Administración Turística',
+  'Colaboradores',
+  'Comunicación',
+  'Derecho',
+  'Diseño de Moda e Innovación',
+  'Diseño Gráfico',
+  'Diseño Industrial',
+  'Diseño Multimedia',
+  'Egresados',
+  'Finanzas y Contaduría Pública',
+  'Gastronomía',
+  'Ingeniería Biomédica',
+  'Ingeniería Civil',
+  'Ingeniería Industrial para la Dirección',
+  'Ingeniería Mecatrónica',
+  'Ingeniería en Tecnologías de la Información y Negocios Digitales',
+  'Médico Cirujano',
+  'Mercadotecnia Estratégica',
+  'Psicología',
+];
+
 const name = ref('');
 const email = ref('');
 const password = ref('');
+const carrera = ref('');
 const loading = ref(false);
 
 const handleRegister = async () => {
-  if (!name.value || !email.value || !password.value) return;
-  
+  if (!name.value || !email.value || !password.value || !carrera.value) return;
+
   loading.value = true;
   try {
-    await authStore.register({ name: name.value, email: email.value, password: password.value });
+    await authStore.register({ name: name.value, email: email.value, password: password.value, carrera: carrera.value });
     console.log('Registration successful, redirecting to dashboard...');
     await router.push('/dashboard');
   } catch (e) {
@@ -90,14 +114,45 @@ const handleRegister = async () => {
             <label class="block text-xs font-medium text-white/50 ml-1 uppercase tracking-wider">Contraseña</label>
             <div class="relative group">
               <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-40 group-focus-within:opacity-100 transition-opacity">🔒</span>
-              <input 
-                type="password" 
-                v-model="password" 
-                required 
-                placeholder="Mínimo 6 caracteres" 
-                class="glass-input pl-12" 
+              <input
+                type="password"
+                v-model="password"
+                required
+                placeholder="Mínimo 6 caracteres"
+                class="glass-input pl-12"
                 minlength="6"
               />
+            </div>
+          </div>
+
+          <!-- Universidad (solo lectura) -->
+          <div class="space-y-2">
+            <label class="block text-xs font-medium text-white/50 ml-1 uppercase tracking-wider">Universidad</label>
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-40">🏛️</span>
+              <input
+                type="text"
+                value="UAO — Universidad Anáhuac Oaxaca"
+                disabled
+                class="glass-input pl-12 opacity-50 cursor-not-allowed"
+              />
+            </div>
+          </div>
+
+          <!-- Carrera -->
+          <div class="space-y-2">
+            <label class="block text-xs font-medium text-white/50 ml-1 uppercase tracking-wider">Carrera <span class="text-anahuac-orange">*</span></label>
+            <div class="relative group">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-40 group-focus-within:opacity-100 transition-opacity pointer-events-none">🎓</span>
+              <select
+                v-model="carrera"
+                required
+                class="glass-input pl-12 appearance-none"
+              >
+                <option value="" disabled>Selecciona tu carrera</option>
+                <option v-for="c in CARRERAS" :key="c" :value="c">{{ c }}</option>
+              </select>
+              <span class="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none">▾</span>
             </div>
           </div>
 

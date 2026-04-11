@@ -6,6 +6,7 @@ export interface UpdateProfileRequest {
   bio?: string | null;
   avatarUrl?: string | null;
   universityId?: string | null;
+  carrera?: string | null;
 }
 
 export class AuthService {

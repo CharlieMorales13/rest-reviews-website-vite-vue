@@ -20,6 +20,7 @@ export const UpdateUserSchema = z.object({
     avatarUrl: z.string().url().optional().nullable(),
     bio: z.string().max(500).optional().nullable(),
     universityId: z.string().optional().nullable(),
+    carrera: z.string().max(100).optional().nullable(),
     establishmentId: z.string().uuid().optional().nullable(),
 });
 
@@ -31,6 +32,7 @@ export const UpdateProfileSchema = z.object({
     avatarUrl: z.string().url().optional().nullable(),
     bio: z.string().max(500).optional().nullable(),
     universityId: z.string().optional().nullable(),
+    carrera: z.string().max(100).optional().nullable(),
 });
 
 export type UpdateProfileDTO = z.infer<typeof UpdateProfileSchema>;

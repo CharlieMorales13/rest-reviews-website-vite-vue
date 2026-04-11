@@ -36,7 +36,8 @@ export class RegisterUserUseCase {
             email: dto.email,
             passwordHash: hashedPassword,
             role: UserRole.STUDENT,
-            isVerified: true
+            isVerified: true,
+            carrera: dto.carrera,
         });
 
         const savedUser = await this.userRepository.save(newUser);

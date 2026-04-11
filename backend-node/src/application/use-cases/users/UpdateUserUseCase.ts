@@ -34,6 +34,7 @@ export class UpdateUserUseCase {
             avatarUrl: dto.avatarUrl ?? existingUser.avatarUrl,
             bio: dto.bio ?? existingUser.bio,
             universityId: dto.universityId ?? existingUser.universityId,
+            carrera: dto.carrera ?? existingUser.carrera,
             createdAt: existingUser.createdAt,
         });
 

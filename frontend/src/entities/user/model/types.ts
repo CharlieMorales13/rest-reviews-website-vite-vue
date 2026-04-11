@@ -6,12 +6,14 @@ export interface User {
   avatarUrl?: string | null;
   bio?: string | null;
   universityId?: string | null;
+  carrera?: string | null;
 }
 
 export interface RegisterRequest {
   name: string;
   email: string;
   password?: string;
+  carrera: string;
 }
 
 export interface LoginRequest {
