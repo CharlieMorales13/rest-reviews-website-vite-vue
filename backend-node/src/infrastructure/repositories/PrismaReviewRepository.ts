@@ -129,16 +129,6 @@ export class PrismaReviewRepository implements IReviewRepository {
         await prisma.review.delete({ where: { id } });
     }
 
-    async hasUserReviewedEstablishment(userId: string, establishmentId: string): Promise<boolean> {
-        const count = await prisma.review.count({
-            where: {
-                userId,
-                establishmentId,
-            },
-        });
-        return count > 0;
-    }
-
     private mapToDomain(data: any): Review {
         return Review.create({
             id: data.id,

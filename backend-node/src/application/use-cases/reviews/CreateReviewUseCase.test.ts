@@ -40,7 +40,6 @@ describe('CreateReviewUseCase', () => {
         } as unknown as IEstablishmentRepository;
 
         const mockReviewRepo: IReviewRepository = {
-            hasUserReviewedEstablishment: vi.fn().mockResolvedValue(false),
             save: vi.fn().mockImplementation((review) => Promise.resolve(review)),
         } as unknown as IReviewRepository;
 
