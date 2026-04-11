@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { container } from '../../config/container';
 import { ReviewController } from '../controllers/ReviewController';
 import { authenticateToken, requireRole } from '../middlewares/AuthMiddleware';
+import { reviewRateLimiter } from '../middlewares/RateLimitMiddleware';
 
 const reviewRouter = Router();
 
@@ -37,7 +38,7 @@ reviewRouter.get('/my', authenticateToken, reviewController.getMyReviews);
  *       400:
  *         description: Invalid input
  */
-reviewRouter.post('/', authenticateToken, requireRole(['student']), reviewController.create);
+reviewRouter.post('/', authenticateToken, requireRole(['student']), reviewRateLimiter, reviewController.create);
 reviewRouter.patch('/:id/reply', authenticateToken, requireRole(['admin', 'manager']), reviewController.reply);
 
 export default reviewRouter;

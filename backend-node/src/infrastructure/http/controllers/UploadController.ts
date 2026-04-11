@@ -2,6 +2,7 @@ import { Response, Request } from 'express';
 import { injectable, inject } from 'tsyringe';
 import { UploadFileUseCase } from '../../../application/use-cases/uploads/UploadFileUseCase';
 import { AppError } from '../errors/AppError';
+import { checkImageSafety } from '../../services/VisionModerationService';
 
 @injectable()
 export class UploadController {
@@ -40,6 +41,9 @@ export class UploadController {
         if (!file) {
             throw new AppError('No file provided', 400);
         }
+
+        // Reject NSFW images before uploading to storage
+        await checkImageSafety(file.buffer, file.mimetype);
 
         const bucketName = 'reviews-app-bucket';
 

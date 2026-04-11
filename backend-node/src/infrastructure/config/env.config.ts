@@ -15,6 +15,8 @@ const envSchema = z.object({
     SUPABASE_KEY: z.string().min(1, 'SUPABASE_KEY is required for storage'),
     ANALYTICS_URL: z.string().url().default('http://localhost:8001'),
     ANALYTICS_API_KEY: z.string().default(''),
+    SIGHTENGINE_API_USER: z.string().optional(),
+    SIGHTENGINE_API_SECRET: z.string().optional(),
 });
 
 const parseEnv = () => {
