@@ -5,25 +5,6 @@ import { AdminService, type AdminUser, type PaginationMeta } from '@/entities/us
 import CreateUserModal from './CreateUserModal.vue';
 import EditUserModal from './EditUserModal.vue';
 
-// ── ML Pipeline ──────────────────────────────────────────
-const pipelineRunning = ref(false);
-const pipelineResult = ref<{ accuracy?: number; f1Score?: number; ige_global?: number; sentiment_label?: string } | null>(null);
-const pipelineError = ref<string | null>(null);
-
-const runPipeline = async () => {
-  pipelineRunning.value = true;
-  pipelineResult.value = null;
-  pipelineError.value = null;
-  try {
-    const res = await httpClient.post<{ success: boolean; data: any }>('/api/metrics/run');
-    pipelineResult.value = res.data.data;
-  } catch (e: any) {
-    pipelineError.value = e?.response?.data?.message || 'Error al ejecutar el pipeline.';
-  } finally {
-    pipelineRunning.value = false;
-  }
-};
-
 // ── System Metrics ────────────────────────────────────────
 const systemMetrics = ref([
   { id: '1', title: 'Cuentas Totales', value: '—', icon: 'group', color: 'orange-500' },
@@ -179,76 +160,6 @@ const formatTime = (iso: string) => {
             <span class="text-3xl font-black text-[#0e0e10] brand leading-none">{{ metric.value }}</span>
           </div>
         </div>
-      </div>
-    </section>
-
-    <!-- ML Pipeline -->
-    <section class="mb-16">
-      <h2 class="text-2xl font-bold tracking-tight text-white mb-6 brand">Motor de Inteligencia Artificial</h2>
-      <div class="card-cream rounded-[1.5rem] p-8 border border-black/5 shadow-xl">
-        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div class="flex items-start gap-5">
-            <div class="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center flex-shrink-0">
-              <span class="material-symbols-outlined text-orange-500 text-3xl" style="font-variation-settings: 'FILL' 1;">model_training</span>
-            </div>
-            <div>
-              <h3 class="text-xl font-black text-[#0e0e10] brand mb-1">Pipeline de Análisis de Sentimiento</h3>
-              <p class="text-[#525155] text-sm max-w-lg">
-                Procesa todas las reseñas activas, clasifica sentimiento (TF-IDF + Regresión Logística),
-                actualiza los índices IGE por establecimiento y registra métricas del modelo.
-              </p>
-              <div class="flex flex-wrap gap-2 mt-3">
-                <span class="text-[10px] font-bold uppercase tracking-widest bg-orange-100 text-orange-600 px-2.5 py-1 rounded-full border border-orange-200">TF-IDF</span>
-                <span class="text-[10px] font-bold uppercase tracking-widest bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full border border-blue-100">Logistic Regression</span>
-                <span class="text-[10px] font-bold uppercase tracking-widest bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full border border-emerald-100">scikit-learn</span>
-              </div>
-            </div>
-          </div>
-          <button
-            @click="runPipeline"
-            :disabled="pipelineRunning"
-            class="flex-shrink-0 flex items-center gap-3 px-7 py-3.5 rounded-2xl font-bold text-sm transition-all duration-200 active:scale-95 disabled:cursor-not-allowed"
-            :class="pipelineRunning
-              ? 'bg-orange-100 text-orange-400 border border-orange-200'
-              : 'bg-orange-500 hover:bg-orange-400 text-white shadow-lg shadow-orange-500/25'"
-          >
-            <span class="material-symbols-outlined text-xl" :class="pipelineRunning ? 'animate-spin' : ''" style="font-variation-settings: 'FILL' 1;">
-              {{ pipelineRunning ? 'progress_activity' : 'play_circle' }}
-            </span>
-            {{ pipelineRunning ? 'Procesando...' : 'Ejecutar Pipeline' }}
-          </button>
-        </div>
-        <Transition name="fade">
-          <div v-if="pipelineResult" class="mt-6 pt-6 border-t border-black/5">
-            <p class="text-xs font-bold uppercase tracking-widest text-[#adaaad] mb-4">Resultado del último entrenamiento</p>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div class="bg-white rounded-2xl p-4 border border-black/5 text-center">
-                <p class="text-2xl font-black text-[#0e0e10] brand">{{ ((pipelineResult.accuracy ?? 0) * 100).toFixed(1) }}%</p>
-                <p class="text-xs text-[#adaaad] font-semibold mt-1">Accuracy</p>
-              </div>
-              <div class="bg-white rounded-2xl p-4 border border-black/5 text-center">
-                <p class="text-2xl font-black text-[#0e0e10] brand">{{ ((pipelineResult.f1Score ?? 0) * 100).toFixed(1) }}%</p>
-                <p class="text-xs text-[#adaaad] font-semibold mt-1">F1 Score</p>
-              </div>
-              <div class="bg-white rounded-2xl p-4 border border-black/5 text-center">
-                <p class="text-2xl font-black text-orange-500 brand">{{ (pipelineResult.ige_global ?? 0).toFixed(1) }}</p>
-                <p class="text-xs text-[#adaaad] font-semibold mt-1">IGE Global</p>
-              </div>
-              <div class="bg-white rounded-2xl p-4 border border-black/5 text-center">
-                <p class="text-lg font-black text-[#0e0e10] brand capitalize">{{ pipelineResult.sentiment_label ?? '—' }}</p>
-                <p class="text-xs text-[#adaaad] font-semibold mt-1">Sentimiento</p>
-              </div>
-            </div>
-          </div>
-        </Transition>
-        <Transition name="fade">
-          <div v-if="pipelineError" class="mt-6 pt-6 border-t border-black/5">
-            <div class="flex items-center gap-3 p-4 bg-red-50 rounded-2xl border border-red-100">
-              <span class="material-symbols-outlined text-red-500">error</span>
-              <p class="text-sm text-red-600 font-medium">{{ pipelineError }}</p>
-            </div>
-          </div>
-        </Transition>
       </div>
     </section>
 
