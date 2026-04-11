@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { httpClient } from '@/shared/api/httpClient';
 import ManagerReplyModal from './ManagerReplyModal.vue';
 
@@ -186,7 +186,7 @@ const loadReviews = async (estabId: string) => {
   reviewsLoading.value = true;
   try {
     const res = await httpClient.get<{ data: Review[]; meta: any }>(
-      `/api/establishments/${estabId}/reviews?limit=50`
+      `/api/establishments/${estabId}/reviews?limit=200`
     );
     reviews.value = res.data.data;
   } catch {
@@ -216,6 +216,38 @@ const handleReplySent = (updated: { reviewId: string; reply: string }) => {
   isReplyModalOpen.value = false;
   selectedReview.value = null;
 };
+
+// ── Search + Pagination ────────────────────────────────────────────────────────
+const searchQuery = ref('');
+const searchDate = ref('');
+const currentPage = ref(1);
+const PAGE_SIZE = 10;
+
+const filteredReviews = computed(() => {
+  let list = reviews.value;
+  const q = searchQuery.value.trim().toLowerCase();
+  if (q) {
+    list = list.filter(r =>
+      r.comment?.toLowerCase().includes(q) ||
+      r.author?.toLowerCase().includes(q)
+    );
+  }
+  if (searchDate.value) {
+    list = list.filter(r => r.createdAt.startsWith(searchDate.value));
+  }
+  return list;
+});
+
+const totalPages = computed(() => Math.ceil(filteredReviews.value.length / PAGE_SIZE));
+
+const paginatedReviews = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE;
+  return filteredReviews.value.slice(start, start + PAGE_SIZE);
+});
+
+watch([searchQuery, searchDate], () => { currentPage.value = 1; });
+
+const clearSearch = () => { searchQuery.value = ''; searchDate.value = ''; };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const pendingCount = computed(() => reviews.value.filter(r => !r.managerReply).length);
@@ -520,7 +552,7 @@ const sentimentLabel = (s: string | null) => {
       </section>
 
       <!-- ══════════════════════════════════════════════════════════════════════
-           RESEÑAS — Lista con modal de respuesta
+           RESEÑAS — Búsqueda, paginación y modal de respuesta
       ══════════════════════════════════════════════════════════════════════════ -->
       <section>
         <div class="flex items-center justify-between mb-6">
@@ -536,6 +568,32 @@ const sentimentLabel = (s: string | null) => {
           </div>
         </div>
 
+        <!-- Barra de búsqueda -->
+        <div class="flex flex-col sm:flex-row gap-3 mb-6">
+          <div class="relative flex-1">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#adaaad]" style="font-size:18px;">search</span>
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Buscar por comentario o usuario..."
+              class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white border border-black/10 text-sm text-[#0e0e10] placeholder:text-[#adaaad] focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+            />
+          </div>
+          <input
+            v-model="searchDate"
+            type="date"
+            class="px-4 py-2.5 rounded-xl bg-white border border-black/10 text-sm text-[#0e0e10] focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+          />
+          <button
+            v-if="searchQuery || searchDate"
+            @click="clearSearch"
+            class="px-4 py-2.5 rounded-xl bg-white border border-black/10 text-sm font-bold text-[#525155] hover:bg-black/5 transition-colors flex items-center gap-1"
+          >
+            <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+            Limpiar
+          </button>
+        </div>
+
         <div v-if="reviewsLoading" class="space-y-4">
           <div v-for="i in 3" :key="i" class="h-36 bg-white/5 rounded-2xl animate-pulse"></div>
         </div>
@@ -546,9 +604,15 @@ const sentimentLabel = (s: string | null) => {
           <p class="text-sm text-[#adaaad]">Cuando los estudiantes califiquen tu establecimiento, aparecerán aquí.</p>
         </div>
 
+        <div v-else-if="filteredReviews.length === 0" class="text-center py-12 card-cream rounded-[1.5rem] border border-dashed border-black/10">
+          <span class="material-symbols-outlined text-4xl text-[#adaaad] mb-2">search_off</span>
+          <p class="text-[#525155] font-bold">Sin resultados</p>
+          <p class="text-sm text-[#adaaad]">Intenta con otros términos de búsqueda.</p>
+        </div>
+
         <div v-else class="grid grid-cols-1 gap-5">
           <div
-            v-for="review in reviews"
+            v-for="review in paginatedReviews"
             :key="review.id"
             class="card-cream rounded-[1.5rem] p-6 shadow-sm border border-black/5"
           >
@@ -598,6 +662,29 @@ const sentimentLabel = (s: string | null) => {
                 Responder
               </button>
             </div>
+          </div>
+          <!-- Paginación -->
+          <div v-if="totalPages > 1" class="flex items-center justify-between pt-4">
+            <button
+              :disabled="currentPage === 1"
+              @click="currentPage--"
+              class="flex items-center gap-1 px-4 py-2 rounded-xl bg-white border border-black/10 text-sm font-bold text-[#0e0e10] disabled:opacity-40 hover:bg-black/5 transition-colors"
+            >
+              <span class="material-symbols-outlined" style="font-size:16px;">arrow_back_ios</span>
+              Anterior
+            </button>
+            <span class="text-sm text-[#adaaad] font-bold">
+              Página {{ currentPage }} de {{ totalPages }}
+              <span class="text-[#adaaad]/60 font-normal ml-1">({{ filteredReviews.length }} resultados)</span>
+            </span>
+            <button
+              :disabled="currentPage === totalPages"
+              @click="currentPage++"
+              class="flex items-center gap-1 px-4 py-2 rounded-xl bg-white border border-black/10 text-sm font-bold text-[#0e0e10] disabled:opacity-40 hover:bg-black/5 transition-colors"
+            >
+              Siguiente
+              <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward_ios</span>
+            </button>
           </div>
         </div>
       </section>
