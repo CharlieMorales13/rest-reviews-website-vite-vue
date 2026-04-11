@@ -39,6 +39,9 @@ export interface GlobalMetrics {
 export interface EstablishmentMetricSummary extends EstablishmentMetric {
     sentimentDistribution: SentimentSummary;
     reviewsThisMonth: number;
+    reviewsLastMonth: number;
+    nps: number;
+    criticalMentionsCount: number;
     scoreDistribution: ScoreDistribution;
     negativeTerms: NegativeTerm[];
 }

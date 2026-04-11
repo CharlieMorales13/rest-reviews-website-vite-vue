@@ -69,8 +69,10 @@ export class PrismaMetricsRepository implements IMetricsRepository {
     async getEstablishmentSummary(id: string): Promise<EstablishmentMetricSummary | null> {
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfLastMonth = startOfMonth;
 
-        const [e, reviewsThisMonth, latestSnapshot] = await Promise.all([
+        const [e, reviewsThisMonth, reviewsLastMonth, latestSnapshot] = await Promise.all([
             prisma.establishment.findUnique({
                 where: { id },
                 include: {
@@ -80,6 +82,7 @@ export class PrismaMetricsRepository implements IMetricsRepository {
                             foodScore: true,
                             serviceScore: true,
                             priceScore: true,
+                            comment: true,
                             sentimentResults: {
                                 orderBy: { createdAt: 'desc' },
                                 take: 1,
@@ -91,6 +94,9 @@ export class PrismaMetricsRepository implements IMetricsRepository {
             }),
             prisma.review.count({
                 where: { establishmentId: id, createdAt: { gte: startOfMonth } },
+            }),
+            prisma.review.count({
+                where: { establishmentId: id, createdAt: { gte: startOfLastMonth, lt: endOfLastMonth } },
             }),
             prisma.metricsSnapshot.findFirst({
                 where: { establishmentId: id },
@@ -124,6 +130,31 @@ export class PrismaMetricsRepository implements IMetricsRepository {
             priceBins[(r as any).priceScore - 1]++;
         }
 
+        // NPS: avg score ≥ 4 → promoter; ≤ 2.5 → detractor
+        const promoters = e.reviews.filter((r: any) =>
+            (r.foodScore + r.serviceScore + r.priceScore) / 3 >= 4
+        ).length;
+        const detractors = e.reviews.filter((r: any) =>
+            (r.foodScore + r.serviceScore + r.priceScore) / 3 <= 2.5
+        ).length;
+        const nps = e._count.reviews > 0
+            ? Math.round(((promoters - detractors) / e._count.reviews) * 100)
+            : 0;
+
+        // Critical mentions: reviews containing high-severity keywords
+        const CRITICAL_WORDS = [
+            'crudo', 'cruda', 'crudos', 'crudas',
+            'mosca', 'moscas', 'cucaracha', 'cucarachas',
+            'intoxicado', 'intoxicación', 'intoxicacion',
+            'grosero', 'grosera', 'groseros',
+            'cabello', 'pelo',
+            'asqueroso', 'asco',
+            'basura', 'mugre',
+        ];
+        const criticalMentionsCount = e.reviews.filter((r: any) =>
+            r.comment && CRITICAL_WORDS.some((w: string) => (r.comment as string).toLowerCase().includes(w))
+        ).length;
+
         const negativeTerms: NegativeTerm[] =
             Array.isArray(latestSnapshot?.negativeTerms)
                 ? (latestSnapshot.negativeTerms as unknown as NegativeTerm[])
@@ -139,6 +170,9 @@ export class PrismaMetricsRepository implements IMetricsRepository {
             sentimentScore: Number(positiveRatio.toFixed(1)),
             sentimentDistribution: sentimentCounts,
             reviewsThisMonth,
+            reviewsLastMonth,
+            nps,
+            criticalMentionsCount,
             scoreDistribution: { food: foodBins, service: serviceBins, price: priceBins },
             negativeTerms,
         };
