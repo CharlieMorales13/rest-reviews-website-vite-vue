@@ -161,6 +161,7 @@ const loadMetrics = async () => {
     }
 
     establishment.value = first;
+    metricsLoading.value = false;
     await renderChart(first.scoreDistribution);
     await loadReviews(first.id);
   } catch (e: any) {
