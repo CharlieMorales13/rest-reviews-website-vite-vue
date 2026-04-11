@@ -68,7 +68,8 @@ const routes = [
       {
         path: 'my-reviews',
         name: 'my-reviews',
-        component: () => import('@/pages/profile/ui/MyReviewsPage.vue')
+        component: () => import('@/pages/profile/ui/MyReviewsPage.vue'),
+        meta: { roles: ['student'] }
       }
     ]
   }
