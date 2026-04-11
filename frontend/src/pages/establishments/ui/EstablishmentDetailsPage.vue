@@ -13,7 +13,12 @@ const establishmentId = route.params.id as string;
 const est = ref<Establishment | null>(null);
 const reviews = ref<EstablishmentReview[]>([]);
 const loading = ref(true);
+const reviewsLoading = ref(false);
 const error = ref<string | null>(null);
+const currentPage = ref(1);
+const totalReviews = ref(0);
+const PAGE_SIZE = 10;
+const totalPages = computed(() => Math.ceil(totalReviews.value / PAGE_SIZE));
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
 
@@ -28,14 +33,30 @@ const ige = computed(() => {
   return ((avgF * 0.5 + avgS * 0.3 + avgP * 0.2) * 20).toFixed(1);
 });
 
+const loadReviews = async (page: number) => {
+  reviewsLoading.value = true;
+  try {
+    const result = await ReviewService.getEstablishmentReviews(establishmentId, page, PAGE_SIZE);
+    reviews.value = result.data;
+    totalReviews.value = result.total;
+    currentPage.value = page;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch {
+    reviews.value = [];
+  } finally {
+    reviewsLoading.value = false;
+  }
+};
+
 onMounted(async () => {
   try {
     const [establishment, reviewsResult] = await Promise.all([
       ReviewService.getEstablishment(establishmentId),
-      ReviewService.getEstablishmentReviews(establishmentId, 1, 50),
+      ReviewService.getEstablishmentReviews(establishmentId, 1, PAGE_SIZE),
     ]);
     est.value = establishment;
     reviews.value = reviewsResult.data;
+    totalReviews.value = reviewsResult.total;
   } catch (e: any) {
     error.value = e.response?.data?.message || 'No se pudo cargar el establecimiento.';
   } finally {
@@ -184,13 +205,20 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 
         <!-- Reviews -->
         <section>
-          <h3 class="text-2xl font-bold text-white mb-6 brand">Reseñas de la Comunidad</h3>
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-2xl font-bold text-white brand">Reseñas de la Comunidad</h3>
+            <span v-if="totalReviews > 0" class="text-sm text-[#adaaad] font-bold">{{ totalReviews }} en total</span>
+          </div>
 
-          <div v-if="reviews.length === 0" class="card-cream p-10 rounded-3xl text-center text-[#adaaad]">
+          <div v-if="reviews.length === 0 && !reviewsLoading" class="card-cream p-10 rounded-3xl text-center text-[#adaaad]">
             Aún no hay reseñas para este establecimiento. ¡Sé el primero!
           </div>
 
-          <div class="space-y-6">
+          <div v-if="reviewsLoading" class="space-y-6">
+            <div v-for="i in 3" :key="i" class="h-40 bg-white/5 rounded-3xl animate-pulse"></div>
+          </div>
+
+          <div v-else class="space-y-6">
             <article v-for="rev in reviews" :key="rev.id" class="card-cream p-8 rounded-[2rem] shadow-xl text-[#3f3f42]">
               <div class="flex justify-between items-start mb-6">
                 <div class="flex items-center gap-4">
@@ -230,6 +258,27 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
                 </div>
               </div>
             </article>
+          </div>
+
+          <!-- Paginación -->
+          <div v-if="totalPages > 1" class="flex items-center justify-between mt-8">
+            <button
+              :disabled="currentPage === 1 || reviewsLoading"
+              @click="loadReviews(currentPage - 1)"
+              class="flex items-center gap-1 px-5 py-2.5 rounded-2xl bg-white border border-black/10 text-sm font-bold text-[#0e0e10] disabled:opacity-40 hover:bg-black/5 transition-colors shadow-sm"
+            >
+              <span class="material-symbols-outlined" style="font-size:16px;">arrow_back_ios</span>
+              Anterior
+            </button>
+            <span class="text-sm text-[#adaaad] font-bold">{{ currentPage }} / {{ totalPages }}</span>
+            <button
+              :disabled="currentPage === totalPages || reviewsLoading"
+              @click="loadReviews(currentPage + 1)"
+              class="flex items-center gap-1 px-5 py-2.5 rounded-2xl bg-white border border-black/10 text-sm font-bold text-[#0e0e10] disabled:opacity-40 hover:bg-black/5 transition-colors shadow-sm"
+            >
+              Siguiente
+              <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward_ios</span>
+            </button>
           </div>
         </section>
       </div>
