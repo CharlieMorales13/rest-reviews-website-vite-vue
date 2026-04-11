@@ -1,12 +1,27 @@
 /**
  * seed-reviews.mjs
- * Registra 100 usuarios estudiantes e inyecta 100 reseñas por establecimiento
- * (400 total). Cada usuario reseña los 4 establecimientos una vez.
+ * Inserta 100 usuarios estudiantes y 100 reseñas por establecimiento (400 total)
+ * directamente en la BD via Prisma — sin pasar por la API HTTP.
  *
  * Uso: node scripts/seed-reviews.mjs
  */
 
-const BASE_URL     = 'http://localhost:3000';
+import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
+
+// ── Cargar .env del backend ──────────────────────────────────────────────────
+const dotenv = require(path.join(__dirname, '../backend-node/node_modules/dotenv'));
+dotenv.config({ path: path.join(__dirname, '../backend-node/.env') });
+
+// ── Importar Prisma y argon2 desde el backend ────────────────────────────────
+const { PrismaClient } = require(path.join(__dirname, '../backend-node/node_modules/@prisma/client'));
+const argon2 = require(path.join(__dirname, '../backend-node/node_modules/argon2'));
+
+const prisma = new PrismaClient();
 const SEED_PASSWORD = 'REDACTED';
 
 // ── Establecimientos ─────────────────────────────────────────────────────────
@@ -255,41 +270,41 @@ const POOLS = {
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-async function registerOrLogin({ name, email, password, carrera }) {
-  // Intentar registro
-  const regRes = await fetch(`${BASE_URL}/api/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, password, carrera }),
+
+/** Upsert user directly in DB. Returns the user record. */
+async function upsertUser({ name, email, password, carrera }) {
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) return existing;
+
+  const passwordHash = await argon2.hash(password);
+  return prisma.user.create({
+    data: {
+      name,
+      email,
+      passwordHash,
+      role: 'student',
+      isActive: true,
+      isVerified: true,
+      carrera,
+    },
   });
-  const regJson = await regRes.json();
-  if (regJson.success) return regJson.data.token;
-
-  // Si ya existe (409) → login
-  if (regRes.status === 409) {
-    const logRes = await fetch(`${BASE_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const logJson = await logRes.json();
-    if (logJson.success) return logJson.data.token;
-    throw new Error(`Login failed for ${email}: ${JSON.stringify(logJson)}`);
-  }
-
-  throw new Error(`Register failed for ${email}: ${JSON.stringify(regJson)}`);
 }
 
-async function createReview(token, establishmentId, food, service, price, title, comment) {
-  const res = await fetch(`${BASE_URL}/api/reviews`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ establishmentId, foodScore: food, serviceScore: service, priceScore: price, title, comment }),
+/** Insert review directly in DB. Returns true on success. */
+async function insertReview(userId, establishmentId, food, service, price, title, comment) {
+  await prisma.review.create({
+    data: {
+      userId,
+      establishmentId,
+      foodScore: food,
+      serviceScore: service,
+      priceScore: price,
+      title,
+      comment,
+    },
   });
-  return res.json();
+  return true;
 }
-
-const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
@@ -299,13 +314,13 @@ async function main() {
   let totalOk = 0, totalFail = 0;
 
   for (let i = 0; i < USERS.length; i++) {
-    const user = USERS[i];
-    let token;
+    const userDef = USERS[i];
+    let dbUser;
 
     try {
-      token = await registerOrLogin(user);
+      dbUser = await upsertUser(userDef);
     } catch (err) {
-      console.error(`  ✗ Auth falló para ${user.email}: ${err.message}`);
+      console.error(`  ✗ Upsert falló para ${userDef.email}: ${err.message}`);
       totalFail += ESTABLISHMENTS.length;
       continue;
     }
@@ -315,29 +330,24 @@ async function main() {
       const pool = POOLS[est.key];
       const [food, service, price, title, comment] = pool[i % pool.length];
 
-      const result = await createReview(token, est.id, food, service, price, title, comment);
-
-      if (result.success) {
+      try {
+        await insertReview(dbUser.id, est.id, food, service, price, title, comment);
         console.log(`  ✓ [u${String(i+1).padStart(3,'0')}] [${est.label.padEnd(13)}] ${food}★/${service}★/${price}★ — ${title}`);
         totalOk++;
-      } else {
-        const msg = result.message || result.error || JSON.stringify(result);
-        console.warn(`  ✗ [u${String(i+1).padStart(3,'0')}] [${est.label.padEnd(13)}] ${msg}`);
+      } catch (err) {
+        console.warn(`  ✗ [u${String(i+1).padStart(3,'0')}] [${est.label.padEnd(13)}] ${err.message}`);
         totalFail++;
       }
-
-      await sleep(80);
     }
-
-    // Pausa entre usuarios para no saturar argon2 en registro
-    await sleep(150);
   }
 
+  await prisma.$disconnect();
   console.log(`\n✅ Completado: ${totalOk} creadas, ${totalFail} fallidas de ${USERS.length * ESTABLISHMENTS.length} total.`);
   console.log('Siguiente paso: POST /api/metrics/run (admin) para procesar el pipeline de analytics.\n');
 }
 
-main().catch(err => {
+main().catch(async err => {
+  await prisma.$disconnect();
   console.error('Error fatal:', err.message);
   process.exit(1);
 });
