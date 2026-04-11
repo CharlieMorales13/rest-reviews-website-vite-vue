@@ -7,11 +7,26 @@ import EditUserModal from './EditUserModal.vue';
 
 // ── System Metrics ────────────────────────────────────────
 const systemMetrics = ref([
-  { id: '1', title: 'Cuentas Totales', value: '—', icon: 'group', color: 'orange-500' },
-  { id: '2', title: 'Establecimientos Activos', value: '4', icon: 'storefront', color: 'blue-500' },
-  { id: '3', title: 'Reseñas Procesadas', value: '—', icon: 'reviews', color: 'emerald-500' },
-  { id: '4', title: 'Salud de Endpoints API', value: '100%', icon: 'monitor_heart', color: 'purple-500' },
+  { id: '1', title: 'Cuentas Totales',        value: '…', icon: 'group',         color: 'orange-500' },
+  { id: '2', title: 'Establecimientos Activos', value: '…', icon: 'storefront',    color: 'blue-500'   },
+  { id: '3', title: 'Reseñas Publicadas',      value: '…', icon: 'reviews',       color: 'emerald-500' },
+  { id: '4', title: 'Salud de Endpoints API',  value: '…', icon: 'monitor_heart', color: 'purple-500' },
 ]);
+
+const loadGlobalMetrics = async () => {
+  try {
+    const res = await httpClient.get<{ success: boolean; data: {
+      totalReviews: number;
+      topEstablishments: { id: string }[];
+    } }>('/api/metrics/summary');
+    const d = res.data.data;
+    if (systemMetrics.value[1]) systemMetrics.value[1].value = d.topEstablishments.length.toString();
+    if (systemMetrics.value[2]) systemMetrics.value[2].value = d.totalReviews.toLocaleString('es-MX');
+  } catch {
+    if (systemMetrics.value[1]) systemMetrics.value[1].value = '—';
+    if (systemMetrics.value[2]) systemMetrics.value[2].value = '—';
+  }
+};
 
 // ── Users + Pagination ────────────────────────────────────
 const users = ref<AdminUser[]>([]);
@@ -36,7 +51,7 @@ const loadUsers = async (page = currentPage.value) => {
   }
 };
 
-onMounted(() => loadUsers(1));
+onMounted(() => { loadUsers(1); loadGlobalMetrics(); });
 
 const goToPage = (p: number) => {
   if (p < 1 || p > pagination.value.totalPages) return;
@@ -92,8 +107,17 @@ const loadLogs = async () => {
   try {
     const res = await httpClient.get<{ success: boolean; data: RequestLog[] }>('/api/metrics/request-logs');
     requestLogs.value = res.data.data;
+    // API health = % of non-5xx responses
+    if (requestLogs.value.length > 0) {
+      const ok = requestLogs.value.filter(l => l.statusCode < 500).length;
+      const health = Math.round((ok / requestLogs.value.length) * 100);
+      if (systemMetrics.value[3]) systemMetrics.value[3].value = `${health}%`;
+    } else {
+      if (systemMetrics.value[3]) systemMetrics.value[3].value = '100%';
+    }
   } catch {
     logsError.value = true;
+    if (systemMetrics.value[3]) systemMetrics.value[3].value = '—';
   } finally {
     logsLoading.value = false;
   }
