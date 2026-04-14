@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { httpClient } from '@/shared/api/httpClient';
-import ManagerReplyModal from './ManagerReplyModal.vue';
+
+const router = useRouter();
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface SentimentDistribution {
@@ -32,24 +34,9 @@ interface EstablishmentMetrics {
   negativeTerms: NegativeTerm[];
 }
 
-interface Review {
-  id: string;
-  author: string;
-  comment: string;
-  foodScore: number;
-  serviceScore: number;
-  priceScore: number;
-  sentiment: string | null;
-  managerReply: string | null;
-  managerReplyAt: string | null;
-  createdAt: string;
-}
-
 // ── State ──────────────────────────────────────────────────────────────────────
 const establishment = ref<EstablishmentMetrics | null>(null);
-const reviews = ref<Review[]>([]);
 const metricsLoading = ref(true);
-const reviewsLoading = ref(true);
 const metricsError = ref<string | null>(null);
 
 // ── KPI 1 — CSAT (Sentiment Index) ────────────────────────────────────────────
@@ -164,8 +151,6 @@ const loadMetrics = async () => {
     }
 
     establishment.value = first;
-    metricsLoading.value = false;
-    await loadReviews(first.id);
   } catch (e: any) {
     metricsError.value = e?.response?.data?.message || 'Error al cargar las métricas.';
   } finally {
@@ -173,92 +158,7 @@ const loadMetrics = async () => {
   }
 };
 
-const loadReviews = async (estabId: string) => {
-  reviewsLoading.value = true;
-  try {
-    const res = await httpClient.get<{ data: Review[]; meta: any }>(
-      `/api/establishments/${estabId}/reviews?limit=200`
-    );
-    reviews.value = res.data.data;
-  } catch {
-    reviews.value = [];
-  } finally {
-    reviewsLoading.value = false;
-  }
-};
-
 onMounted(() => loadMetrics());
-
-// ── Reply modal ────────────────────────────────────────────────────────────────
-const isReplyModalOpen = ref(false);
-const selectedReview = ref<Review | null>(null);
-
-const openReplyModal = (review: Review) => {
-  selectedReview.value = review;
-  isReplyModalOpen.value = true;
-};
-
-const handleReplySent = (updated: { reviewId: string; reply: string }) => {
-  const rev = reviews.value.find(r => r.id === updated.reviewId);
-  if (rev) {
-    rev.managerReply = updated.reply;
-    rev.managerReplyAt = new Date().toISOString();
-  }
-  isReplyModalOpen.value = false;
-  selectedReview.value = null;
-};
-
-// ── Search + Pagination ────────────────────────────────────────────────────────
-const searchQuery = ref('');
-const searchDate = ref('');
-const currentPage = ref(1);
-const PAGE_SIZE = 10;
-
-const filteredReviews = computed(() => {
-  let list = reviews.value;
-  const q = searchQuery.value.trim().toLowerCase();
-  if (q) {
-    list = list.filter(r =>
-      r.comment?.toLowerCase().includes(q) ||
-      r.author?.toLowerCase().includes(q)
-    );
-  }
-  if (searchDate.value) {
-    list = list.filter(r => r.createdAt.startsWith(searchDate.value));
-  }
-  return list;
-});
-
-const totalPages = computed(() => Math.ceil(filteredReviews.value.length / PAGE_SIZE));
-
-const paginatedReviews = computed(() => {
-  const start = (currentPage.value - 1) * PAGE_SIZE;
-  return filteredReviews.value.slice(start, start + PAGE_SIZE);
-});
-
-watch([searchQuery, searchDate], () => { currentPage.value = 1; });
-
-const clearSearch = () => { searchQuery.value = ''; searchDate.value = ''; };
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
-const pendingCount = computed(() => reviews.value.filter(r => !r.managerReply).length);
-
-const avgRating = (r: Review) =>
-  ((r.foodScore + r.serviceScore + r.priceScore) / 3).toFixed(1);
-
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
-
-const sentimentBadge = (s: string | null) => {
-  if (s === 'positive') return 'bg-emerald-100 text-emerald-700';
-  if (s === 'negative') return 'bg-red-100 text-red-600';
-  return 'bg-gray-100 text-gray-500';
-};
-const sentimentLabel = (s: string | null) => {
-  if (s === 'positive') return 'Positivo';
-  if (s === 'negative') return 'Negativo';
-  return 'Neutral';
-};
 </script>
 
 <template>
@@ -494,150 +394,26 @@ const sentimentLabel = (s: string | null) => {
 
 
       <!-- ══════════════════════════════════════════════════════════════════════
-           RESEÑAS — Búsqueda, paginación y modal de respuesta
+           ACCESO RÁPIDO — Mi Establecimiento
       ══════════════════════════════════════════════════════════════════════════ -->
       <section>
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-2xl font-bold tracking-tight text-white brand">Reseñas de Estudiantes</h2>
-          <div class="flex items-center gap-3">
-            <span v-if="pendingCount > 0" class="bg-orange-500/20 text-orange-500 font-bold px-3 py-1 rounded-full text-sm">
-              {{ pendingCount }} sin responder
-            </span>
-            <span v-else class="bg-emerald-500/10 text-emerald-400 font-bold px-3 py-1 rounded-full text-sm flex items-center gap-1">
-              <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">done_all</span>
-              Todo respondido
-            </span>
-          </div>
-        </div>
-
-        <!-- Barra de búsqueda -->
-        <div class="flex flex-col sm:flex-row gap-3 mb-6">
-          <div class="relative flex-1">
-            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#adaaad]" style="font-size:18px;">search</span>
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Buscar por comentario o usuario..."
-              class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white border border-black/10 text-sm text-[#0e0e10] placeholder:text-[#adaaad] focus:outline-none focus:ring-2 focus:ring-orange-500/30"
-            />
-          </div>
-          <input
-            v-model="searchDate"
-            type="date"
-            class="px-4 py-2.5 rounded-xl bg-white border border-black/10 text-sm text-[#0e0e10] focus:outline-none focus:ring-2 focus:ring-orange-500/30"
-          />
-          <button
-            v-if="searchQuery || searchDate"
-            @click="clearSearch"
-            class="px-4 py-2.5 rounded-xl bg-white border border-black/10 text-sm font-bold text-[#525155] hover:bg-black/5 transition-colors flex items-center gap-1"
-          >
-            <span class="material-symbols-outlined" style="font-size:16px;">close</span>
-            Limpiar
-          </button>
-        </div>
-
-        <div v-if="reviewsLoading" class="space-y-4">
-          <div v-for="i in 3" :key="i" class="h-36 bg-white/5 rounded-2xl animate-pulse"></div>
-        </div>
-
-        <div v-else-if="reviews.length === 0" class="text-center py-16 card-cream rounded-[1.5rem] border border-dashed border-black/10">
-          <span class="material-symbols-outlined text-5xl text-[#adaaad] mb-2">rate_review</span>
-          <p class="text-[#525155] font-bold">Sin reseñas todavía</p>
-          <p class="text-sm text-[#adaaad]">Cuando los estudiantes califiquen tu establecimiento, aparecerán aquí.</p>
-        </div>
-
-        <div v-else-if="filteredReviews.length === 0" class="text-center py-12 card-cream rounded-[1.5rem] border border-dashed border-black/10">
-          <span class="material-symbols-outlined text-4xl text-[#adaaad] mb-2">search_off</span>
-          <p class="text-[#525155] font-bold">Sin resultados</p>
-          <p class="text-sm text-[#adaaad]">Intenta con otros términos de búsqueda.</p>
-        </div>
-
-        <div v-else class="grid grid-cols-1 gap-5">
-          <div
-            v-for="review in paginatedReviews"
-            :key="review.id"
-            class="card-cream rounded-[1.5rem] p-6 shadow-sm border border-black/5"
-          >
-            <div class="flex justify-between items-start flex-col sm:flex-row gap-4 mb-4">
-              <div class="flex items-center gap-4">
-                <div class="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold flex-shrink-0">
-                  {{ (review.author ?? '?').charAt(0).toUpperCase() }}
-                </div>
-                <div>
-                  <p class="font-bold text-[#0e0e10] brand">{{ review.author ?? 'Estudiante' }}</p>
-                  <p class="text-xs text-[#adaaad]">{{ formatDate(review.createdAt) }}</p>
-                </div>
-              </div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <span :class="['px-2 py-0.5 rounded-full text-xs font-bold', sentimentBadge(review.sentiment)]">
-                  {{ sentimentLabel(review.sentiment) }}
-                </span>
-                <div class="flex items-center gap-1 bg-white px-3 py-1 rounded-full shadow-sm border border-black/5">
-                  <span class="material-symbols-outlined text-orange-500 text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="font-bold text-[#0e0e10] text-sm">{{ avgRating(review) }}</span>
-                </div>
-              </div>
+        <div
+          class="card-cream rounded-[1.5rem] p-6 border border-black/5 shadow-sm flex items-center justify-between gap-4 cursor-pointer hover:border-orange-500/30 transition-colors"
+          @click="router.push('/manager/mi-establecimiento')"
+        >
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
+              <span class="material-symbols-outlined text-orange-500 text-2xl" style="font-variation-settings: 'FILL' 1;">storefront</span>
             </div>
-
-            <div class="flex gap-4 mb-3 flex-wrap">
-              <span class="text-xs text-[#adaaad]">Comida: <strong class="text-[#0e0e10]">{{ review.foodScore }}/5</strong></span>
-              <span class="text-xs text-[#adaaad]">Servicio: <strong class="text-[#0e0e10]">{{ review.serviceScore }}/5</strong></span>
-              <span class="text-xs text-[#adaaad]">Precio: <strong class="text-[#0e0e10]">{{ review.priceScore }}/5</strong></span>
-            </div>
-
-            <p class="text-[#3f3f42] mb-4">"{{ review.comment }}"</p>
-
-            <div v-if="review.managerReply" class="mt-3 p-4 bg-orange-50 rounded-xl border border-orange-100">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="material-symbols-outlined text-orange-500 text-sm" style="font-variation-settings: 'FILL' 1;">storefront</span>
-                <span class="text-xs font-bold text-orange-600 uppercase tracking-wide">Respuesta del establecimiento</span>
-              </div>
-              <p class="text-sm text-[#3f3f42]">{{ review.managerReply }}</p>
-            </div>
-
-            <div v-else class="flex justify-end mt-2">
-              <button
-                @click="openReplyModal(review)"
-                class="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold py-2 px-6 rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-md text-sm"
-              >
-                <span class="material-symbols-outlined text-sm">reply</span>
-                Responder
-              </button>
+            <div>
+              <p class="font-bold text-[#0e0e10] brand text-lg">Mi Establecimiento</p>
+              <p class="text-sm text-[#adaaad]">Publica novedades, responde reseñas y edita el perfil de tu local.</p>
             </div>
           </div>
-          <!-- Paginación -->
-          <div v-if="totalPages > 1" class="flex items-center justify-between pt-4">
-            <button
-              :disabled="currentPage === 1"
-              @click="currentPage--"
-              class="flex items-center gap-1 px-4 py-2 rounded-xl bg-white border border-black/10 text-sm font-bold text-[#0e0e10] disabled:opacity-40 hover:bg-black/5 transition-colors"
-            >
-              <span class="material-symbols-outlined" style="font-size:16px;">arrow_back_ios</span>
-              Anterior
-            </button>
-            <span class="text-sm text-[#adaaad] font-bold">
-              Página {{ currentPage }} de {{ totalPages }}
-              <span class="text-[#adaaad]/60 font-normal ml-1">({{ filteredReviews.length }} resultados)</span>
-            </span>
-            <button
-              :disabled="currentPage === totalPages"
-              @click="currentPage++"
-              class="flex items-center gap-1 px-4 py-2 rounded-xl bg-white border border-black/10 text-sm font-bold text-[#0e0e10] disabled:opacity-40 hover:bg-black/5 transition-colors"
-            >
-              Siguiente
-              <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward_ios</span>
-            </button>
-          </div>
+          <span class="material-symbols-outlined text-[#adaaad] text-2xl flex-shrink-0">arrow_forward_ios</span>
         </div>
       </section>
 
     </template>
-
-    <ManagerReplyModal
-      :isOpen="isReplyModalOpen"
-      :review="selectedReview"
-      @close="isReplyModalOpen = false"
-      @sent="handleReplySent"
-    />
   </div>
 </template>

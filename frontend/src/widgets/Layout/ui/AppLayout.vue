@@ -30,7 +30,7 @@ const logout = () => {
   router.push('/login');
 };
 
-const isActive = (path: string) => route.path.includes(path);
+const isActive = (path: string) => route.path === path || route.path.startsWith(path + '/');
 </script>
 
 <template>
@@ -75,9 +75,17 @@ const isActive = (path: string) => route.path.includes(path);
             v-if="authStore.user?.role === 'manager'"
             to="/manager"
             class="transition-colors border-b-2 pb-1 text-lg font-semibold"
-            :class="isActive('/manager') ? 'text-orange-500 font-bold border-orange-500' : 'text-[#adaaad] hover:text-white border-transparent'"
+            :class="route.path === '/manager' ? 'text-orange-500 font-bold border-orange-500' : 'text-[#adaaad] hover:text-white border-transparent'"
           >
             Mi Panel
+          </router-link>
+          <router-link
+            v-if="authStore.user?.role === 'manager'"
+            to="/manager/mi-establecimiento"
+            class="transition-colors border-b-2 pb-1 text-lg font-semibold"
+            :class="isActive('/manager/mi-establecimiento') ? 'text-orange-500 font-bold border-orange-500' : 'text-[#adaaad] hover:text-white border-transparent'"
+          >
+            Mi Establecimiento
           </router-link>
         </div>
 
@@ -184,6 +192,24 @@ const isActive = (path: string) => route.path.includes(path);
             >
               <span class="material-symbols-outlined text-base">admin_panel_settings</span>
               Panel Admin
+            </router-link>
+            <router-link
+              v-if="authStore.user?.role === 'manager'"
+              to="/manager"
+              class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors"
+              :class="route.path === '/manager' ? 'bg-orange-500/10 text-orange-400' : 'text-[#adaaad] hover:bg-white/5 hover:text-white'"
+            >
+              <span class="material-symbols-outlined text-base">dashboard</span>
+              Mi Panel
+            </router-link>
+            <router-link
+              v-if="authStore.user?.role === 'manager'"
+              to="/manager/mi-establecimiento"
+              class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors"
+              :class="isActive('/manager/mi-establecimiento') ? 'bg-orange-500/10 text-orange-400' : 'text-[#adaaad] hover:bg-white/5 hover:text-white'"
+            >
+              <span class="material-symbols-outlined text-base">storefront</span>
+              Mi Establecimiento
             </router-link>
             <router-link
               to="/profile"

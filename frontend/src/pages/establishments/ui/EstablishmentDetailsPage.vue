@@ -3,7 +3,9 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/entities/user/model/authStore';
 import { ReviewService } from '@/entities/review/api/ReviewService';
+import { PostService } from '@/entities/post/api/PostService';
 import type { Establishment, EstablishmentReview } from '@/entities/review/model/types';
+import type { EstablishmentPost } from '@/entities/post/model/types';
 
 const authStore = useAuthStore();
 const route = useRoute();
@@ -33,6 +35,30 @@ const ige = computed(() => {
   return ((avgF * 0.5 + avgS * 0.3 + avgP * 0.2) * 20).toFixed(1);
 });
 
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+type Tab = 'feed' | 'reviews';
+const activeTab = ref<Tab>('feed');
+
+// ── Posts ─────────────────────────────────────────────────────────────────────
+const posts = ref<EstablishmentPost[]>([]);
+const postsLoading = ref(false);
+
+const loadPosts = async () => {
+  postsLoading.value = true;
+  try {
+    const result = await PostService.getPosts(establishmentSlug, 1, 20);
+    posts.value = result.data;
+  } catch {
+    posts.value = [];
+  } finally {
+    postsLoading.value = false;
+  }
+};
+
+const formatPostDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+
+// ── Reviews ───────────────────────────────────────────────────────────────────
 const loadReviews = async (page: number) => {
   reviewsLoading.value = true;
   try {
@@ -57,6 +83,7 @@ onMounted(async () => {
     est.value = establishment;
     reviews.value = reviewsResult.data;
     totalReviews.value = reviewsResult.total;
+    loadPosts();
   } catch (e: any) {
     error.value = e.response?.data?.message || 'No se pudo cargar el establecimiento.';
   } finally {
@@ -167,18 +194,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
       </div>
 
       <!-- Main Content -->
-      <div class="max-w-4xl mx-auto px-6 mt-28 mb-16 space-y-12">
-
-        <!-- CTA -->
-        <div v-if="authStore.user?.role === 'student'" class="flex justify-center my-8">
-          <button
-            @click="goToReview"
-            class="w-full md:w-2/3 py-5 text-xl tracking-wide bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-2xl shadow-lg hover:shadow-orange-500/30 hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
-          >
-            <span class="material-symbols-outlined font-bold">edit_square</span>
-            Escribir una Reseña
-          </button>
-        </div>
+      <div class="max-w-4xl mx-auto px-6 mt-28 mb-16 space-y-10">
 
         <!-- Galería -->
         <section v-if="est.galleryUrls && est.galleryUrls.length > 0">
@@ -203,85 +219,180 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
           </div>
         </section>
 
-        <!-- Reviews -->
-        <section>
-          <div class="flex items-center justify-between mb-6">
-            <h3 class="text-2xl font-bold text-white brand">Reseñas de la Comunidad</h3>
-            <span v-if="totalReviews > 0" class="text-sm text-[#adaaad] font-bold">{{ totalReviews }} en total</span>
+        <!-- ── Tabs ─────────────────────────────────────────────────────────── -->
+        <div>
+          <!-- Tab bar -->
+          <div class="flex gap-1 p-1 bg-white/5 rounded-2xl mb-8 border border-white/10 w-fit">
+            <button
+              @click="activeTab = 'feed'"
+              class="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all"
+              :class="activeTab === 'feed'
+                ? 'bg-white text-[#0e0e10] shadow-sm'
+                : 'text-[#adaaad] hover:text-white'"
+            >
+              <span class="material-symbols-outlined text-base" style="font-variation-settings: 'FILL' 1;">campaign</span>
+              Feed
+              <span v-if="posts.length > 0" class="bg-orange-500/20 text-orange-400 text-xs font-bold px-2 py-0.5 rounded-full">{{ posts.length }}</span>
+            </button>
+            <button
+              @click="activeTab = 'reviews'"
+              class="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all"
+              :class="activeTab === 'reviews'
+                ? 'bg-white text-[#0e0e10] shadow-sm'
+                : 'text-[#adaaad] hover:text-white'"
+            >
+              <span class="material-symbols-outlined text-base" style="font-variation-settings: 'FILL' 1;">rate_review</span>
+              Reseñas
+              <span v-if="totalReviews > 0" class="bg-orange-500/20 text-orange-400 text-xs font-bold px-2 py-0.5 rounded-full">{{ totalReviews }}</span>
+            </button>
           </div>
 
-          <div v-if="reviews.length === 0 && !reviewsLoading" class="card-cream p-10 rounded-3xl text-center text-[#adaaad]">
-            Aún no hay reseñas para este establecimiento. ¡Sé el primero!
-          </div>
+          <!-- ── Tab: Feed ─────────────────────────────────────────────────── -->
+          <section v-show="activeTab === 'feed'">
+            <div v-if="postsLoading" class="space-y-5">
+              <div v-for="i in 3" :key="i" class="h-40 bg-white/5 rounded-3xl animate-pulse"></div>
+            </div>
 
-          <div v-if="reviewsLoading" class="space-y-6">
-            <div v-for="i in 3" :key="i" class="h-40 bg-white/5 rounded-3xl animate-pulse"></div>
-          </div>
+            <div v-else-if="posts.length === 0" class="card-cream p-12 rounded-3xl text-center border border-dashed border-black/10">
+              <span class="material-symbols-outlined text-5xl text-[#adaaad] mb-3 block" style="font-variation-settings: 'FILL' 1;">campaign</span>
+              <p class="text-[#525155] font-bold">Sin publicaciones aún</p>
+              <p class="text-sm text-[#adaaad] mt-1">El establecimiento no ha publicado novedades todavía.</p>
+            </div>
 
-          <div v-else class="space-y-6">
-            <article v-for="rev in reviews" :key="rev.id" class="card-cream p-8 rounded-[2rem] shadow-xl text-[#3f3f42]">
-              <div class="flex justify-between items-start mb-6">
-                <div class="flex items-center gap-4">
-                  <div class="w-12 h-12 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold font-headline shadow-sm">
-                    {{ initials(rev.author) }}
+            <div v-else class="space-y-6">
+              <article
+                v-for="post in posts"
+                :key="post.id"
+                class="card-cream rounded-3xl shadow-md border border-black/5 overflow-hidden"
+              >
+                <!-- Post header -->
+                <div class="flex items-center gap-3 px-6 pt-6 pb-4">
+                  <div class="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                    <span class="material-symbols-outlined text-orange-500 text-lg" style="font-variation-settings: 'FILL' 1;">storefront</span>
                   </div>
                   <div>
-                    <h4 class="font-bold text-[#0e0e10] text-lg leading-none brand">{{ rev.author || 'Estudiante' }}</h4>
-                    <p class="text-xs text-orange-500 font-semibold mt-0.5" v-if="rev.authorCarrera">{{ rev.authorCarrera }} · UAO</p>
-                    <p class="text-xs text-[#adaaad] mt-0.5">{{ new Date(rev.createdAt).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' }) }}</p>
+                    <p class="font-bold text-[#0e0e10] brand leading-none">{{ est.name }}</p>
+                    <p class="text-xs text-[#adaaad] mt-0.5">{{ formatPostDate(post.createdAt) }}</p>
                   </div>
                 </div>
-                <div class="flex gap-0.5 text-orange-500">
-                  <span v-for="n in 5" :key="n" class="material-symbols-outlined text-sm" :style="{ fontVariationSettings: `'FILL' ${n <= rev.foodScore ? 1 : 0}` }">star</span>
+
+                <!-- Post content -->
+                <p class="text-[#3f3f42] leading-relaxed whitespace-pre-line px-6 pb-4">{{ post.content }}</p>
+
+                <!-- Post images -->
+                <div
+                  v-if="post.imageUrls && post.imageUrls.length > 0"
+                  class="grid gap-0.5"
+                  :class="{
+                    'grid-cols-1': post.imageUrls.length === 1,
+                    'grid-cols-2': post.imageUrls.length === 2,
+                    'grid-cols-2': post.imageUrls.length === 3,
+                    'grid-cols-2': post.imageUrls.length === 4,
+                  }"
+                >
+                  <img
+                    v-for="(url, i) in post.imageUrls"
+                    :key="i"
+                    :src="url"
+                    class="w-full object-cover"
+                    :class="{
+                      'max-h-96': post.imageUrls.length === 1,
+                      'h-56': post.imageUrls.length >= 2,
+                      'rounded-bl-3xl': post.imageUrls.length === 3 && i === 1,
+                    }"
+                  />
                 </div>
-              </div>
 
-              <p v-if="rev.comment" class="text-[#3f3f42] font-medium leading-relaxed font-sans">{{ rev.comment }}</p>
+                <div class="h-2"></div>
+              </article>
+            </div>
+          </section>
 
-              <!-- Imagen de evidencia -->
-              <div v-if="rev.imageUrl" class="mt-4">
-                <img
-                  :src="rev.imageUrl"
-                  class="w-full max-h-64 object-cover rounded-2xl cursor-pointer hover:opacity-90 hover:scale-[1.01] transition-all duration-300 shadow-md border border-black/5"
-                  @click="openLightbox(rev.id)"
-                  alt="Evidencia de la reseña"
-                />
-              </div>
+          <!-- ── Tab: Reseñas ──────────────────────────────────────────────── -->
+          <section v-show="activeTab === 'reviews'">
+            <!-- CTA -->
+            <div v-if="authStore.user?.role === 'student'" class="flex justify-center mb-8">
+              <button
+                @click="goToReview"
+                class="w-full md:w-2/3 py-5 text-xl tracking-wide bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-2xl shadow-lg hover:shadow-orange-500/30 hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
+              >
+                <span class="material-symbols-outlined font-bold">edit_square</span>
+                Escribir una Reseña
+              </button>
+            </div>
 
-              <div v-if="rev.managerReply" class="mt-6 relative pl-6">
-                <div class="absolute left-0 top-0 bottom-0 w-1 bg-orange-500 rounded-full"></div>
-                <div class="bg-orange-500/5 rounded-2xl p-5 border border-orange-500/10">
-                  <div class="flex items-center gap-2 mb-2">
-                    <span class="material-symbols-outlined text-orange-500 text-sm">reply</span>
-                    <span class="text-xs font-bold uppercase tracking-wider text-orange-500 brand">Respuesta Oficial</span>
+            <div v-if="reviews.length === 0 && !reviewsLoading" class="card-cream p-10 rounded-3xl text-center text-[#adaaad]">
+              Aún no hay reseñas para este establecimiento. ¡Sé el primero!
+            </div>
+
+            <div v-if="reviewsLoading" class="space-y-6">
+              <div v-for="i in 3" :key="i" class="h-40 bg-white/5 rounded-3xl animate-pulse"></div>
+            </div>
+
+            <div v-else class="space-y-6">
+              <article v-for="rev in reviews" :key="rev.id" class="card-cream p-8 rounded-[2rem] shadow-xl text-[#3f3f42]">
+                <div class="flex justify-between items-start mb-6">
+                  <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold font-headline shadow-sm">
+                      {{ initials(rev.author) }}
+                    </div>
+                    <div>
+                      <h4 class="font-bold text-[#0e0e10] text-lg leading-none brand">{{ rev.author || 'Estudiante' }}</h4>
+                      <p class="text-xs text-orange-500 font-semibold mt-0.5" v-if="rev.authorCarrera">{{ rev.authorCarrera }} · UAO</p>
+                      <p class="text-xs text-[#adaaad] mt-0.5">{{ new Date(rev.createdAt).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' }) }}</p>
+                    </div>
                   </div>
-                  <p class="text-[#3f3f42] text-sm italic leading-relaxed font-sans">"{{ rev.managerReply }}"</p>
+                  <div class="flex gap-0.5 text-orange-500">
+                    <span v-for="n in 5" :key="n" class="material-symbols-outlined text-sm" :style="{ fontVariationSettings: `'FILL' ${n <= rev.foodScore ? 1 : 0}` }">star</span>
+                  </div>
                 </div>
-              </div>
-            </article>
-          </div>
 
-          <!-- Paginación -->
-          <div v-if="totalPages > 1" class="flex items-center justify-between mt-8">
-            <button
-              :disabled="currentPage === 1 || reviewsLoading"
-              @click="loadReviews(currentPage - 1)"
-              class="flex items-center gap-1 px-5 py-2.5 rounded-2xl bg-white border border-black/10 text-sm font-bold text-[#0e0e10] disabled:opacity-40 hover:bg-black/5 transition-colors shadow-sm"
-            >
-              <span class="material-symbols-outlined" style="font-size:16px;">arrow_back_ios</span>
-              Anterior
-            </button>
-            <span class="text-sm text-[#adaaad] font-bold">{{ currentPage }} / {{ totalPages }}</span>
-            <button
-              :disabled="currentPage === totalPages || reviewsLoading"
-              @click="loadReviews(currentPage + 1)"
-              class="flex items-center gap-1 px-5 py-2.5 rounded-2xl bg-white border border-black/10 text-sm font-bold text-[#0e0e10] disabled:opacity-40 hover:bg-black/5 transition-colors shadow-sm"
-            >
-              Siguiente
-              <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward_ios</span>
-            </button>
-          </div>
-        </section>
+                <p v-if="rev.comment" class="text-[#3f3f42] font-medium leading-relaxed font-sans">{{ rev.comment }}</p>
+
+                <div v-if="rev.imageUrl" class="mt-4">
+                  <img
+                    :src="rev.imageUrl"
+                    class="w-full max-h-64 object-cover rounded-2xl cursor-pointer hover:opacity-90 hover:scale-[1.01] transition-all duration-300 shadow-md border border-black/5"
+                    @click="openLightbox(rev.id)"
+                    alt="Evidencia de la reseña"
+                  />
+                </div>
+
+                <div v-if="rev.managerReply" class="mt-6 relative pl-6">
+                  <div class="absolute left-0 top-0 bottom-0 w-1 bg-orange-500 rounded-full"></div>
+                  <div class="bg-orange-500/5 rounded-2xl p-5 border border-orange-500/10">
+                    <div class="flex items-center gap-2 mb-2">
+                      <span class="material-symbols-outlined text-orange-500 text-sm">reply</span>
+                      <span class="text-xs font-bold uppercase tracking-wider text-orange-500 brand">Respuesta Oficial</span>
+                    </div>
+                    <p class="text-[#3f3f42] text-sm italic leading-relaxed font-sans">"{{ rev.managerReply }}"</p>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <!-- Paginación -->
+            <div v-if="totalPages > 1" class="flex items-center justify-between mt-8">
+              <button
+                :disabled="currentPage === 1 || reviewsLoading"
+                @click="loadReviews(currentPage - 1)"
+                class="flex items-center gap-1 px-5 py-2.5 rounded-2xl bg-white border border-black/10 text-sm font-bold text-[#0e0e10] disabled:opacity-40 hover:bg-black/5 transition-colors shadow-sm"
+              >
+                <span class="material-symbols-outlined" style="font-size:16px;">arrow_back_ios</span>
+                Anterior
+              </button>
+              <span class="text-sm text-[#adaaad] font-bold">{{ currentPage }} / {{ totalPages }}</span>
+              <button
+                :disabled="currentPage === totalPages || reviewsLoading"
+                @click="loadReviews(currentPage + 1)"
+                class="flex items-center gap-1 px-5 py-2.5 rounded-2xl bg-white border border-black/10 text-sm font-bold text-[#0e0e10] disabled:opacity-40 hover:bg-black/5 transition-colors shadow-sm"
+              >
+                Siguiente
+                <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward_ios</span>
+              </button>
+            </div>
+          </section>
+        </div>
       </div>
     </template>
 
@@ -293,13 +404,9 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
           class="fixed inset-0 z-[200] flex items-center justify-center"
           @click.self="closeLightbox"
         >
-          <!-- Backdrop -->
           <div class="absolute inset-0 bg-black/80 backdrop-blur-md" @click="closeLightbox"></div>
 
-          <!-- Panel -->
           <div class="relative z-10 w-full max-w-3xl mx-4 flex flex-col items-center gap-4">
-
-            <!-- Close -->
             <button
               @click="closeLightbox"
               class="absolute -top-12 right-0 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
@@ -307,15 +414,12 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
               <span class="material-symbols-outlined">close</span>
             </button>
 
-            <!-- Image -->
             <div class="relative w-full">
               <img
                 :src="lightboxItems[lightboxIdx]?.url"
                 class="w-full max-h-[70vh] object-contain rounded-2xl shadow-2xl"
                 alt="Evidencia de reseña"
               />
-
-              <!-- Prev -->
               <button
                 v-if="lightboxItems.length > 1"
                 @click.stop="prevImage"
@@ -323,8 +427,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
               >
                 <span class="material-symbols-outlined">arrow_back_ios</span>
               </button>
-
-              <!-- Next -->
               <button
                 v-if="lightboxItems.length > 1"
                 @click.stop="nextImage"
@@ -334,7 +436,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
               </button>
             </div>
 
-            <!-- Comment + counter -->
             <div class="w-full bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-4 text-white">
               <div class="flex items-center justify-between mb-1">
                 <span class="text-sm font-bold text-orange-400">{{ lightboxItems[lightboxIdx]?.author || 'Estudiante' }}</span>
