@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { uploadImage } from '@/shared/api/uploadImage';
 import { ReviewService } from '@/entities/review/api/ReviewService';
 
 const route = useRoute();
@@ -8,14 +9,14 @@ const router = useRouter();
 const establishmentSlug = route.params.slug as string;
 
 const establishmentName = ref('el Establecimiento');
-let establishmentId = '';
+const establishmentId = ref('');
 onMounted(async () => {
   try {
     const establishments = await ReviewService.getEstablishments();
     const found = establishments.find(e => e.slug === establishmentSlug);
     if (found) {
       establishmentName.value = found.name;
-      establishmentId = found.id;
+      establishmentId.value = found.id;
     }
   } catch {
     // fallback ya está en el valor por defecto
@@ -61,9 +62,10 @@ const triggerFileInput = () => {
   fileInput.value?.click();
 };
 
-const onFileSelect = async (e: any) => {
-  const files: FileList = e.target.files;
-  if (!files.length) return;
+const onFileSelect = async (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  const files = target.files;
+  if (!files?.length) return;
 
   // Capturar el File ANTES de limpiar el input,
   // porque FileList es un live object que se vacía al hacer reset.
@@ -71,7 +73,7 @@ const onFileSelect = async (e: any) => {
   if (!file) return;
 
   // Reset el input para permitir seleccionar el mismo archivo de nuevo
-  e.target.value = '';
+  target.value = '';
 
   const idx = uploadedImages.value.length;
   uploadedImages.value.push({
@@ -85,25 +87,12 @@ const onFileSelect = async (e: any) => {
   const entry = uploadedImages.value[idx]!;
 
   try {
-    const formData = new FormData();
-    formData.append('file', file);
-    const token = localStorage.getItem('token');
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/upload`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
-    if (!res.ok) {
-      const errBody = await res.json().catch(() => ({})) as any;
-      throw new Error(errBody?.message || `HTTP ${res.status}`);
-    }
-    const json = await res.json() as { success: boolean; data: { url: string } };
-    entry.remoteUrl = json.data.url;
-  } catch (err) {
+    entry.remoteUrl = await uploadImage(file);
+  } catch (err: any) {
     console.error('[Upload]', err);
     entry.remoteUrl = null;
-    entry.errorMessage = (err as Error).message || 'No se pudo subir la imagen.';
+    const msg = err?.response?.data?.message || err.message || 'No se pudo subir la imagen.';
+    entry.errorMessage = msg;
   } finally {
     entry.uploading = false;
   }
@@ -128,7 +117,7 @@ const submitReview = async () => {
   try {
     const imageUrl = uploadedImages.value.find(img => img.remoteUrl)?.remoteUrl ?? undefined;
     const response = await ReviewService.create({
-      establishmentId,
+      establishmentId: establishmentId.value,
       foodScore: foodScore.value,
       serviceScore: serviceScore.value,
       priceScore: priceScore.value,
@@ -138,11 +127,16 @@ const submitReview = async () => {
     });
     alert(response.message || '¡Evaluación enviada con éxito!');
     router.push(`/establishments/${establishmentSlug}`);
-  } catch (e: any) {
-    if (e.response?.status === 409) {
-      error.value = 'Ya has enviado una reseña para este establecimiento anteriormente.';
+  } catch (e: unknown) {
+    if (e && typeof e === 'object' && 'response' in e) {
+      const axiosErr = e as { response?: { status?: number; data?: { message?: string } } };
+      if (axiosErr.response?.status === 409) {
+        error.value = 'Ya has enviado una reseña para este establecimiento anteriormente.';
+      } else {
+        error.value = axiosErr.response?.data?.message || 'Hubo un error al enviar tu evaluación.';
+      }
     } else {
-      error.value = e.response?.data?.message || 'Hubo un error al enviar tu evaluación.';
+      error.value = 'Hubo un error al enviar tu evaluación.';
     }
   } finally {
     loading.value = false;

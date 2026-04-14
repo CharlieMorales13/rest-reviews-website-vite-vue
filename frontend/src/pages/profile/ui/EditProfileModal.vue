@@ -1,28 +1,9 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import { useAuthStore } from '@/entities/user/model/authStore';
-
-const CARRERAS = [
-  'Administración de Empresas',
-  'Administración Turística',
-  'Comunicación',
-  'Derecho',
-  'Diseño de Moda e Innovación',
-  'Diseño Gráfico',
-  'Diseño Industrial',
-  'Diseño Multimedia',
-  'Finanzas y Contaduría Pública',
-  'Gastronomía',
-  'Ingeniería Biomédica',
-  'Ingeniería Civil',
-  'Ingeniería Industrial para la Dirección',
-  'Ingeniería Mecatrónica',
-  'Ingeniería en Tecnologías de la Información y Negocios Digitales',
-  'Médico Cirujano',
-  'Mercadotecnia Estratégica',
-  'Psicología',
-  'Turismo',
-];
+import { extractErrorMessage } from '@/shared/lib/extractError';
+import { uploadImage } from '@/shared/api/uploadImage';
+import { CARRERAS } from '@/shared/lib/constants';
 
 const props = defineProps<{
   isOpen: boolean;
@@ -62,23 +43,10 @@ async function onAvatarSelect(e: Event) {
   avatarUploading.value = true;
   avatarError.value = null;
   try {
-    const formData = new FormData();
-    formData.append('file', file);
-    const token = localStorage.getItem('token');
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/upload`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
-    if (!res.ok) {
-      const errBody = await res.json().catch(() => ({})) as any;
-      throw new Error(errBody?.message || `HTTP ${res.status}`);
-    }
-    const json = await res.json() as { success: boolean; data: { url: string } };
-    avatarUrl.value = json.data.url;
-  } catch (err) {
-    avatarError.value = (err as Error).message || 'No se pudo subir la imagen.';
+    avatarUrl.value = await uploadImage(file);
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || (err as Error).message || 'No se pudo subir la imagen.';
+    avatarError.value = msg;
   } finally {
     avatarUploading.value = false;
   }
@@ -113,8 +81,8 @@ const handleSave = async () => {
     });
     emit('saved');
     emit('close');
-  } catch (err: any) {
-    saveError.value = err.response?.data?.message || 'No se pudo guardar. Intenta de nuevo.';
+  } catch (err: unknown) {
+    saveError.value = extractErrorMessage(err, 'No se pudo guardar. Intenta de nuevo.');
   } finally {
     saving.value = false;
   }
