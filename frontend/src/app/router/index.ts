@@ -3,13 +3,10 @@ import { useAuthStore } from '@/entities/user/model/authStore';
 
 const routes = [
   {
-    path: '/',
-    redirect: '/login',
-  },
-  {
     path: '/login',
     name: 'login',
     component: () => import('@/pages/login/ui/LoginPage.vue'),
+    meta: { guest: true },
   },
   {
     path: '/register',
@@ -24,7 +21,7 @@ const routes = [
     children: [
       {
         path: '',
-        redirect: '/dashboard'
+        redirect: '/dashboard',
       },
       {
         path: 'dashboard',
@@ -88,6 +85,16 @@ export const router = createRouter({
 
 router.beforeEach(async (to) => {
   const authStore = useAuthStore();
+
+  // If user is already authenticated and visits a guest page (login/register),
+  // redirect them to their role-specific dashboard.
+  const isGuestPage = to.matched.some(r => r.meta.guest);
+  if (isGuestPage && authStore.isAuthenticated) {
+    const role = authStore.userRole;
+    if (role === 'admin') return '/admin';
+    if (role === 'manager') return '/manager';
+    return '/dashboard';
+  }
 
   // Check requiresAuth from matched routes (parent meta inheritance)
   const requiresAuth = to.matched.some(r => r.meta.requiresAuth);
