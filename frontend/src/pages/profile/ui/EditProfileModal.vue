@@ -4,16 +4,14 @@ import { useAuthStore } from '@/entities/user/model/authStore';
 
 const CARRERAS = [
   'Administración de Empresas',
-  'Colaboradores',
+  'Administración Turística',
   'Comunicación',
   'Derecho',
   'Diseño de Moda e Innovación',
   'Diseño Gráfico',
   'Diseño Industrial',
   'Diseño Multimedia',
-  'Egresados',
   'Finanzas y Contaduría Pública',
-  'Turismo',
   'Gastronomía',
   'Ingeniería Biomédica',
   'Ingeniería Civil',
@@ -23,6 +21,7 @@ const CARRERAS = [
   'Médico Cirujano',
   'Mercadotecnia Estratégica',
   'Psicología',
+  'Turismo',
 ];
 
 const props = defineProps<{

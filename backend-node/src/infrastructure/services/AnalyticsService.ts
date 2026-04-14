@@ -48,11 +48,14 @@ export class AnalyticsService implements IAnalyticsService {
         const url = `${env.ANALYTICS_URL}${path}`;
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (env.ANALYTICS_API_KEY) headers['X-API-Key'] = env.ANALYTICS_API_KEY;
+        // /train can take several minutes with hundreds of reviews; /predict is fast.
+        const timeoutMs = path === '/train' ? 10 * 60 * 1000 : 15_000;
         try {
             const response = await fetch(url, {
                 method: 'POST',
                 headers,
                 body: JSON.stringify(body),
+                signal: AbortSignal.timeout(timeoutMs),
             });
             if (!response.ok) {
                 const text = await response.text();

@@ -11,6 +11,7 @@ Endpoints:
 Start with:
   uvicorn server:app --host 0.0.0.0 --port 8001
 """
+import asyncio
 import logging
 import os
 import sys
@@ -68,12 +69,17 @@ async def startup() -> None:
     logger.info("Starting analytics server — model=%s", config.TRANSFORMER_MODEL_NAME)
     _deps = _build_deps()
 
-    # Pre-load model into memory so first request is fast
-    try:
-        _deps["model"].load_or_train([], [])
-        logger.info("Model pre-loaded at startup")
-    except Exception as e:
-        logger.warning("Could not pre-load model at startup: %s", e)
+    # Load model in background so the server accepts connections immediately.
+    # /health will return model_loaded=false until it's ready.
+    async def _preload():
+        loop = asyncio.get_event_loop()
+        try:
+            await loop.run_in_executor(None, lambda: _deps["model"].load_or_train([], []))
+            logger.info("Model pre-loaded in background")
+        except Exception as e:
+            logger.warning("Could not pre-load model: %s", e)
+
+    asyncio.create_task(_preload())
 
 
 # ── Request / Response models ─────────────────────────────────────────────
