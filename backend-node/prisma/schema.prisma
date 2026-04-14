@@ -60,6 +60,7 @@ model User {
   sessions      UserSession[]
   establishments Establishment[] @relation("ManagedBy")
   reviews       Review[]
+  posts         EstablishmentPost[] @relation("AuthoredPosts")
 
   @@map("users")
 }
@@ -96,8 +97,26 @@ model Establishment {
   manager     User?    @relation("ManagedBy", fields: [managerId], references: [id], onDelete: SetNull)
   reviews     Review[]
   metrics     MetricsSnapshot[]
+  posts       EstablishmentPost[]
 
   @@map("establishments")
+}
+
+model EstablishmentPost {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  establishmentId String   @map("establishment_id") @db.Uuid
+  authorId        String   @map("author_id") @db.Uuid
+  content         String
+  imageUrls       String[] @default([]) @map("image_urls")
+  isPublished     Boolean  @default(true) @map("is_published")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  author          User          @relation("AuthoredPosts", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([establishmentId, createdAt(sort: Desc)])
+  @@map("establishment_posts")
 }
 
 model Review {
