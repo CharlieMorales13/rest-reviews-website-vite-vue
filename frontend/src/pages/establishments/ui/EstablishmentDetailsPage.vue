@@ -8,7 +8,7 @@ import type { Establishment, EstablishmentReview } from '@/entities/review/model
 const authStore = useAuthStore();
 const route = useRoute();
 const router = useRouter();
-const establishmentId = route.params.id as string;
+const establishmentSlug = route.params.slug as string;
 
 const est = ref<Establishment | null>(null);
 const reviews = ref<EstablishmentReview[]>([]);
@@ -36,7 +36,7 @@ const ige = computed(() => {
 const loadReviews = async (page: number) => {
   reviewsLoading.value = true;
   try {
-    const result = await ReviewService.getEstablishmentReviews(establishmentId, page, PAGE_SIZE);
+    const result = await ReviewService.getEstablishmentReviews(establishmentSlug, page, PAGE_SIZE);
     reviews.value = result.data;
     totalReviews.value = result.total;
     currentPage.value = page;
@@ -51,8 +51,8 @@ const loadReviews = async (page: number) => {
 onMounted(async () => {
   try {
     const [establishment, reviewsResult] = await Promise.all([
-      ReviewService.getEstablishment(establishmentId),
-      ReviewService.getEstablishmentReviews(establishmentId, 1, PAGE_SIZE),
+      ReviewService.getEstablishment(establishmentSlug),
+      ReviewService.getEstablishmentReviews(establishmentSlug, 1, PAGE_SIZE),
     ]);
     est.value = establishment;
     reviews.value = reviewsResult.data;
@@ -65,7 +65,7 @@ onMounted(async () => {
 });
 
 const goToReview = () => {
-  router.push(`/review/create/${establishmentId}`);
+  router.push(`/review/create/${establishmentSlug}`);
 };
 
 const initials = (name: string | null) => {

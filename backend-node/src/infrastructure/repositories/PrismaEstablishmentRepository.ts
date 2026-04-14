@@ -13,6 +13,12 @@ export class PrismaEstablishmentRepository implements IEstablishmentRepository {
         return this.mapToEntity(data);
     }
 
+    async findBySlug(slug: string): Promise<Establishment | null> {
+        const data = await this.prisma.establishment.findUnique({ where: { slug } });
+        if (!data) return null;
+        return this.mapToEntity(data);
+    }
+
     async findAll(
         filters?: { name?: string; universityId?: string },
         pagination?: { page: number; limit: number }
@@ -53,6 +59,7 @@ export class PrismaEstablishmentRepository implements IEstablishmentRepository {
         const data = await this.prisma.establishment.create({
             data: {
                 name: establishment.name,
+                slug: establishment.slug,
                 description: establishment.description,
                 category: establishment.category,
                 managerId: establishment.managerId,
@@ -104,6 +111,7 @@ export class PrismaEstablishmentRepository implements IEstablishmentRepository {
         return Establishment.create({
             id: data.id,
             name: data.name,
+            slug: data.slug,
             description: data.description,
             category: data.category,
             managerId: data.managerId,

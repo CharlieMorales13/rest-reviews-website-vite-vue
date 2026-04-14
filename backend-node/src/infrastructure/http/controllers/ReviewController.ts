@@ -101,12 +101,12 @@ export class ReviewController {
      *         description: OK
      */
     public getByEstablishment = async (req: Request, res: Response): Promise<void> => {
-        const { id } = req.params;
+        const { slug } = req.params;
         const { page, limit } = req.query;
         const pageNum = parseInt(page as string) || 1;
         const limitNum = Math.min(parseInt(limit as string) || 10, 100);
 
-        const { data, total } = await this.listEstablishmentReviewsUseCase.execute(id as string, { page: pageNum, limit: limitNum });
+        const { data, total } = await this.listEstablishmentReviewsUseCase.execute(slug as string, { page: pageNum, limit: limitNum });
 
         const formatted = data.map(r => ({
             id: r.id,

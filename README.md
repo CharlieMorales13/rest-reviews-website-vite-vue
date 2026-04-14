@@ -68,9 +68,11 @@ Ensure your PostgreSQL instance is running. Execute the schema found in `backend
 cd backend-node
 cp .env.example .env  # Update with your DB credentials
 npm install
-npm run prisma:push   # Sync database schema
+npm run prisma:push   # Sync database schema (see note below)
 npm run dev
 ```
+
+> **Note:** If `prisma db push` hangs (common with Supabase pooler), run the schema changes directly in Supabase Dashboard → SQL Editor, then run `npx prisma generate` locally.
 
 ### 3. Backend Analytics Setup
 ```bash

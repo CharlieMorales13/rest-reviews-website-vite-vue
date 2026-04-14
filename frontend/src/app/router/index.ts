@@ -50,11 +50,11 @@ const routes = [
         component: () => import('@/pages/establishments/ui/EstablishmentsPage.vue')
       },
       {
-        path: 'establishments/:id',
+        path: 'establishments/:slug',
         name: 'establishment-details',
         component: () => import('@/pages/establishments/ui/EstablishmentDetailsPage.vue')
       },      {
-        path: 'review/create/:id',
+        path: 'review/create/:slug',
         name: 'create-review',
         component: () => import('@/pages/create-review/ui/CreateReviewPage.vue'),
         meta: { roles: ['student'] },

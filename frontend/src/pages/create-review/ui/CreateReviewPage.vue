@@ -5,14 +5,18 @@ import { ReviewService } from '@/entities/review/api/ReviewService';
 
 const route = useRoute();
 const router = useRouter();
-const establishmentId = route.params.id as string;
+const establishmentSlug = route.params.slug as string;
 
 const establishmentName = ref('el Establecimiento');
+let establishmentId = '';
 onMounted(async () => {
   try {
     const establishments = await ReviewService.getEstablishments();
-    const found = establishments.find(e => e.id === establishmentId);
-    if (found) establishmentName.value = found.name;
+    const found = establishments.find(e => e.slug === establishmentSlug);
+    if (found) {
+      establishmentName.value = found.name;
+      establishmentId = found.id;
+    }
   } catch {
     // fallback ya está en el valor por defecto
   }
@@ -133,7 +137,7 @@ const submitReview = async () => {
       imageUrl,
     });
     alert(response.message || '¡Evaluación enviada con éxito!');
-    router.push(`/establishments/${establishmentId}`);
+    router.push(`/establishments/${establishmentSlug}`);
   } catch (e: any) {
     if (e.response?.status === 409) {
       error.value = 'Ya has enviado una reseña para este establecimiento anteriormente.';

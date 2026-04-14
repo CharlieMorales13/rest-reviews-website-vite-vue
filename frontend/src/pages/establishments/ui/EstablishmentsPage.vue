@@ -20,10 +20,10 @@ const fetchEstablishments = async () => {
   } catch {
     errorMsg.value = 'No se pudieron cargar los establecimientos.';
     establishments.value = [
-      { id: '1', name: 'DelyFull', category: 'Restaurante' },
-      { id: '2', name: 'Guajaquenito', category: 'Restaurante' },
-      { id: '3', name: 'Cuckoo Coffee & Resto', category: 'Cafetería' },
-      { id: '4', name: 'Cuckoo Box', category: 'Cafetería' },
+      { id: '1', slug: 'delyfull', name: 'DelyFull', category: 'Restaurante' },
+      { id: '2', slug: 'guajaquenito', name: 'Guajaquenito', category: 'Restaurante' },
+      { id: '3', slug: 'cuckoo-coffee-resto', name: 'Cuckoo Coffee & Resto', category: 'Cafetería' },
+      { id: '4', slug: 'cuckoo-box', name: 'Cuckoo Box', category: 'Cafetería' },
     ];
   } finally {
     loading.value = false;
@@ -32,12 +32,12 @@ const fetchEstablishments = async () => {
 
 onMounted(fetchEstablishments);
 
-const goToReview = (id: string) => {
-  router.push({ name: 'create-review', params: { id } });
+const goToReview = (slug: string) => {
+  router.push({ name: 'create-review', params: { slug } });
 };
 
-const goToDetails = (id: string) => {
-  router.push({ name: 'establishment-details', params: { id } });
+const goToDetails = (slug: string) => {
+  router.push({ name: 'establishment-details', params: { slug } });
 };
 </script>
 
@@ -101,14 +101,14 @@ const goToDetails = (id: string) => {
         <!-- Actions -->
         <div class="flex gap-3 mt-6">
           <button
-            @click="goToDetails(est.id)"
+            @click="goToDetails(est.slug!)"
             class="flex-1 py-2.5 text-sm font-semibold text-[#adaaad] hover:text-white border border-white/10 hover:border-white/20 rounded-xl transition-colors"
           >
             Ver Detalles
           </button>
           <button
             v-if="authStore.user?.role === 'student'"
-            @click="goToReview(est.id)"
+            @click="goToReview(est.slug!)"
             class="flex-1 py-2.5 text-sm font-bold bg-orange-500 hover:bg-orange-400 text-white rounded-xl transition-colors active:scale-95"
           >
             Evaluar

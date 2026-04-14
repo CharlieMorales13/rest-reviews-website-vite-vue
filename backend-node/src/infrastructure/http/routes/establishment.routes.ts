@@ -10,8 +10,8 @@ const reviewController = container.resolve(ReviewController);
 
 // Public Routes
 establishmentRouter.get('/', controller.getAll);
-establishmentRouter.get('/:id', controller.getOne);
-establishmentRouter.get('/:id/reviews', reviewController.getByEstablishment);
+establishmentRouter.get('/:slug', controller.getOne);
+establishmentRouter.get('/:slug/reviews', reviewController.getByEstablishment);
 
 // Protected Routes
 establishmentRouter.post('/', authenticateToken, requireRole(['admin']), controller.create);

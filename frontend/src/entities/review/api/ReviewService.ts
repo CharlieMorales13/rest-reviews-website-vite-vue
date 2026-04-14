@@ -12,14 +12,14 @@ export class ReviewService {
     return response.data.data;
   }
 
-  static async getEstablishment(id: string): Promise<Establishment> {
-    const response = await httpClient.get<{ success: boolean; data: Establishment }>(`/api/establishments/${id}`);
+  static async getEstablishment(slug: string): Promise<Establishment> {
+    const response = await httpClient.get<{ success: boolean; data: Establishment }>(`/api/establishments/${slug}`);
     return response.data.data;
   }
 
-  static async getEstablishmentReviews(id: string, page = 1, limit = 20): Promise<{ data: EstablishmentReview[]; total: number }> {
+  static async getEstablishmentReviews(slug: string, page = 1, limit = 20): Promise<{ data: EstablishmentReview[]; total: number }> {
     const response = await httpClient.get<{ data: EstablishmentReview[]; meta: { total: number } }>(
-      `/api/establishments/${id}/reviews?page=${page}&limit=${limit}`
+      `/api/establishments/${slug}/reviews?page=${page}&limit=${limit}`
     );
     return { data: response.data.data, total: response.data.meta?.total ?? 0 };
   }

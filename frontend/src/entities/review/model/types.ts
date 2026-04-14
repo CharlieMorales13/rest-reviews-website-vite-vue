@@ -48,6 +48,7 @@ export interface ReviewResponse {
 
 export interface Establishment {
   id: string;
+  slug?: string;
   name: string;
   category: string;
   managerId?: string;

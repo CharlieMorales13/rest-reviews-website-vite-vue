@@ -1,6 +1,7 @@
 export interface EstablishmentProps {
     id?: string;
     name: string;
+    slug?: string | null;
     description?: string | null;
     category?: string | null;
     managerId?: string | null;
@@ -37,6 +38,7 @@ export class Establishment {
 
     get id(): string | undefined { return this.props.id; }
     get name(): string { return this.props.name; }
+    get slug(): string | null | undefined { return this.props.slug; }
     get description(): string | null | undefined { return this.props.description; }
     get category(): string | null | undefined { return this.props.category; }
     get managerId(): string | null | undefined { return this.props.managerId; }

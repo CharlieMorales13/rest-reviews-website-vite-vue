@@ -9,8 +9,8 @@ export class GetEstablishmentUseCase {
         @inject('IEstablishmentRepository') private repository: IEstablishmentRepository
     ) { }
 
-    async execute(id: string): Promise<Establishment> {
-        const establishment = await this.repository.findById(id);
+    async execute(slug: string): Promise<Establishment> {
+        const establishment = await this.repository.findBySlug(slug);
         if (!establishment) {
             throw new AppError('Establishment not found', 404);
         }

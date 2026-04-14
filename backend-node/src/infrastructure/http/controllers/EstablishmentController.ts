@@ -39,7 +39,7 @@ export class EstablishmentController {
     public create = async (req: Request, res: Response): Promise<void> => {
         const validatedData = CreateEstablishmentSchema.parse(req.body);
         const e = await this.createUseCase.execute(validatedData);
-        res.status(201).json({ success: true, data: { id: e.id, name: e.name, description: e.description, category: e.category, managerId: e.managerId, isActive: e.isActive } });
+        res.status(201).json({ success: true, data: { id: e.id, slug: e.slug, name: e.name, description: e.description, category: e.category, managerId: e.managerId, isActive: e.isActive } });
     };
 
     /**
@@ -53,12 +53,12 @@ export class EstablishmentController {
      *         description: Array of all establishments
      */
     public getOne = async (req: Request, res: Response): Promise<void> => {
-        const { id } = req.params;
-        const e = await this.getUseCase.execute(id);
+        const { slug } = req.params;
+        const e = await this.getUseCase.execute(slug);
         res.status(200).json({
             success: true,
             data: {
-                id: e.id, name: e.name, description: e.description,
+                id: e.id, slug: e.slug, name: e.name, description: e.description,
                 category: e.category, managerId: e.managerId, isActive: e.isActive,
                 locationDetails: e.locationDetails, openingHours: e.openingHours,
                 galleryUrls: e.galleryUrls, menuUrls: e.menuUrls, createdAt: e.createdAt,
@@ -70,6 +70,7 @@ export class EstablishmentController {
         const { data } = await this.listUseCase.execute();
         const mapped = data.map(e => ({
             id: e.id,
+            slug: e.slug,
             name: e.name,
             description: e.description,
             category: e.category,

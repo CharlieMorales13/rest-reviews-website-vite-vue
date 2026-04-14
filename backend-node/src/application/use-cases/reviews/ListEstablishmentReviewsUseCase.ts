@@ -12,16 +12,16 @@ export class ListEstablishmentReviewsUseCase {
     ) { }
 
     async execute(
-        establishmentId: string,
+        slug: string,
         pagination?: { page: number; limit: number }
     ): Promise<{ data: Review[]; total: number }> {
-        // 1. Verify Establishment exists
-        const establishment = await this.establishmentRepository.findById(establishmentId);
+        // 1. Resolve slug to establishment
+        const establishment = await this.establishmentRepository.findBySlug(slug);
         if (!establishment) {
             throw new AppError('Establishment not found', 404);
         }
 
-        // 2. Fetch reviews (Rich data now included by repository)
-        return await this.reviewRepository.findByEstablishmentId(establishmentId, pagination);
+        // 2. Fetch reviews
+        return await this.reviewRepository.findByEstablishmentId(establishment.id!, pagination);
     }
 }

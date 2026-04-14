@@ -17,6 +17,7 @@ const FALLBACK_IMAGES = [
 
 interface EstablishmentCard {
   id: string;
+  slug: string;
   name: string;
   category: string;
   description: string;
@@ -34,6 +35,7 @@ onMounted(async () => {
       const fallbackIdx = i % FALLBACK_IMAGES.length;
       return {
         id: e.id,
+        slug: e.slug || e.id,
         name: e.name,
         category: e.category || 'Establecimiento',
         description: e.description || 'Disfruta de una experiencia gastronómica única en el campus Anáhuac Oaxaca.',
@@ -48,8 +50,8 @@ onMounted(async () => {
   }
 });
 
-const navigateToEstablishment = (id: string) => {
-  router.push(`/establishments/${id}`);
+const navigateToEstablishment = (slug: string) => {
+  router.push(`/establishments/${slug}`);
 };
 </script>
 
@@ -117,7 +119,7 @@ const navigateToEstablishment = (id: string) => {
             <div
                 v-for="est in establishments"
                 :key="est.id"
-                @click="navigateToEstablishment(est.id)"
+                @click="navigateToEstablishment(est.slug!)"
                 class="group cursor-pointer"
             >
                 <div class="card-cream rounded-2xl overflow-hidden shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(249,115,22,0.15)]">
