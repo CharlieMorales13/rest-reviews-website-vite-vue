@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
+import { uploadImage } from '@/shared/api/uploadImage';
 import { ReviewService } from '@/entities/review/api/ReviewService';
 import { PostService } from '@/entities/post/api/PostService';
+import { EstablishmentService } from '@/entities/establishment/api/EstablishmentService';
 import { useAuthStore } from '@/entities/user/model/authStore';
-import { httpClient } from '@/shared/api/httpClient';
+import ReviewCard from '@/shared/ui/ReviewCard.vue';
 import type { Establishment, EstablishmentReview } from '@/entities/review/model/types';
 import type { EstablishmentPost } from '@/entities/post/model/types';
 import CreatePostModal from '@/features/create-post/ui/CreatePostModal.vue';
@@ -11,19 +13,30 @@ import ManagerReplyModal from '@/pages/dashboard/ui/ManagerReplyModal.vue';
 
 const authStore = useAuthStore();
 
+const FALLBACK_COVER =
+  'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=1400&q=80';
+
 // ── State ──────────────────────────────────────────────────────────────────────
-const establishment = ref<Establishment | null>(null);
+const est = ref<Establishment | null>(null);
 const posts = ref<EstablishmentPost[]>([]);
 const reviews = ref<EstablishmentReview[]>([]);
 const loading = ref(true);
 const reviewsLoading = ref(false);
 const error = ref<string | null>(null);
 
+type TabKey = 'feed' | 'menu' | 'gallery' | 'reviews';
+const activeTab = ref<TabKey>('feed');
+const tabs: ReadonlyArray<{ key: TabKey; label: string }> = [
+  { key: 'feed', label: 'Feed' },
+  { key: 'menu', label: 'Menú' },
+  { key: 'gallery', label: 'Galería' },
+  { key: 'reviews', label: 'Reseñas' },
+];
+
 // Pagination - reviews
 const reviewPage = ref(1);
 const reviewTotal = ref(0);
 const REVIEW_PAGE_SIZE = 10;
-const totalReviewPages = computed(() => Math.ceil(reviewTotal.value / REVIEW_PAGE_SIZE));
 
 // Pagination - posts
 const postPage = ref(1);
@@ -59,7 +72,7 @@ const fetchAll = async () => {
       error.value = 'No tienes un establecimiento asignado. Contacta al administrador.';
       return;
     }
-    establishment.value = mine;
+    est.value = mine;
     await Promise.all([loadPosts(mine.slug!), loadReviews(mine.slug!)]);
   } catch {
     error.value = 'Error al cargar el establecimiento.';
@@ -79,7 +92,7 @@ const loadReviews = async (slug: string) => {
   reviewsLoading.value = true;
   try {
     const result = await ReviewService.getEstablishmentReviews(slug, 1, 200);
-    reviews.value = result.data as any;
+    reviews.value = result.data;
     reviewTotal.value = result.total;
   } finally {
     reviewsLoading.value = false;
@@ -87,6 +100,125 @@ const loadReviews = async (slug: string) => {
 };
 
 onMounted(fetchAll);
+
+// ── IGE ────────────────────────────────────────────────────────────────────────
+const ige = computed(() => {
+  if (!est.value) return '–';
+  const aF = est.value.avgFoodScore || 0;
+  const aS = est.value.avgServiceScore || 0;
+  const aP = est.value.avgPriceScore || 0;
+  if (!aF && !aS && !aP) return '–';
+  return ((aF * 0.5 + aS * 0.3 + aP * 0.2) * 20).toFixed(1);
+});
+
+
+
+// ── Cover + Logo upload ────────────────────────────────────────────────────────
+const coverInput = ref<HTMLInputElement | null>(null);
+const logoInput = ref<HTMLInputElement | null>(null);
+const coverUploading = ref(false);
+const logoUploading = ref(false);
+
+const triggerCoverUpload = () => coverInput.value?.click();
+const triggerLogoUpload = () => logoInput.value?.click();
+
+const onCoverSelected = async (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file || !est.value) return;
+  target.value = '';
+  coverUploading.value = true;
+  try {
+    const url = await uploadImage(file);
+    await EstablishmentService.update(est.value.id, { coverUrl: url });
+    est.value = { ...est.value, coverUrl: url };
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err.message;
+    if (msg) alert(msg);
+  } finally {
+    coverUploading.value = false;
+  }
+};
+
+const onLogoSelected = async (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file || !est.value) return;
+  target.value = '';
+  logoUploading.value = true;
+  try {
+    const url = await uploadImage(file);
+    await EstablishmentService.update(est.value.id, { logoUrl: url });
+    est.value = { ...est.value, logoUrl: url };
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err.message;
+    if (msg) alert(msg);
+  } finally {
+    logoUploading.value = false;
+  }
+};
+
+// ── Gallery ────────────────────────────────────────────────────────────────────
+const galleryInput = ref<HTMLInputElement | null>(null);
+const galleryUploading = ref(false);
+const triggerGalleryUpload = () => galleryInput.value?.click();
+
+const onGalleryImageSelected = async (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file || !est.value) return;
+  target.value = '';
+  galleryUploading.value = true;
+  try {
+    const url = await uploadImage(file);
+    const newUrls = [...(est.value.galleryUrls || []), url];
+    await EstablishmentService.update(est.value.id, { galleryUrls: newUrls });
+    est.value = { ...est.value, galleryUrls: newUrls };
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err.message;
+    if (msg) alert(msg);
+  } finally {
+    galleryUploading.value = false;
+  }
+};
+
+const removeGalleryImage = async (index: number) => {
+  if (!est.value) return;
+  const newUrls = (est.value.galleryUrls || []).filter((_, i) => i !== index);
+  await EstablishmentService.update(est.value.id, { galleryUrls: newUrls });
+  est.value = { ...est.value, galleryUrls: newUrls };
+};
+
+// ── Menu ───────────────────────────────────────────────────────────────────────
+const menuInput = ref<HTMLInputElement | null>(null);
+const menuUploading = ref(false);
+const triggerMenuUpload = () => menuInput.value?.click();
+
+const onMenuImageSelected = async (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file || !est.value) return;
+  target.value = '';
+  menuUploading.value = true;
+  try {
+    const url = await uploadImage(file);
+    const newUrls = [...(est.value.menuUrls || []), url];
+    await EstablishmentService.update(est.value.id, { menuUrls: newUrls });
+    est.value = { ...est.value, menuUrls: newUrls };
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err.message;
+    if (msg) alert(msg);
+  } finally {
+    menuUploading.value = false;
+  }
+};
+
+const removeMenuImage = async (index: number) => {
+  if (!est.value) return;
+  const newUrls = (est.value.menuUrls || []).filter((_, i) => i !== index);
+  await EstablishmentService.update(est.value.id, { menuUrls: newUrls });
+  est.value = { ...est.value, menuUrls: newUrls };
+};
 
 // ── Posts actions ──────────────────────────────────────────────────────────────
 const postModalOpen = ref(false);
@@ -109,405 +241,489 @@ const onPostUpdated = (updated: EstablishmentPost) => {
 };
 
 const deletePost = async (postId: string) => {
-  if (!establishment.value?.slug || !confirm('¿Eliminar esta publicación?')) return;
-  await PostService.deletePost(establishment.value.slug, postId);
+  if (!est.value?.slug || !confirm('¿Eliminar esta publicación?')) return;
+  await PostService.deletePost(est.value.slug, postId);
   posts.value = posts.value.filter(p => p.id !== postId);
   postTotal.value--;
 };
 
-// ── Edit establishment profile ─────────────────────────────────────────────────
-const editProfileOpen = ref(false);
-const editForm = ref({ description: '', openingHours: '', locationDetails: '' });
+// ── About edit ─────────────────────────────────────────────────────────────────
+const aboutEditOpen = ref(false);
+const aboutSaving = ref(false);
+const aboutForm = ref({ description: '', openingHours: '', locationDetails: '' });
 
-const openEditProfile = () => {
-  editForm.value = {
-    description: establishment.value?.description ?? '',
-    openingHours: establishment.value?.openingHours ?? '',
-    locationDetails: establishment.value?.locationDetails ?? '',
+const openAboutEdit = () => {
+  aboutForm.value = {
+    description: est.value?.description ?? '',
+    openingHours: est.value?.openingHours ?? '',
+    locationDetails: est.value?.locationDetails ?? '',
   };
-  editProfileOpen.value = true;
+  aboutEditOpen.value = true;
 };
 
-const saveProfile = async () => {
-  if (!establishment.value) return;
-  await httpClient.put(`/api/establishments/${establishment.value.id}`, editForm.value);
-  establishment.value = { ...establishment.value, ...editForm.value };
-  editProfileOpen.value = false;
+const saveAbout = async () => {
+  if (!est.value) return;
+  aboutSaving.value = true;
+  try {
+    await EstablishmentService.update(est.value.id, { ...aboutForm.value });
+    est.value = { ...est.value, ...aboutForm.value };
+    aboutEditOpen.value = false;
+  } finally {
+    aboutSaving.value = false;
+  }
 };
 
 // ── Reply modal ────────────────────────────────────────────────────────────────
 const replyModalOpen = ref(false);
-const selectedReview = ref<any>(null);
+const selectedReview = ref<EstablishmentReview | null>(null);
 
-const openReplyModal = (review: any) => { selectedReview.value = review; replyModalOpen.value = true; };
+const openReplyModal = (review: EstablishmentReview) => { selectedReview.value = review; replyModalOpen.value = true; };
 const handleReplySent = (updated: { reviewId: string; reply: string }) => {
-  const rev = reviews.value.find((r: any) => r.id === updated.reviewId) as any;
+  const rev = reviews.value.find(r => r.id === updated.reviewId);
   if (rev) { rev.managerReply = updated.reply; rev.managerReplyAt = new Date().toISOString(); }
   replyModalOpen.value = false;
   selectedReview.value = null;
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-const pendingCount = computed(() => reviews.value.filter((r: any) => !r.managerReply).length);
+const pendingCount = computed(() => reviews.value.filter(r => !r.managerReply).length);
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
-
-const avgRating = (r: any) => ((r.foodScore + r.serviceScore + r.priceScore) / 3).toFixed(1);
-
-const sentimentBadge = (s: string | null) => {
-  if (s === 'positive') return 'bg-emerald-100 text-emerald-700';
-  if (s === 'negative') return 'bg-red-100 text-red-600';
-  return 'bg-gray-100 text-gray-500';
-};
-const sentimentLabel = (s: string | null) => {
-  if (s === 'positive') return 'Positivo';
-  if (s === 'negative') return 'Negativo';
-  return 'Neutral';
-};
 </script>
 
 <template>
-  <div class="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
-
+  <div class="w-full animate-fade-in">
     <!-- Loading -->
     <div v-if="loading" class="space-y-6">
-      <div class="h-10 bg-white/5 rounded-2xl w-2/3 animate-pulse"></div>
-      <div class="h-40 bg-white/5 rounded-3xl animate-pulse"></div>
+      <div class="w-full h-[450px] bg-surface-container animate-pulse"></div>
+      <div class="max-w-[1280px] mx-auto px-8 md:px-16 space-y-4 mt-20">
+        <div class="h-16 bg-surface-container rounded-2xl w-1/3 animate-pulse"></div>
+        <div class="h-4 bg-surface-container rounded w-1/2 animate-pulse"></div>
+      </div>
     </div>
 
     <!-- Error -->
     <div v-else-if="error" class="flex flex-col items-center justify-center py-24 text-center gap-4">
-      <span class="material-symbols-outlined text-5xl text-amber-400" style="font-variation-settings: 'FILL' 1;">store_mall_directory</span>
-      <h2 class="text-xl font-black text-white brand">Sin establecimiento asignado</h2>
-      <p class="text-[#adaaad] text-sm">{{ error }}</p>
+      <span class="material-symbols-outlined text-5xl text-primary" style="font-variation-settings: 'FILL' 1;">store_mall_directory</span>
+      <h2 class="text-xl font-black text-on-surface font-headline">Sin establecimiento asignado</h2>
+      <p class="text-on-surface-variant text-sm">{{ error }}</p>
     </div>
 
-    <template v-else-if="establishment">
+    <template v-else-if="est">
+      <!-- ═══════════════════ COVER + LOGO ═══════════════════ -->
+      <div class="relative w-full h-[450px]">
+        <img :src="est.coverUrl || FALLBACK_COVER" class="w-full h-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent"></div>
 
-      <!-- ══════════════════════════════════════════════════════════════════════
-           PERFIL DEL ESTABLECIMIENTO
-      ══════════════════════════════════════════════════════════════════════════ -->
-      <section class="mb-10">
-        <div class="flex items-center justify-between mb-6">
-          <div>
-            <div class="flex items-center gap-2 mb-1">
-              <span class="material-symbols-outlined text-orange-500">storefront</span>
-              <span class="text-orange-500 text-xs font-bold uppercase tracking-widest">Mi Establecimiento</span>
+        <div v-if="coverUploading" class="absolute inset-0 flex items-center justify-center bg-black/60 z-10">
+          <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+
+        <button
+          @click="triggerCoverUpload"
+          class="absolute bottom-4 right-4 z-20 flex items-center gap-2 px-4 py-2 bg-surface-container-high/80 backdrop-blur-md rounded-xl text-on-surface hover:bg-surface-bright transition-all border border-outline-variant/20"
+        >
+          <span class="material-symbols-outlined text-base">camera_alt</span>
+          <span class="text-xs font-bold font-headline uppercase tracking-widest">Cambiar portada</span>
+        </button>
+        <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="onCoverSelected" />
+
+        <!-- Logo -->
+        <div class="absolute -bottom-16 left-8 md:left-16">
+          <div class="relative group w-32 h-32 md:w-44 md:h-44 rounded-full border-4 border-background bg-surface-container-high overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
+            <div v-if="!est.logoUrl" class="w-full h-full flex items-center justify-center bg-surface-container-highest">
+              <span class="text-4xl font-black font-headline text-primary">{{ est.name?.[0] }}</span>
             </div>
-            <h1 class="text-3xl md:text-4xl font-black text-white brand tracking-tight">{{ establishment.name }}</h1>
+            <img v-else :src="est.logoUrl" class="w-full h-full object-cover" />
+
+            <div v-if="logoUploading" class="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full z-10">
+              <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+
+            <button
+              @click="triggerLogoUpload"
+              class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+            >
+              <span class="material-symbols-outlined text-on-surface text-2xl">camera_alt</span>
+            </button>
+            <input ref="logoInput" type="file" accept="image/*" class="hidden" @change="onLogoSelected" />
           </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ NAME + INFO ═══════════════════ -->
+      <div class="max-w-[1280px] mx-auto px-8 md:px-16 mt-20">
+        <h1 class="text-4xl md:text-6xl font-black font-headline tracking-tighter text-on-surface">
+          {{ est.name }}
+        </h1>
+        <div class="flex flex-wrap items-center gap-4 mt-3">
+          <span v-if="est.category" class="px-3 py-1 bg-primary/10 text-primary text-xs font-black uppercase rounded-full border border-primary/20 tracking-wider font-headline">
+            {{ est.category }}
+          </span>
+          <span v-if="ige !== '–'" class="flex items-center gap-1.5 text-sm text-on-surface-variant font-body">
+            <span class="material-symbols-outlined text-primary text-base" style="font-variation-settings: 'FILL' 1;">star</span>
+            <span class="font-bold text-on-surface">IGE {{ ige }}</span>
+            <span class="text-xs text-on-surface-variant/70">/ 100</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ TABS ═══════════════════ -->
+      <div class="mt-8 border-b border-outline-variant/10 bg-background sticky top-[80px] md:top-[112px] z-40">
+        <div class="max-w-[1280px] mx-auto px-8 md:px-16 flex gap-10 overflow-x-auto no-scrollbar">
           <button
-            @click="openEditProfile"
-            class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[#adaaad] hover:text-white hover:border-white/20 transition-colors text-sm font-semibold"
+            v-for="tab in tabs"
+            :key="tab.key"
+            @click="activeTab = tab.key"
+            :class="activeTab === tab.key
+              ? 'pb-4 pt-4 text-primary border-b-2 border-primary font-headline font-bold text-sm uppercase tracking-widest whitespace-nowrap'
+              : 'pb-4 pt-4 text-on-surface-variant hover:text-on-surface font-headline font-bold text-sm uppercase tracking-widest whitespace-nowrap transition-colors'"
           >
-            <span class="material-symbols-outlined text-base">edit</span>
-            Editar perfil
+            {{ tab.label }}
           </button>
         </div>
+      </div>
 
-        <div class="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-4">
-          <div v-if="establishment.category" class="flex items-center gap-2">
-            <span class="px-3 py-1 bg-orange-500/10 text-orange-500 text-xs font-bold uppercase rounded-full border border-orange-500/20 tracking-wider">
-              {{ establishment.category }}
-            </span>
-          </div>
-          <p v-if="establishment.description" class="text-[#adaaad]">{{ establishment.description }}</p>
-          <p v-else class="text-[#adaaad]/50 text-sm italic">Sin descripción. Edita el perfil para añadir una.</p>
-
-          <div class="flex flex-wrap gap-6 pt-2">
-            <div v-if="establishment.openingHours" class="flex items-center gap-2 text-sm text-[#adaaad]">
-              <span class="material-symbols-outlined text-orange-500 text-base">schedule</span>
-              {{ establishment.openingHours }}
+      <!-- ═══════════════════ MAIN GRID ═══════════════════ -->
+      <div class="max-w-[1280px] mx-auto px-8 md:px-16 py-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <!-- LEFT — About -->
+        <div class="lg:col-span-4 space-y-10">
+          <section class="bg-surface-container-low p-8 rounded-3xl">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-xs uppercase tracking-[0.2em] font-black text-primary font-headline">About the Kitchen</h3>
+              <button
+                @click="openAboutEdit"
+                class="p-1.5 rounded-lg hover:bg-surface-bright transition-colors text-on-surface-variant hover:text-on-surface"
+              >
+                <span class="material-symbols-outlined text-base">edit</span>
+              </button>
             </div>
-            <div v-if="establishment.locationDetails" class="flex items-center gap-2 text-sm text-[#adaaad]">
-              <span class="material-symbols-outlined text-orange-500 text-base">location_on</span>
-              {{ establishment.locationDetails }}
-            </div>
-          </div>
-
-          <!-- Galería -->
-          <div v-if="establishment.galleryUrls?.length" class="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-2">
-            <img
-              v-for="(url, i) in establishment.galleryUrls"
-              :key="i"
-              :src="url"
-              class="w-full aspect-square object-cover rounded-xl"
-            />
-          </div>
-        </div>
-      </section>
-
-      <!-- ══════════════════════════════════════════════════════════════════════
-           PUBLICACIONES
-      ══════════════════════════════════════════════════════════════════════════ -->
-      <section class="mb-12">
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-2xl font-bold text-white brand tracking-tight">Publicaciones</h2>
-          <button
-            @click="openCreatePost"
-            class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold text-sm shadow-md hover:brightness-110 active:scale-95 transition-all"
-          >
-            <span class="material-symbols-outlined text-base">add</span>
-            Nueva publicación
-          </button>
-        </div>
-
-        <div v-if="posts.length === 0" class="text-center py-12 border border-dashed border-white/10 rounded-3xl">
-          <span class="material-symbols-outlined text-5xl text-[#adaaad]/40 block mb-2">campaign</span>
-          <p class="text-[#adaaad] font-bold">Sin publicaciones todavía</p>
-          <p class="text-sm text-[#adaaad]/60 mt-1">Comparte novedades o el menú del día con los estudiantes.</p>
-        </div>
-
-        <div v-else class="space-y-4">
-          <div
-            v-for="post in posts"
-            :key="post.id"
-            class="bg-white/5 border border-white/10 rounded-3xl p-6"
-          >
-            <div class="flex justify-between items-start mb-3">
-              <p class="text-xs text-[#adaaad]">{{ formatDate(post.createdAt) }}</p>
-              <div class="flex items-center gap-2">
-                <button @click="openEditPost(post)" class="text-[#adaaad] hover:text-white transition-colors">
-                  <span class="material-symbols-outlined text-base">edit</span>
-                </button>
-                <button @click="deletePost(post.id)" class="text-[#adaaad] hover:text-red-400 transition-colors">
-                  <span class="material-symbols-outlined text-base">delete</span>
-                </button>
+            <p class="text-on-surface-variant leading-relaxed mb-6 font-body">
+              {{ est.description || 'Sin descripción. Haz clic en editar para añadir una.' }}
+            </p>
+            <div class="space-y-3">
+              <div v-if="est.openingHours" class="flex items-center gap-2 text-sm">
+                <span class="material-symbols-outlined text-primary text-base">schedule</span>
+                <span class="text-on-surface-variant font-body">{{ est.openingHours }}</span>
+              </div>
+              <div v-if="est.locationDetails" class="flex items-center gap-2 text-sm">
+                <span class="material-symbols-outlined text-primary text-base">location_on</span>
+                <span class="text-on-surface-variant font-body">{{ est.locationDetails }}</span>
               </div>
             </div>
+          </section>
+        </div>
 
-            <p class="text-[#f9f5f8] mb-4 whitespace-pre-wrap">{{ post.content }}</p>
+        <!-- RIGHT — Tab content -->
+        <div class="lg:col-span-8 space-y-8">
+          <!-- ═══ FEED ═══ -->
+          <template v-if="activeTab === 'feed'">
+            <section>
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xs uppercase tracking-[0.2em] font-black text-on-surface font-headline">Publicaciones</h3>
+                <button
+                  @click="openCreatePost"
+                  class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#ff9153] to-[#ff7a23] text-on-primary font-bold text-sm shadow-[0_4px_12px_rgba(255,145,83,0.2)] hover:brightness-110 active:scale-95 transition-all font-headline"
+                >
+                  <span class="material-symbols-outlined text-base">add</span>
+                  Nueva publicación
+                </button>
+              </div>
 
-            <div v-if="post.imageUrls?.length" class="grid gap-2" :class="post.imageUrls.length === 1 ? 'grid-cols-1' : 'grid-cols-2'">
-              <img
-                v-for="(url, i) in post.imageUrls"
-                :key="i"
-                :src="url"
-                class="w-full rounded-2xl object-cover max-h-64"
+              <div v-if="posts.length === 0" class="text-center py-12 bg-surface-container-low rounded-3xl">
+                <span class="material-symbols-outlined text-5xl text-on-surface-variant/40 block mb-2">campaign</span>
+                <p class="text-on-surface-variant font-bold font-headline">Sin publicaciones todavía</p>
+                <p class="text-sm text-on-surface-variant/60 mt-1 font-body">Comparte novedades con tus estudiantes.</p>
+              </div>
+
+              <div v-else class="space-y-4">
+                <div v-for="post in posts" :key="post.id" class="bg-surface-container-low rounded-3xl p-6">
+                  <div class="flex justify-between items-start mb-3">
+                    <p class="text-xs text-on-surface-variant font-body">{{ formatDate(post.createdAt) }}</p>
+                    <div class="flex items-center gap-2">
+                      <button @click="openEditPost(post)" class="text-on-surface-variant hover:text-on-surface transition-colors">
+                        <span class="material-symbols-outlined text-base">edit</span>
+                      </button>
+                      <button @click="deletePost(post.id)" class="text-on-surface-variant hover:text-red-400 transition-colors">
+                        <span class="material-symbols-outlined text-base">delete</span>
+                      </button>
+                    </div>
+                  </div>
+                  <p class="text-on-surface mb-4 whitespace-pre-wrap font-body">{{ post.content }}</p>
+                  <div v-if="post.imageUrls?.length" class="grid gap-2" :class="post.imageUrls.length === 1 ? 'grid-cols-1' : 'grid-cols-2'">
+                    <img v-for="(url, i) in post.imageUrls" :key="i" :src="url" class="w-full rounded-2xl object-cover max-h-64" />
+                  </div>
+                </div>
+
+                <div v-if="totalPostPages > 1" class="flex items-center justify-between pt-2">
+                  <button
+                    :disabled="postPage === 1"
+                    @click="loadPosts(est!.slug!, postPage - 1)"
+                    class="flex items-center gap-1 px-4 py-2 rounded-xl bg-surface-container-high text-sm font-bold text-on-surface disabled:opacity-40 hover:bg-surface-bright transition-colors font-headline"
+                  >
+                    <span class="material-symbols-outlined" style="font-size:16px;">arrow_back_ios</span>
+                    Anterior
+                  </button>
+                  <span class="text-sm text-on-surface-variant font-body">{{ postPage }} / {{ totalPostPages }}</span>
+                  <button
+                    :disabled="postPage === totalPostPages"
+                    @click="loadPosts(est!.slug!, postPage + 1)"
+                    class="flex items-center gap-1 px-4 py-2 rounded-xl bg-surface-container-high text-sm font-bold text-on-surface disabled:opacity-40 hover:bg-surface-bright transition-colors font-headline"
+                  >
+                    Siguiente
+                    <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward_ios</span>
+                  </button>
+                </div>
+              </div>
+            </section>
+          </template>
+
+          <!-- ═══ MENU ═══ -->
+          <template v-else-if="activeTab === 'menu'">
+            <section>
+              <div class="flex justify-between items-end mb-4">
+                <h3 class="text-xs uppercase tracking-[0.2em] font-black text-on-surface font-headline">Menú</h3>
+                <span v-if="menuUploading" class="text-xs text-on-surface-variant font-body">Subiendo…</span>
+              </div>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div
+                  v-for="(url, i) in est.menuUrls"
+                  :key="i"
+                  class="relative group rounded-2xl overflow-hidden aspect-[3/4] bg-surface-container"
+                >
+                  <img :src="url" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <button
+                    @click="removeMenuImage(i)"
+                    class="absolute top-2 right-2 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/80"
+                  >
+                    <span class="material-symbols-outlined text-white" style="font-size:14px;">close</span>
+                  </button>
+                </div>
+                <button
+                  @click="triggerMenuUpload"
+                  class="rounded-2xl aspect-[3/4] flex flex-col items-center justify-center bg-surface-container border border-outline-variant/20 border-dashed hover:bg-surface-container-high transition-colors text-on-surface-variant hover:text-on-surface"
+                >
+                  <span class="material-symbols-outlined text-2xl">add_photo_alternate</span>
+                  <span class="text-xs font-bold font-headline mt-1">Agregar</span>
+                </button>
+                <input ref="menuInput" type="file" accept="image/*" class="hidden" @change="onMenuImageSelected" />
+              </div>
+            </section>
+          </template>
+
+          <!-- ═══ GALLERY ═══ -->
+          <template v-else-if="activeTab === 'gallery'">
+            <section>
+              <div class="flex justify-between items-end mb-4">
+                <h3 class="text-xs uppercase tracking-[0.2em] font-black text-on-surface font-headline">Gallery</h3>
+                <span v-if="galleryUploading" class="text-xs text-on-surface-variant font-body">Subiendo…</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <div
+                  v-for="(url, i) in est.galleryUrls"
+                  :key="i"
+                  class="relative group rounded-2xl overflow-hidden aspect-square bg-surface-container"
+                >
+                  <img :src="url" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <button
+                    @click="removeGalleryImage(i)"
+                    class="absolute top-2 right-2 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/80"
+                  >
+                    <span class="material-symbols-outlined text-white" style="font-size:14px;">close</span>
+                  </button>
+                </div>
+                <button
+                  @click="triggerGalleryUpload"
+                  class="rounded-2xl aspect-square flex flex-col items-center justify-center bg-surface-container border border-outline-variant/20 border-dashed hover:bg-surface-container-high transition-colors text-on-surface-variant hover:text-on-surface"
+                >
+                  <span class="material-symbols-outlined text-2xl">add_photo_alternate</span>
+                  <span class="text-xs font-bold font-headline mt-1">Agregar</span>
+                </button>
+                <input ref="galleryInput" type="file" accept="image/*" class="hidden" @change="onGalleryImageSelected" />
+              </div>
+            </section>
+          </template>
+
+          <!-- ═══ REVIEWS ═══ -->
+          <template v-else-if="activeTab === 'reviews'">
+            <section>
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xs uppercase tracking-[0.2em] font-black text-on-surface font-headline">Reseñas de Estudiantes</h3>
+                <span v-if="pendingCount > 0" class="bg-primary/20 text-primary font-bold px-3 py-1 rounded-full text-xs font-headline">
+                  {{ pendingCount }} sin responder
+                </span>
+                <span v-else class="bg-emerald-500/10 text-emerald-400 font-bold px-3 py-1 rounded-full text-xs flex items-center gap-1 font-headline">
+                  <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">done_all</span>
+                  Todo respondido
+                </span>
+              </div>
+
+              <div class="flex flex-col sm:flex-row gap-3 mb-6">
+                <div class="relative flex-1">
+                  <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style="font-size:18px;">search</span>
+                  <input
+                    v-model="searchQuery"
+                    type="text"
+                    placeholder="Buscar por comentario o usuario..."
+                    class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/20 text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary/50 font-body"
+                  />
+                </div>
+                <input
+                  v-model="searchDate"
+                  type="date"
+                  class="px-4 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/20 text-sm text-on-surface focus:outline-none focus:border-primary/50 font-body"
+                />
+                <button
+                  v-if="searchQuery || searchDate"
+                  @click="clearSearch"
+                  class="px-4 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/20 text-sm font-bold text-on-surface-variant hover:bg-surface-bright transition-colors flex items-center gap-1 font-headline"
+                >
+                  <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+                  Limpiar
+                </button>
+              </div>
+
+              <div v-if="reviewsLoading" class="space-y-4">
+                <div v-for="i in 3" :key="i" class="h-36 bg-surface-container rounded-2xl animate-pulse"></div>
+              </div>
+
+              <div v-else-if="reviews.length === 0" class="text-center py-16 bg-surface-container-low rounded-3xl">
+                <span class="material-symbols-outlined text-5xl text-on-surface-variant/40 mb-2 block">rate_review</span>
+                <p class="text-on-surface-variant font-bold font-headline">Sin reseñas todavía</p>
+              </div>
+
+              <div v-else-if="filteredReviews.length === 0" class="text-center py-12 bg-surface-container-low rounded-3xl">
+                <span class="material-symbols-outlined text-4xl text-on-surface-variant/40 mb-2 block">search_off</span>
+                <p class="text-on-surface-variant font-bold font-headline">Sin resultados</p>
+              </div>
+
+              <div v-else class="space-y-5">
+                <ReviewCard
+                  v-for="review in paginatedReviews"
+                  :key="review.id"
+                  :review="review"
+                  :show-author="true"
+                  :show-sentiment="true"
+                >
+                  <template #actions>
+                    <div v-if="!review.managerReply" class="flex justify-end mt-4">
+                      <button
+                        @click.stop="openReplyModal(review)"
+                        class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary/10 hover:bg-primary hover:text-on-primary text-primary font-bold text-sm transition-all border border-primary/30 hover:border-primary font-headline"
+                      >
+                        <span class="material-symbols-outlined text-sm">reply</span>
+                        Responder
+                      </button>
+                    </div>
+                  </template>
+                </ReviewCard>
+
+                <div v-if="Math.ceil(filteredReviews.length / REVIEW_PAGE_SIZE) > 1" class="flex items-center justify-between pt-4">
+                  <button
+                    :disabled="reviewPage === 1"
+                    @click="reviewPage--"
+                    class="flex items-center gap-1 px-4 py-2 rounded-xl bg-surface-container-high text-sm font-bold text-on-surface disabled:opacity-40 hover:bg-surface-bright transition-colors font-headline"
+                  >
+                    <span class="material-symbols-outlined" style="font-size:16px;">arrow_back_ios</span>
+                    Anterior
+                  </button>
+                  <span class="text-sm text-on-surface-variant font-bold font-body">
+                    Página {{ reviewPage }} de {{ Math.ceil(filteredReviews.length / REVIEW_PAGE_SIZE) }}
+                    <span class="text-on-surface-variant/60 font-normal ml-1">({{ filteredReviews.length }})</span>
+                  </span>
+                  <button
+                    :disabled="reviewPage === Math.ceil(filteredReviews.length / REVIEW_PAGE_SIZE)"
+                    @click="reviewPage++"
+                    class="flex items-center gap-1 px-4 py-2 rounded-xl bg-surface-container-high text-sm font-bold text-on-surface disabled:opacity-40 hover:bg-surface-bright transition-colors font-headline"
+                  >
+                    Siguiente
+                    <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward_ios</span>
+                  </button>
+                </div>
+              </div>
+            </section>
+          </template>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ MODALS ═══════════════════ -->
+      <CreatePostModal
+        :isOpen="postModalOpen"
+        :slug="est?.slug ?? ''"
+        :editPost="editingPost"
+        @close="postModalOpen = false; editingPost = null"
+        @created="onPostCreated"
+        @updated="onPostUpdated"
+      />
+
+      <ManagerReplyModal
+        :isOpen="replyModalOpen"
+        :review="selectedReview"
+        @close="replyModalOpen = false; selectedReview = null"
+        @sent="handleReplySent"
+      />
+
+      <!-- About edit panel -->
+      <div v-if="aboutEditOpen" class="fixed inset-0 z-[100] flex items-center justify-center px-4">
+        <div class="absolute inset-0 bg-background/80 backdrop-blur-xl" @click="aboutEditOpen = false"></div>
+        <div class="relative w-full max-w-lg bg-surface-container rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.4)] border border-outline-variant/10 overflow-hidden">
+          <div class="px-8 py-6 flex items-center justify-between border-b border-outline-variant/10">
+            <h3 class="text-lg font-black font-headline text-on-surface">Editar Perfil</h3>
+            <button @click="aboutEditOpen = false" class="p-2 rounded-full hover:bg-surface-bright text-on-surface-variant">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <div class="p-8 space-y-5">
+            <div>
+              <label class="text-xs font-black text-primary uppercase tracking-[0.15em] font-headline block mb-2">Descripción</label>
+              <textarea
+                v-model="aboutForm.description"
+                rows="4"
+                class="w-full bg-surface-container-high border border-outline-variant/20 rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary/50 resize-none text-sm font-body"
+              ></textarea>
+            </div>
+            <div>
+              <label class="text-xs font-black text-primary uppercase tracking-[0.15em] font-headline block mb-2">Horario</label>
+              <input
+                v-model="aboutForm.openingHours"
+                type="text"
+                placeholder="Lun-Vie 8:00 – 20:00"
+                class="w-full bg-surface-container-high border border-outline-variant/20 rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary/50 text-sm font-body"
+              />
+            </div>
+            <div>
+              <label class="text-xs font-black text-primary uppercase tracking-[0.15em] font-headline block mb-2">Ubicación</label>
+              <input
+                v-model="aboutForm.locationDetails"
+                type="text"
+                placeholder="Edificio Central, Planta Baja"
+                class="w-full bg-surface-container-high border border-outline-variant/20 rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary/50 text-sm font-body"
               />
             </div>
           </div>
-
-          <!-- Paginación posts -->
-          <div v-if="totalPostPages > 1" class="flex items-center justify-between pt-2">
+          <div class="px-8 py-5 border-t border-outline-variant/10 flex justify-end gap-3">
             <button
-              :disabled="postPage === 1"
-              @click="loadPosts(establishment!.slug!, postPage - 1)"
-              class="flex items-center gap-1 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm font-bold text-white disabled:opacity-40 hover:bg-white/10 transition-colors"
+              @click="aboutEditOpen = false"
+              class="px-6 py-2.5 rounded-full text-sm font-semibold text-on-surface-variant hover:bg-surface-bright transition-colors font-headline"
             >
-              <span class="material-symbols-outlined" style="font-size:16px;">arrow_back_ios</span>
-              Anterior
+              Cancelar
             </button>
-            <span class="text-sm text-[#adaaad]">{{ postPage }} / {{ totalPostPages }}</span>
             <button
-              :disabled="postPage === totalPostPages"
-              @click="loadPosts(establishment!.slug!, postPage + 1)"
-              class="flex items-center gap-1 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm font-bold text-white disabled:opacity-40 hover:bg-white/10 transition-colors"
+              @click="saveAbout"
+              :disabled="aboutSaving"
+              class="px-8 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-[#ff9153] to-[#ff7a23] text-on-primary shadow-[0_4px_12px_rgba(255,145,83,0.2)] hover:brightness-110 transition-all font-headline disabled:opacity-50"
             >
-              Siguiente
-              <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward_ios</span>
+              {{ aboutSaving ? 'Guardando…' : 'Guardar' }}
             </button>
           </div>
-        </div>
-      </section>
-
-      <!-- ══════════════════════════════════════════════════════════════════════
-           RESEÑAS DE ESTUDIANTES
-      ══════════════════════════════════════════════════════════════════════════ -->
-      <section>
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-2xl font-bold text-white brand tracking-tight">Reseñas de Estudiantes</h2>
-          <div class="flex items-center gap-3">
-            <span v-if="pendingCount > 0" class="bg-orange-500/20 text-orange-500 font-bold px-3 py-1 rounded-full text-sm">
-              {{ pendingCount }} sin responder
-            </span>
-            <span v-else class="bg-emerald-500/10 text-emerald-400 font-bold px-3 py-1 rounded-full text-sm flex items-center gap-1">
-              <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">done_all</span>
-              Todo respondido
-            </span>
-          </div>
-        </div>
-
-        <!-- Búsqueda -->
-        <div class="flex flex-col sm:flex-row gap-3 mb-6">
-          <div class="relative flex-1">
-            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#adaaad]" style="font-size:18px;">search</span>
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Buscar por comentario o usuario..."
-              class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white border border-black/10 text-sm text-[#0e0e10] placeholder:text-[#adaaad] focus:outline-none focus:ring-2 focus:ring-orange-500/30"
-            />
-          </div>
-          <input v-model="searchDate" type="date" class="px-4 py-2.5 rounded-xl bg-white border border-black/10 text-sm text-[#0e0e10] focus:outline-none focus:ring-2 focus:ring-orange-500/30" />
-          <button
-            v-if="searchQuery || searchDate"
-            @click="clearSearch"
-            class="px-4 py-2.5 rounded-xl bg-white border border-black/10 text-sm font-bold text-[#525155] hover:bg-black/5 transition-colors flex items-center gap-1"
-          >
-            <span class="material-symbols-outlined" style="font-size:16px;">close</span>
-            Limpiar
-          </button>
-        </div>
-
-        <div v-if="reviewsLoading" class="space-y-4">
-          <div v-for="i in 3" :key="i" class="h-36 bg-white/5 rounded-2xl animate-pulse"></div>
-        </div>
-
-        <div v-else-if="reviews.length === 0" class="text-center py-16 bg-white/5 rounded-3xl border border-dashed border-white/10">
-          <span class="material-symbols-outlined text-5xl text-[#adaaad]/40 mb-2 block">rate_review</span>
-          <p class="text-[#adaaad] font-bold">Sin reseñas todavía</p>
-        </div>
-
-        <div v-else-if="filteredReviews.length === 0" class="text-center py-12 bg-white/5 rounded-3xl border border-dashed border-white/10">
-          <span class="material-symbols-outlined text-4xl text-[#adaaad]/40 mb-2 block">search_off</span>
-          <p class="text-[#adaaad] font-bold">Sin resultados</p>
-        </div>
-
-        <div v-else class="space-y-5">
-          <article
-            v-for="review in paginatedReviews"
-            :key="review.id"
-            class="card-cream rounded-[1.5rem] shadow-sm border border-black/5 overflow-hidden"
-          >
-            <div class="p-6 pb-4">
-              <!-- Header -->
-              <div class="flex justify-between items-start mb-4">
-                <div class="flex items-center gap-3">
-                  <div class="w-11 h-11 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-sm flex-shrink-0 shadow-sm">
-                    {{ (review.author ?? '?').charAt(0).toUpperCase() }}
-                  </div>
-                  <div>
-                    <p class="font-bold text-[#0e0e10] brand leading-none">{{ review.author ?? 'Estudiante' }}</p>
-                    <p class="text-xs text-[#adaaad] mt-0.5">{{ formatDate(review.createdAt) }}</p>
-                  </div>
-                </div>
-                <div class="flex items-center gap-2 flex-shrink-0">
-                  <span :class="['px-2 py-0.5 rounded-full text-xs font-bold', sentimentBadge((review as any).sentiment)]">
-                    {{ sentimentLabel((review as any).sentiment) }}
-                  </span>
-                  <div class="flex gap-0.5 text-orange-500">
-                    <span v-for="n in 5" :key="n" class="material-symbols-outlined text-sm" :style="{ fontVariationSettings: `'FILL' ${n <= review.foodScore ? 1 : 0}` }">star</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Score chips -->
-              <div class="flex gap-2 flex-wrap mb-4">
-                <span class="flex items-center gap-1.5 px-3 py-1 bg-orange-50 border border-orange-100 rounded-full text-xs font-bold text-orange-700">
-                  <span class="material-symbols-outlined text-orange-500" style="font-size:13px;font-variation-settings:'FILL' 1;">restaurant</span>
-                  Comida {{ review.foodScore }}/5
-                </span>
-                <span class="flex items-center gap-1.5 px-3 py-1 bg-blue-50 border border-blue-100 rounded-full text-xs font-bold text-blue-700">
-                  <span class="material-symbols-outlined text-blue-400" style="font-size:13px;font-variation-settings:'FILL' 1;">support_agent</span>
-                  Servicio {{ review.serviceScore }}/5
-                </span>
-                <span class="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-100 rounded-full text-xs font-bold text-emerald-700">
-                  <span class="material-symbols-outlined text-emerald-500" style="font-size:13px;font-variation-settings:'FILL' 1;">payments</span>
-                  Precio {{ review.priceScore }}/5
-                </span>
-              </div>
-
-              <p class="text-[#3f3f42]">{{ review.comment }}</p>
-
-              <div v-if="(review as any).managerReply" class="mt-5 relative pl-5">
-                <div class="absolute left-0 top-0 bottom-0 w-1 bg-orange-500 rounded-full"></div>
-                <div class="bg-orange-500/5 rounded-2xl p-4 border border-orange-500/10">
-                  <div class="flex items-center gap-2 mb-1.5">
-                    <span class="material-symbols-outlined text-orange-500 text-sm">reply</span>
-                    <span class="text-xs font-bold uppercase tracking-wider text-orange-500 brand">Respuesta Oficial</span>
-                  </div>
-                  <p class="text-[#3f3f42] text-sm italic leading-relaxed">"{{ (review as any).managerReply }}"</p>
-                </div>
-              </div>
-
-              <div v-else class="flex justify-end mt-4">
-                <button
-                  @click="openReplyModal(review)"
-                  class="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold py-2 px-6 rounded-xl hover:brightness-110 active:scale-95 transition-all shadow-md text-sm"
-                >
-                  <span class="material-symbols-outlined text-sm">reply</span>
-                  Responder
-                </button>
-              </div>
-            </div>
-          </article>
-
-          <!-- Paginación reseñas -->
-          <div v-if="Math.ceil(filteredReviews.length / REVIEW_PAGE_SIZE) > 1" class="flex items-center justify-between pt-4">
-            <button
-              :disabled="reviewPage === 1"
-              @click="reviewPage--"
-              class="flex items-center gap-1 px-4 py-2 rounded-xl bg-white border border-black/10 text-sm font-bold text-[#0e0e10] disabled:opacity-40 hover:bg-black/5 transition-colors"
-            >
-              <span class="material-symbols-outlined" style="font-size:16px;">arrow_back_ios</span>
-              Anterior
-            </button>
-            <span class="text-sm text-[#adaaad] font-bold">
-              Página {{ reviewPage }} de {{ Math.ceil(filteredReviews.length / REVIEW_PAGE_SIZE) }}
-              <span class="text-[#adaaad]/60 font-normal ml-1">({{ filteredReviews.length }} resultados)</span>
-            </span>
-            <button
-              :disabled="reviewPage === Math.ceil(filteredReviews.length / REVIEW_PAGE_SIZE)"
-              @click="reviewPage++"
-              class="flex items-center gap-1 px-4 py-2 rounded-xl bg-white border border-black/10 text-sm font-bold text-[#0e0e10] disabled:opacity-40 hover:bg-black/5 transition-colors"
-            >
-              Siguiente
-              <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward_ios</span>
-            </button>
-          </div>
-        </div>
-      </section>
-    </template>
-
-    <!-- Modals -->
-    <CreatePostModal
-      :isOpen="postModalOpen"
-      :slug="establishment?.slug ?? ''"
-      :editPost="editingPost"
-      @close="postModalOpen = false; editingPost = null"
-      @created="onPostCreated"
-      @updated="onPostUpdated"
-    />
-
-    <ManagerReplyModal
-      :isOpen="replyModalOpen"
-      :review="selectedReview"
-      @close="replyModalOpen = false; selectedReview = null"
-      @sent="handleReplySent"
-    />
-
-    <!-- Edit Profile Modal -->
-    <div v-if="editProfileOpen" class="fixed inset-0 z-[100] flex items-center justify-center px-4">
-      <div class="absolute inset-0 bg-[#0e0e10]/80 backdrop-blur-xl" @click="editProfileOpen = false"></div>
-      <div class="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden">
-        <div class="px-8 py-6 border-b border-black/5 bg-[#FAF9F6] flex items-center justify-between">
-          <h3 class="text-xl font-bold text-[#0e0e10] brand">Editar Perfil</h3>
-          <button @click="editProfileOpen = false" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-black/5 text-[#adaaad] transition-colors">
-            <span class="material-symbols-outlined text-xl">close</span>
-          </button>
-        </div>
-        <div class="p-8 space-y-5">
-          <div>
-            <label class="text-xs font-bold text-orange-500 uppercase tracking-widest block mb-2">Descripción</label>
-            <textarea v-model="editForm.description" rows="4" class="w-full bg-[#FAF9F6] border border-black/10 rounded-xl px-4 py-3 text-[#0e0e10] focus:outline-none focus:border-orange-500 resize-none text-sm"></textarea>
-          </div>
-          <div>
-            <label class="text-xs font-bold text-orange-500 uppercase tracking-widest block mb-2">Horario</label>
-            <input v-model="editForm.openingHours" type="text" placeholder="Lunes a Viernes: 8:00 AM - 6:00 PM" class="w-full bg-[#FAF9F6] border border-black/10 rounded-xl px-4 py-3 text-[#0e0e10] focus:outline-none focus:border-orange-500 text-sm" />
-          </div>
-          <div>
-            <label class="text-xs font-bold text-orange-500 uppercase tracking-widest block mb-2">Ubicación</label>
-            <input v-model="editForm.locationDetails" type="text" placeholder="Frente al edificio A, planta baja" class="w-full bg-[#FAF9F6] border border-black/10 rounded-xl px-4 py-3 text-[#0e0e10] focus:outline-none focus:border-orange-500 text-sm" />
-          </div>
-        </div>
-        <div class="px-8 py-5 border-t border-black/5 bg-[#FAF9F6] flex justify-end gap-3">
-          <button @click="editProfileOpen = false" class="px-6 py-2.5 rounded-full text-sm font-semibold text-[#525155] hover:bg-black/5 transition-colors">Cancelar</button>
-          <button @click="saveProfile" class="px-8 py-2.5 rounded-full text-sm font-bold bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md hover:brightness-110 transition-all">Guardar</button>
         </div>
       </div>
-    </div>
-
+    </template>
   </div>
 </template>
+
+<style scoped>
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
