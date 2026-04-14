@@ -10,6 +10,8 @@ export const CreateEstablishmentSchema = z.object({
     openingHours: z.string().optional().nullable(),
     galleryUrls: z.array(z.string().url()).optional(),
     menuUrls: z.array(z.string().url()).optional(),
+    logoUrl: z.string().url().optional().nullable(),
+    coverUrl: z.string().url().optional().nullable(),
 });
 
 export const UpdateEstablishmentSchema = z.object({
@@ -22,6 +24,8 @@ export const UpdateEstablishmentSchema = z.object({
     openingHours: z.string().optional().nullable(),
     galleryUrls: z.array(z.string().url()).optional(),
     menuUrls: z.array(z.string().url()).optional(),
+    logoUrl: z.string().url().optional().nullable(),
+    coverUrl: z.string().url().optional().nullable(),
     isActive: z.boolean().optional(),
 });
 

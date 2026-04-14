@@ -57,6 +57,11 @@ export interface Establishment {
   openingHours?: string;
   galleryUrls?: string[];
   menuUrls?: string[];
+  logoUrl?: string;
+  coverUrl?: string;
+  avgFoodScore?: number;
+  avgServiceScore?: number;
+  avgPriceScore?: number;
 }
 
 export interface MetricsSnapshot {

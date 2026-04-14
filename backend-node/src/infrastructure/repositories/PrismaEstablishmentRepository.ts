@@ -68,6 +68,8 @@ export class PrismaEstablishmentRepository implements IEstablishmentRepository {
                 openingHours: establishment.openingHours,
                 galleryUrls: establishment.galleryUrls,
                 menuUrls: establishment.menuUrls,
+                logoUrl: establishment.logoUrl,
+                coverUrl: establishment.coverUrl,
                 isActive: establishment.isActive,
             }
         });
@@ -89,6 +91,8 @@ export class PrismaEstablishmentRepository implements IEstablishmentRepository {
                 openingHours: establishment.openingHours,
                 galleryUrls: establishment.galleryUrls,
                 menuUrls: establishment.menuUrls,
+                logoUrl: establishment.logoUrl,
+                coverUrl: establishment.coverUrl,
                 isActive: establishment.isActive,
             }
         });
@@ -120,6 +124,8 @@ export class PrismaEstablishmentRepository implements IEstablishmentRepository {
             openingHours: data.openingHours,
             galleryUrls: data.galleryUrls,
             menuUrls: data.menuUrls,
+            logoUrl: data.logoUrl,
+            coverUrl: data.coverUrl,
             isActive: data.isActive,
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,

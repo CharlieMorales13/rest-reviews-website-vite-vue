@@ -10,6 +10,8 @@ export interface EstablishmentProps {
     openingHours?: string | null;
     galleryUrls?: string[];
     menuUrls?: string[];
+    logoUrl?: string | null;
+    coverUrl?: string | null;
     isActive?: boolean;
     createdAt?: Date;
     updatedAt?: Date;
@@ -47,6 +49,8 @@ export class Establishment {
     get openingHours(): string | null | undefined { return this.props.openingHours; }
     get galleryUrls(): string[] | undefined { return this.props.galleryUrls; }
     get menuUrls(): string[] | undefined { return this.props.menuUrls; }
+    get logoUrl(): string | null | undefined { return this.props.logoUrl; }
+    get coverUrl(): string | null | undefined { return this.props.coverUrl; }
     get isActive(): boolean | undefined { return this.props.isActive; }
     get createdAt(): Date | undefined { return this.props.createdAt; }
     get updatedAt(): Date | undefined { return this.props.updatedAt; }

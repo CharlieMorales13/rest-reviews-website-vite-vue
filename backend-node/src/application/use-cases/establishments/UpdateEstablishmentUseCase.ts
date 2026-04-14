@@ -32,6 +32,8 @@ export class UpdateEstablishmentUseCase {
             openingHours: dto.openingHours ?? existing.openingHours,
             galleryUrls: dto.galleryUrls ?? existing.galleryUrls,
             menuUrls: dto.menuUrls ?? existing.menuUrls,
+            logoUrl: dto.logoUrl ?? existing.logoUrl,
+            coverUrl: dto.coverUrl ?? existing.coverUrl,
             isActive: dto.isActive ?? existing.isActive,
             createdAt: existing.createdAt,
         });

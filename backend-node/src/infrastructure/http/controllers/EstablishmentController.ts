@@ -61,7 +61,9 @@ export class EstablishmentController {
                 id: e.id, slug: e.slug, name: e.name, description: e.description,
                 category: e.category, managerId: e.managerId, isActive: e.isActive,
                 locationDetails: e.locationDetails, openingHours: e.openingHours,
-                galleryUrls: e.galleryUrls, menuUrls: e.menuUrls, createdAt: e.createdAt,
+                galleryUrls: e.galleryUrls, menuUrls: e.menuUrls,
+                logoUrl: e.logoUrl, coverUrl: e.coverUrl,
+                createdAt: e.createdAt,
             }
         });
     };
@@ -80,6 +82,8 @@ export class EstablishmentController {
             openingHours: e.openingHours,
             galleryUrls: e.galleryUrls,
             menuUrls: e.menuUrls,
+            logoUrl: e.logoUrl,
+            coverUrl: e.coverUrl,
             createdAt: e.createdAt,
         }));
         res.status(200).json({ success: true, data: mapped });
