@@ -23,10 +23,11 @@ FSD is a modern architectural pattern for frontends that ensures scalability and
 ## 🚀 Technical Stack
 
 -   **Framework**: Vue 3 (Composition API)
--   **Build Tool**: Vite
--   **Styling**: Vanilla CSS / Tailwind (depending on configuration)
+-   **Build Tool**: Vite (Lightning fast HMR via strict workspace isolation)
+-   **Styling**: Tailwind CSS (Fully configured within `/frontend`)
 -   **State Management**: Pinia (Reactive Store)
 -   **Routing**: Vue Router
+-   **Typing**: Strict TypeScript (`noUncheckedSideEffectImports`, `strict: true`)
 
 ---
 

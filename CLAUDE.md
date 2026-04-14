@@ -16,8 +16,11 @@ Tres servicios independientes:
 | Backend Analytics | `backend-analytics/` | 8001 | FastAPI + Python |
 | Base de datos | — | — | Supabase (PostgreSQL) |
 
-**Patrón:** Clean Architecture en Node y Analytics. Feature-Sliced Design (FSD) en Frontend.
-**DI:** tsyringe en Node (`@injectable`, `@inject`). Tokens registrados en `container.ts`.
+**Patrones y Decisiones de Diseño:**
+- **Frontend SPA (Vite + Vue):** El proyecto es un *Walled Garden* (ecosistema cerrado) exclusivo para la comunidad universitaria. **El SEO se evita activamente** (no queremos indexación en Google). Por esta razón, se descartó SSR (Nuxt.js) a favor de una SPA pura, la cual permite hosting estático gratuito/barato y delega la carga computacional gráfica al cliente.
+- **Estructura del Frontend:** Feature-Sliced Design (FSD) para modularizar por entidades, features y páginas, evitando el código espagueti.
+- **Backend Node:** Clean Architecture.
+- **Backend DI:** Uso de `tsyringe` (`@injectable`, `@inject`) con tokens en `container.ts`.
 
 ---
 

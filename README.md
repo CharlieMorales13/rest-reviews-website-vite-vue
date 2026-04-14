@@ -87,6 +87,8 @@ pip install -r requirements.txt
 ```
 
 ### 4. Frontend Setup
+This project uses strict monorepo isolation. There are no configuration files or `node_modules` at the root folder. All frontend dependencies and configs (`vite.config.ts`, `tailwind.config.js`) are safely encapsulated inside the `frontend/` directory.
+
 ```bash
 cd frontend
 npm install

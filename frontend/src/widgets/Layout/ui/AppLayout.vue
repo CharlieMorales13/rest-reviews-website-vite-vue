@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '@/entities/user/model/authStore';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -18,11 +18,30 @@ const userInitials = computed(() => {
 
 const showDropdown = ref(false);
 const mobileMenuOpen = ref(false);
+const dropdownRef = ref<HTMLElement | null>(null);
+
+// Close dropdown on click outside
+const onClickOutside = (e: MouseEvent) => {
+  if (dropdownRef.value && !dropdownRef.value.contains(e.target as Node)) {
+    showDropdown.value = false;
+  }
+};
+onMounted(() => document.addEventListener('click', onClickOutside));
+onUnmounted(() => document.removeEventListener('click', onClickOutside));
 
 // Close menus on route change
 watch(() => route.path, () => {
   showDropdown.value = false;
   mobileMenuOpen.value = false;
+});
+
+// Lock body scroll when mobile menu is open
+watch(mobileMenuOpen, (isOpen) => {
+  if (isOpen) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
 });
 
 const logout = () => {
@@ -93,10 +112,11 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
         <div class="hidden md:flex items-center space-x-4">
 
           <!-- User Dropdown -->
-          <div class="relative">
+          <div class="relative" ref="dropdownRef">
             <button
               class="flex items-center space-x-2 cursor-pointer group"
               @click="showDropdown = !showDropdown"
+              aria-label="Menú de usuario"
             >
               <div class="w-11 h-11 rounded-full bg-orange-500/20 border border-orange-500/40 group-hover:border-orange-500 transition-all flex items-center justify-center text-orange-400 font-bold text-base">
                 {{ userInitials }}

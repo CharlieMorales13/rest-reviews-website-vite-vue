@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --config ../vite.config.ts",
-    "build": "vue-tsc -b ../tsconfig.json && vite build --config ../vite.config.ts",
-    "preview": "vite preview --config ../vite.config.ts"
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "axios": "^1.13.6",
