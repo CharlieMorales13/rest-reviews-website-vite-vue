@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue';
 import { httpClient } from '@/shared/api/httpClient';
 import { PostService } from '@/entities/post/api/PostService';
+import { extractErrorMessage } from '@/shared/lib/extractError';
 import type { EstablishmentPost } from '@/entities/post/model/types';
 
 const props = defineProps<{
@@ -111,8 +112,8 @@ const handleSubmit = async () => {
       });
       emit('created', created);
     }
-  } catch (e: any) {
-    error.value = e?.response?.data?.message || 'Error al publicar. Intenta de nuevo.';
+  } catch (e: unknown) {
+    error.value = extractErrorMessage(e, 'Error al publicar. Intenta de nuevo.');
   } finally {
     submitting.value = false;
   }

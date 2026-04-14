@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { AdminService, type AdminUser, type UserRole, type AdminEstablishment } from '@/entities/user/api/AdminService';
+import { extractErrorMessage } from '@/shared/lib/extractError';
 
 const props = defineProps<{ user: AdminUser }>();
 const emit = defineEmits<{
@@ -60,8 +61,8 @@ const submit = async () => {
     }
     const updated = await AdminService.updateUser(props.user.id, payload);
     emit('updated', updated);
-  } catch (e: any) {
-    error.value = e?.response?.data?.message || 'Error al actualizar la cuenta.';
+  } catch (e: unknown) {
+    error.value = extractErrorMessage(e, 'Error al actualizar la cuenta.');
   } finally {
     loading.value = false;
   }

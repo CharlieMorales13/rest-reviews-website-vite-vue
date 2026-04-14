@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { AdminService, type CreateUserPayload, type UserRole, type AdminEstablishment } from '@/entities/user/api/AdminService';
+import { extractErrorMessage } from '@/shared/lib/extractError';
 
 const emit = defineEmits<{
   close: [];
@@ -58,8 +59,8 @@ const submit = async () => {
       : null;
     createdUser.value = { name: user.name, email: user.email, role: user.role, establishmentName: estabName };
     emit('created', createdUser.value);
-  } catch (e: any) {
-    error.value = e?.response?.data?.message || 'Error al crear la cuenta.';
+  } catch (e: unknown) {
+    error.value = extractErrorMessage(e, 'Error al crear la cuenta.');
   } finally {
     loading.value = false;
   }

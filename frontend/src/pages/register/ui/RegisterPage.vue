@@ -2,31 +2,10 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useAuthStore } from '@/entities/user/model/authStore';
 import { useRouter } from 'vue-router';
+import { CARRERAS } from '@/shared/lib/constants';
 
 const authStore = useAuthStore();
 const router = useRouter();
-
-const CARRERAS = [
-  'Administración de Empresas',
-  'Administración Turística',
-  'Comunicación',
-  'Derecho',
-  'Diseño de Moda e Innovación',
-  'Diseño Gráfico',
-  'Diseño Industrial',
-  'Diseño Multimedia',
-  'Finanzas y Contaduría Pública',
-  'Gastronomía',
-  'Ingeniería Biomédica',
-  'Ingeniería Civil',
-  'Ingeniería Industrial para la Dirección',
-  'Ingeniería Mecatrónica',
-  'Ingeniería en Tecnologías de la Información y Negocios Digitales',
-  'Médico Cirujano',
-  'Mercadotecnia Estratégica',
-  'Psicología',
-  'Turismo',
-];
 
 const NON_STUDENT_TYPES = [
   { value: 'Colaborador UAO',  label: 'Colaborador', icon: 'badge' },

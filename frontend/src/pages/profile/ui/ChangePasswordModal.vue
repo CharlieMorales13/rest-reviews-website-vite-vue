@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { httpClient } from '@/shared/api/httpClient';
+import { extractErrorMessage } from '@/shared/lib/extractError';
 
 defineProps<{ isOpen: boolean }>();
 const emit = defineEmits(['close']);
@@ -47,8 +48,8 @@ async function handleSave() {
     setTimeout(() => {
       handleClose();
     }, 1500);
-  } catch (e: any) {
-    error.value = e.response?.data?.message || 'No se pudo cambiar la contraseña.';
+  } catch (e: unknown) {
+    error.value = extractErrorMessage(e, 'No se pudo cambiar la contraseña.');
   } finally {
     saving.value = false;
   }

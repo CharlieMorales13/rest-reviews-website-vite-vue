@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { httpClient } from '@/shared/api/httpClient';
+import { extractErrorMessage } from '@/shared/lib/extractError';
 
 const props = defineProps<{
   isOpen: boolean;
-  review?: { id: string; author?: string; comment?: string; foodScore?: number } | null;
+  review?: { id: string; author?: string | null; comment?: string | null; foodScore?: number } | null;
 }>();
 
 const emit = defineEmits<{
@@ -34,8 +35,8 @@ const handleReply = async () => {
   try {
     await httpClient.patch(`/api/reviews/${props.review.id}/reply`, { reply: replyText.value.trim() });
     emit('sent', { reviewId: props.review.id, reply: replyText.value.trim() });
-  } catch (e: any) {
-    error.value = e?.response?.data?.message || 'Error al publicar la respuesta.';
+  } catch (e: unknown) {
+    error.value = extractErrorMessage(e, 'Error al publicar la respuesta.');
   } finally {
     isSubmitting.value = false;
   }

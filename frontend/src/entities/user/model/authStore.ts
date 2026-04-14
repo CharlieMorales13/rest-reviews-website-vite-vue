@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { AuthService } from '../api/AuthService';
 import type { UpdateProfileRequest } from '../api/AuthService';
 import type { User, LoginRequest, RegisterRequest } from './types';
+import { extractErrorMessage } from '@/shared/lib/extractError';
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null);
@@ -24,8 +25,8 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
       }
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Error occurred during login';
+    } catch (err: unknown) {
+      error.value = extractErrorMessage(err, 'Error occurred during login');
       throw err;
     } finally {
       loading.value = false;
@@ -52,8 +53,8 @@ export const useAuthStore = defineStore('auth', () => {
           localStorage.setItem('user', JSON.stringify(newUser));
         }
       }
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Error occurred during registration';
+    } catch (err: unknown) {
+      error.value = extractErrorMessage(err, 'Error occurred during registration');
       throw err;
     } finally {
       loading.value = false;

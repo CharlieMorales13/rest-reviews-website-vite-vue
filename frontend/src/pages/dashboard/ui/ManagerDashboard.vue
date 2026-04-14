@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { httpClient } from '@/shared/api/httpClient';
+import { extractErrorMessage } from '@/shared/lib/extractError';
 
 const router = useRouter();
 
@@ -151,8 +152,8 @@ const loadMetrics = async () => {
     }
 
     establishment.value = first;
-  } catch (e: any) {
-    metricsError.value = e?.response?.data?.message || 'Error al cargar las métricas.';
+  } catch (e: unknown) {
+    metricsError.value = extractErrorMessage(e, 'Error al cargar las métricas.');
   } finally {
     metricsLoading.value = false;
   }
