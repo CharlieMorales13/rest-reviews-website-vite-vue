@@ -1,10 +1,10 @@
 import 'reflect-metadata';
 import { describe, it, expect, vi } from 'vitest';
-import { UpdateEstablishmentPostUseCase } from './UpdateEstablishmentPostUseCase';
-import { IEstablishmentPostRepository } from '../../../domain/repositories/IEstablishmentPostRepository';
-import { IEstablishmentRepository } from '../../../domain/repositories/IEstablishmentRepository';
-import { Establishment } from '../../../domain/entities/Establishment';
-import { EstablishmentPost } from '../../../domain/entities/EstablishmentPost';
+import { UpdateEstablishmentPostUseCase } from '@/application/use-cases/posts/UpdateEstablishmentPostUseCase';
+import { IEstablishmentPostRepository } from '@/domain/repositories/IEstablishmentPostRepository';
+import { IEstablishmentRepository } from '@/domain/repositories/IEstablishmentRepository';
+import { Establishment } from '@/domain/entities/Establishment';
+import { EstablishmentPost } from '@/domain/entities/EstablishmentPost';
 
 const mockEstablishment = Establishment.create({
     id: 'est-uuid',

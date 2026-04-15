@@ -73,7 +73,7 @@ const navigateToEstablishment = (slug: string) => {
                 <span class="text-orange-500">¿Tienes hambre?</span>
             </h1>
             <p class="text-[#525155] text-lg font-medium max-w-md mb-8">
-                Explora las mejores los establecimientos de comida dentro de tu universidad y calificalos.
+                Explora los mejores establecimientos de comida dentro de la Universidad Anáhuac Oaxaca y calificalos.
             </p>
             <RouterLink
                 to="/establishments"

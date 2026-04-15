@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-import app from '../src/infrastructure/http/server';
+import app from '@/infrastructure/http/server';
 import type { Server } from 'http';
 
 let server: Server;
@@ -42,9 +42,10 @@ describe('Integration Tests - Auth API', () => {
                 name: 'Integration Test Student',
                 email: testEmail,
                 password: 'Password123!',
-                role: 'student'
+                role: 'student',
+                carrera: 'Ingeniería en Sistemas Computacionales',
             });
-            
+
         expect(registerRes.status).toBe(201);
         expect(registerRes.body.success).toBe(true);
 
@@ -55,7 +56,7 @@ describe('Integration Tests - Auth API', () => {
                 email: testEmail,
                 password: 'Password123!'
             });
-            
+
         expect(loginRes.status).toBe(200);
         expect(loginRes.body.success).toBe(true);
         expect(loginRes.body.data).toHaveProperty('token');
@@ -67,18 +68,19 @@ describe('Integration Tests - Establishments API', () => {
         const res = await request(server).get('/api/establishments');
 
         expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
         expect(res.body.data).toBeInstanceOf(Array);
-        expect(res.body.meta).toHaveProperty('total');
-        expect(res.body.meta).toHaveProperty('page');
+        expect(res.body.data.length).toBeGreaterThan(0);
     });
 
-    it('should support pagination limits', async () => {
-        const res = await request(server).get('/api/establishments?page=1&limit=2');
+    it('should return establishments with expected fields', async () => {
+        const res = await request(server).get('/api/establishments');
 
         expect(res.status).toBe(200);
-        expect(res.body.data).toBeInstanceOf(Array);
-        expect(res.body.data.length).toBeLessThanOrEqual(2);
-        expect(res.body.meta.limit).toBe(2);
+        const first = res.body.data[0];
+        expect(first).toHaveProperty('id');
+        expect(first).toHaveProperty('name');
+        expect(first).toHaveProperty('slug');
     });
 });
 

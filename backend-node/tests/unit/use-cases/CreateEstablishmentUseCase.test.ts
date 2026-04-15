@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 import { describe, it, expect, vi } from 'vitest';
-import { CreateEstablishmentUseCase } from './CreateEstablishmentUseCase';
-import { IEstablishmentRepository } from '../../../domain/repositories/IEstablishmentRepository';
-import { Establishment } from '../../../domain/entities/Establishment';
+import { CreateEstablishmentUseCase } from '@/application/use-cases/establishments/CreateEstablishmentUseCase';
+import { IEstablishmentRepository } from '@/domain/repositories/IEstablishmentRepository';
+import { Establishment } from '@/domain/entities/Establishment';
 
 describe('CreateEstablishmentUseCase', () => {
     it('should create an establishment successfully', async () => {

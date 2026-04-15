@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { describe, it, expect, vi } from 'vitest';
 import { Request, Response } from 'express';
-import { ReviewController } from './ReviewController';
+import { ReviewController } from '@/infrastructure/http/controllers/ReviewController';
 
 describe('ReviewController', () => {
     it('should return 200 and success response when replying to review', async () => {
@@ -9,7 +9,7 @@ describe('ReviewController', () => {
         const mockCreate = {} as any;
         const mockListEst = {} as any;
         const mockListAll = {} as any;
-        
+
         // Setup mock for Reply to Review
         const mockReply = {
             execute: vi.fn().mockResolvedValue({
@@ -19,7 +19,14 @@ describe('ReviewController', () => {
             })
         };
 
-        const controller = new ReviewController(mockCreate, mockListEst, mockListAll, mockReply as any);
+        const controller = new ReviewController(
+            mockCreate, mockListEst, mockListAll,
+            {} as any,       // listUserReviewsUseCase
+            mockReply as any,
+            {} as any,       // updateReviewUseCase
+            {} as any,       // deleteReviewUseCase
+            {} as any,       // classifyReviewUseCase
+        );
 
         const req = {
             params: { id: '123e4567-e89b-12d3-a456-426614174000' },

@@ -1,9 +1,9 @@
 import 'reflect-metadata';
 import { describe, it, expect, vi } from 'vitest';
-import { CreateReviewUseCase } from './CreateReviewUseCase';
-import { IReviewRepository } from '../../../domain/repositories/IReviewRepository';
-import { IUserRepository } from '../../../domain/repositories/IUserRepository';
-import { IEstablishmentRepository } from '../../../domain/repositories/IEstablishmentRepository';
+import { CreateReviewUseCase } from '@/application/use-cases/reviews/CreateReviewUseCase';
+import { IReviewRepository } from '@/domain/repositories/IReviewRepository';
+import { IUserRepository } from '@/domain/repositories/IUserRepository';
+import { IEstablishmentRepository } from '@/domain/repositories/IEstablishmentRepository';
 
 describe('CreateReviewUseCase', () => {
     it('should throw an error if the user does not exist or is inactive', async () => {
@@ -16,7 +16,8 @@ describe('CreateReviewUseCase', () => {
         const mockEstablishmentRepo: IEstablishmentRepository = {} as any;
         const mockReviewRepo: IReviewRepository = {} as any;
 
-        const useCase = new CreateReviewUseCase(mockReviewRepo, mockUserRepository, mockEstablishmentRepo);
+        const mockClassify = { execute: vi.fn() } as any;
+        const useCase = new CreateReviewUseCase(mockReviewRepo, mockUserRepository, mockEstablishmentRepo, mockClassify);
 
         await expect(
             useCase.execute({
@@ -43,7 +44,8 @@ describe('CreateReviewUseCase', () => {
             save: vi.fn().mockImplementation((review) => Promise.resolve(review)),
         } as unknown as IReviewRepository;
 
-        const useCase = new CreateReviewUseCase(mockReviewRepo, mockUserRepository, mockEstablishmentRepo);
+        const mockClassify = { execute: vi.fn() } as any;
+        const useCase = new CreateReviewUseCase(mockReviewRepo, mockUserRepository, mockEstablishmentRepo, mockClassify);
 
         const result = await useCase.execute({
             userId: 'user-id',

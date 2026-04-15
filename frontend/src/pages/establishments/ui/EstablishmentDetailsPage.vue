@@ -137,39 +137,40 @@ onMounted(async () => {
 
     <template v-else-if="est">
 
-      <!-- ═══════════════════ COVER + LOGO ═══════════════════ -->
-      <div class="relative w-full h-[450px]">
+      <!-- ── BOTÓN REGRESAR (fijo, permanece durante el scroll) ── -->
+      <button
+        @click="router.back()"
+        class="fixed top-[84px] md:top-[116px] left-4 z-50 flex items-center gap-2 px-4 py-2.5 bg-surface-container-high/80 hover:bg-surface-container-high backdrop-blur-md rounded-full text-on-surface transition-all border border-outline-variant/20 shadow-lg text-sm font-medium font-body"
+      >
+        <span class="material-symbols-outlined" style="font-size:18px">arrow_back</span>
+        <span class="hidden sm:inline">Regresar</span>
+      </button>
+
+      <!-- ═══════════════════ COVER + LOGO + TÍTULO ═══════════════════ -->
+      <div class="relative w-full h-[480px]">
         <img :src="est.coverUrl || est.galleryUrls?.[0] || FALLBACK_COVER" class="w-full h-full object-cover" />
-        <div class="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent"></div>
 
-        <!-- Botón regresar -->
-        <button
-          @click="router.back()"
-          class="absolute top-6 left-6 z-20 flex items-center gap-2 px-4 py-2 bg-surface-container-high/70 hover:bg-surface-container-high backdrop-blur-md rounded-full text-on-surface transition-colors border border-outline-variant/20"
-        >
-          <span class="material-symbols-outlined text-sm">arrow_back</span>
-          Regresar
-        </button>
-
-        <!-- Logo circular -->
-        <div class="absolute -bottom-16 left-8 md:left-16">
-          <div class="w-32 h-32 md:w-44 md:h-44 rounded-full border-4 border-background bg-surface-container-high overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
+        <div class="absolute -bottom-20 md:-bottom-24 left-8 md:left-16">
+          <div class="w-40 h-40 md:w-52 md:h-52 rounded-full border-4 border-background bg-surface-container-high overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
             <div v-if="!est.logoUrl" class="w-full h-full flex items-center justify-center bg-surface-container-highest">
-              <span class="text-4xl font-black font-headline text-primary">{{ est.name?.[0] }}</span>
+              <span class="text-5xl font-black font-headline text-primary">{{ est.name?.[0] }}</span>
             </div>
             <img v-else :src="est.logoUrl" class="w-full h-full object-cover" />
           </div>
         </div>
+
       </div>
 
       <!-- ═══════════════════ NAME + ACCIONES ═══════════════════ -->
-      <div class="max-w-[1280px] mx-auto px-8 md:px-16 mt-20 flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div class="max-w-[1320px] mx-auto px-8 md:px-16 mt-24 md:mt-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 class="text-4xl md:text-6xl font-black font-headline tracking-tighter text-on-surface">
             {{ est.name }}
           </h1>
           <div class="flex flex-wrap items-center gap-4 mt-3">
-            <span v-if="est.category" class="px-3 py-1 bg-primary/10 text-primary text-xs font-black uppercase rounded-full border border-primary/20 tracking-wider font-headline">
+            <span v-if="est.category"
+              class="px-4 py-1.5 bg-primary/10 text-primary text-sm font-black uppercase rounded-full border border-primary/20 tracking-wider font-headline">
               {{ est.category }}
             </span>
             <span v-if="ige !== '–'" class="flex items-center gap-1.5 text-sm text-on-surface-variant font-body">
@@ -184,8 +185,9 @@ onMounted(async () => {
         <button
           v-if="authStore.user?.role === 'student'"
           @click="router.push(`/review/create/${slug}`)"
-          class="flex-shrink-0 bg-gradient-to-r from-[#ff9153] to-[#ff7a23] text-on-primary px-8 py-3 rounded-xl font-headline font-bold text-xs uppercase tracking-widest shadow-[0_4px_12px_rgba(255,145,83,0.2)] active:scale-95 transition-transform"
+          class="flex-shrink-0 flex items-center gap-2.5 bg-gradient-to-r from-[#ff9153] to-[#ff7a23] text-white px-6 py-3.5 md:px-8 md:py-4 rounded-2xl font-headline font-bold text-sm uppercase tracking-widest shadow-[0_8px_24px_rgba(255,145,83,0.5)] active:scale-95 transition-all hover:shadow-[0_12px_32px_rgba(255,145,83,0.6)] hover:-translate-y-0.5"
         >
+          <span class="material-symbols-outlined" style="font-size:50px; font-variation-settings: 'FILL' 1;">rate_review</span>
           Escribir una reseña
         </button>
       </div>
