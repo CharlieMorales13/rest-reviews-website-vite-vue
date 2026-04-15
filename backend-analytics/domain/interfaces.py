@@ -3,7 +3,7 @@ from typing import List, Optional
 
 import pandas as pd
 
-from .entities import SentimentPrediction, ModelMetrics, MetricsSnapshot
+from .entities import SentimentPrediction, ModelMetrics, MetricsSnapshot, TrendDataPoint
 
 
 class IReviewRepository(ABC):
@@ -59,6 +59,13 @@ class IMetricsRepository(ABC):
 
     @abstractmethod
     def save_metrics_snapshot(self, snapshot: MetricsSnapshot) -> None:
+        ...
+
+    @abstractmethod
+    def get_snapshots_by_establishment(
+        self, establishment_id: str, days: int = 30
+    ) -> List[TrendDataPoint]:
+        """Return time-ordered snapshots for *establishment_id* within *days* days."""
         ...
 
 
