@@ -1,13 +1,13 @@
 import 'reflect-metadata';
 import { describe, it, expect, vi } from 'vitest';
-import { ListEstablishmentReviewsUseCase } from './ListEstablishmentReviewsUseCase';
-import { IReviewRepository } from '../../../domain/repositories/IReviewRepository';
-import { IEstablishmentRepository } from '../../../domain/repositories/IEstablishmentRepository';
+import { ListEstablishmentReviewsUseCase } from '@/application/use-cases/reviews/ListEstablishmentReviewsUseCase';
+import { IReviewRepository } from '@/domain/repositories/IReviewRepository';
+import { IEstablishmentRepository } from '@/domain/repositories/IEstablishmentRepository';
 
 describe('ListEstablishmentReviewsUseCase', () => {
     it('should return reviews for an existing establishment', async () => {
         const mockEstRepo: IEstablishmentRepository = {
-            findById: vi.fn().mockResolvedValue({ id: 'est-1', name: 'Test' }),
+            findBySlug: vi.fn().mockResolvedValue({ id: 'est-1', name: 'Test' }),
         } as unknown as IEstablishmentRepository;
 
         const mockReviewRepo: IReviewRepository = {
@@ -25,13 +25,13 @@ describe('ListEstablishmentReviewsUseCase', () => {
 
         expect(result.data).toHaveLength(2);
         expect(result.total).toBe(2);
-        expect(mockEstRepo.findById).toHaveBeenCalledWith('est-1');
+        expect(mockEstRepo.findBySlug).toHaveBeenCalledWith('est-1');
         expect(mockReviewRepo.findByEstablishmentId).toHaveBeenCalledWith('est-1', undefined);
     });
 
     it('should throw 404 if establishment does not exist', async () => {
         const mockEstRepo: IEstablishmentRepository = {
-            findById: vi.fn().mockResolvedValue(null),
+            findBySlug: vi.fn().mockResolvedValue(null),
         } as unknown as IEstablishmentRepository;
 
         const mockReviewRepo: IReviewRepository = {} as any;

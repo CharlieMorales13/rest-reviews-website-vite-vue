@@ -7,6 +7,8 @@
  * Requires the server to be running on port 3000.
  */
 
+export {};
+
 const API_URL = 'http://localhost:3000/api';
 
 async function testRBAC() {

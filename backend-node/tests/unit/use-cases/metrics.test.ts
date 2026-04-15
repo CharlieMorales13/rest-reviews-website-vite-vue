@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 import { describe, it, expect, vi } from 'vitest';
-import { GetHistoricalMetricsUseCase } from '../../../application/use-cases/metrics/GetHistoricalMetricsUseCase';
-import { IMetricsRepository } from '../../../domain/repositories/IMetricsRepository';
-import { IEstablishmentRepository } from '../../../domain/repositories/IEstablishmentRepository';
+import { GetHistoricalMetricsUseCase } from '@/application/use-cases/metrics/GetHistoricalMetricsUseCase';
+import { IMetricsRepository } from '@/domain/repositories/IMetricsRepository';
+import { IEstablishmentRepository } from '@/domain/repositories/IEstablishmentRepository';
 
 describe('Metrics Use Cases', () => {
     describe('GetHistoricalMetricsUseCase', () => {
@@ -19,7 +19,7 @@ describe('Metrics Use Cases', () => {
 
             const useCase = new GetHistoricalMetricsUseCase(mockMetricsRepo, mockEstRepo);
             const result = await useCase.execute('est-1', 30);
-            
+
             expect(result.series.length).toBe(1);
             expect(result.series[0].ige).toBe(80.5);
             expect(mockMetricsRepo.getHistoricalMetrics).toHaveBeenCalledWith('est-1', 30);

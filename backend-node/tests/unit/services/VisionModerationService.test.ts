@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { checkImageSafety } from './VisionModerationService';
-import { AppError } from '../http/errors/AppError';
+import { checkImageSafety } from '@/infrastructure/services/VisionModerationService';
+import { AppError } from '@/infrastructure/http/errors/AppError';
 
 // Stub env so credentials are always "set" for these tests
-vi.mock('../config/env.config', () => ({
+vi.mock('@/infrastructure/config/env.config', () => ({
     env: {
         SIGHTENGINE_API_USER: 'test_user',
         SIGHTENGINE_API_SECRET: 'test_secret',
@@ -27,7 +27,7 @@ describe('checkImageSafety', () => {
     it('permite imagen limpia', async () => {
         mockFetch({
             status: 'success',
-            nudity: { sexual_activity: 0.01, sexual_display: 0.02, erotica: 0.03 },
+            nudity: { raw: 0.01, partial: 0.02 },
             gore: { prob: 0.01 },
         });
 
@@ -37,7 +37,7 @@ describe('checkImageSafety', () => {
     it('rechaza imagen con contenido sexual explícito', async () => {
         mockFetch({
             status: 'success',
-            nudity: { sexual_activity: 0.95, sexual_display: 0.90, erotica: 0.80 },
+            nudity: { raw: 0.95, partial: 0.90 },
             gore: { prob: 0.01 },
         });
 
@@ -47,7 +47,7 @@ describe('checkImageSafety', () => {
     it('rechaza imagen con gore', async () => {
         mockFetch({
             status: 'success',
-            nudity: { sexual_activity: 0.01, sexual_display: 0.01, erotica: 0.01 },
+            nudity: { raw: 0.01, partial: 0.01 },
             gore: { prob: 0.85 },
         });
 

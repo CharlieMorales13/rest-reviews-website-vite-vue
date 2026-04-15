@@ -1,10 +1,10 @@
 import 'reflect-metadata';
 import { describe, it, expect, vi } from 'vitest';
-import { ReplyToReviewUseCase } from './ReplyToReviewUseCase';
-import { IReviewRepository } from '../../../domain/repositories/IReviewRepository';
-import { IEstablishmentRepository } from '../../../domain/repositories/IEstablishmentRepository';
-import { AppError } from '../../../infrastructure/http/errors/AppError';
-import { Review } from '../../../domain/entities/Review';
+import { ReplyToReviewUseCase } from '@/application/use-cases/reviews/ReplyToReviewUseCase';
+import { IReviewRepository } from '@/domain/repositories/IReviewRepository';
+import { IEstablishmentRepository } from '@/domain/repositories/IEstablishmentRepository';
+import { AppError } from '@/infrastructure/http/errors/AppError';
+import { Review } from '@/domain/entities/Review';
 
 describe('ReplyToReviewUseCase', () => {
     it('should throw an error if the review does not exist', async () => {

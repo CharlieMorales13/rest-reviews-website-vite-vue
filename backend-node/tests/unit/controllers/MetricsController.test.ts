@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { describe, it, expect, vi } from 'vitest';
 import { Request, Response } from 'express';
-import { MetricsController } from '../../../infrastructure/http/controllers/MetricsController';
+import { MetricsController } from '@/infrastructure/http/controllers/MetricsController';
 
 describe('MetricsController', () => {
     describe('getSummary', () => {
@@ -12,10 +12,10 @@ describe('MetricsController', () => {
                     averageIGE: 85.5
                 })
             } as any;
-            
+
             // @ts-ignore
             const controller = new MetricsController(mockGlobalMetrics, {} as any, {} as any, {} as any);
-            
+
             const req = {
                 user: { role: 'admin' }
             } as any;
@@ -25,7 +25,7 @@ describe('MetricsController', () => {
             } as unknown as Response;
 
             await controller.getSummary(req, res);
-            
+
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith({
                 success: true,

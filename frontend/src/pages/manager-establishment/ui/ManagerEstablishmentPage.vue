@@ -27,7 +27,7 @@ const error = ref<string | null>(null);
 type TabKey = 'feed' | 'menu' | 'gallery' | 'reviews';
 const activeTab = ref<TabKey>('feed');
 const tabs: ReadonlyArray<{ key: TabKey; label: string }> = [
-  { key: 'feed', label: 'Feed' },
+  { key: 'feed', label: 'Publicaciones' },
   { key: 'menu', label: 'Menú' },
   { key: 'gallery', label: 'Galería' },
   { key: 'reviews', label: 'Reseñas' },
@@ -312,9 +312,9 @@ const formatDate = (iso: string) =>
 
     <template v-else-if="est">
       <!-- ═══════════════════ COVER + LOGO ═══════════════════ -->
-      <div class="relative w-full h-[450px]">
+      <div class="relative w-full h-[480px]">
         <img :src="est.coverUrl || FALLBACK_COVER" class="w-full h-full object-cover" />
-        <div class="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent"></div>
 
         <div v-if="coverUploading" class="absolute inset-0 flex items-center justify-center bg-black/60 z-10">
           <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -330,10 +330,10 @@ const formatDate = (iso: string) =>
         <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="onCoverSelected" />
 
         <!-- Logo -->
-        <div class="absolute -bottom-16 left-8 md:left-16">
-          <div class="relative group w-32 h-32 md:w-44 md:h-44 rounded-full border-4 border-background bg-surface-container-high overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
+        <div class="absolute -bottom-20 md:-bottom-24 left-8 md:left-16">
+          <div class="relative group w-40 h-40 md:w-52 md:h-52 rounded-full border-4 border-background bg-surface-container-high overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
             <div v-if="!est.logoUrl" class="w-full h-full flex items-center justify-center bg-surface-container-highest">
-              <span class="text-4xl font-black font-headline text-primary">{{ est.name?.[0] }}</span>
+              <span class="text-5xl font-black font-headline text-primary">{{ est.name?.[0] }}</span>
             </div>
             <img v-else :src="est.logoUrl" class="w-full h-full object-cover" />
 
@@ -353,19 +353,22 @@ const formatDate = (iso: string) =>
       </div>
 
       <!-- ═══════════════════ NAME + INFO ═══════════════════ -->
-      <div class="max-w-[1280px] mx-auto px-8 md:px-16 mt-20">
-        <h1 class="text-4xl md:text-6xl font-black font-headline tracking-tighter text-on-surface">
-          {{ est.name }}
-        </h1>
-        <div class="flex flex-wrap items-center gap-4 mt-3">
-          <span v-if="est.category" class="px-3 py-1 bg-primary/10 text-primary text-xs font-black uppercase rounded-full border border-primary/20 tracking-wider font-headline">
-            {{ est.category }}
-          </span>
-          <span v-if="ige !== '–'" class="flex items-center gap-1.5 text-sm text-on-surface-variant font-body">
-            <span class="material-symbols-outlined text-primary text-base" style="font-variation-settings: 'FILL' 1;">star</span>
-            <span class="font-bold text-on-surface">IGE {{ ige }}</span>
-            <span class="text-xs text-on-surface-variant/70">/ 100</span>
-          </span>
+      <div class="max-w-[1280px] mx-auto px-8 md:px-16 mt-24 md:mt-28 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 class="text-4xl md:text-6xl font-black font-headline tracking-tighter text-on-surface">
+            {{ est.name }}
+          </h1>
+          <div class="flex flex-wrap items-center gap-4 mt-3">
+            <span v-if="est.category"
+              class="px-4 py-1.5 bg-primary/10 text-primary text-sm font-black uppercase rounded-full border border-primary/20 tracking-wider font-headline">
+              {{ est.category }}
+            </span>
+            <span v-if="ige !== '–'" class="flex items-center gap-1.5 text-sm text-on-surface-variant font-body">
+              <span class="material-symbols-outlined text-primary text-base" style="font-variation-settings: 'FILL' 1;">star</span>
+              <span class="font-bold text-on-surface">IGE {{ ige }}</span>
+              <span class="text-xs text-on-surface-variant/70">/ 100</span>
+            </span>
+          </div>
         </div>
       </div>
 
@@ -391,7 +394,7 @@ const formatDate = (iso: string) =>
         <div class="lg:col-span-4 space-y-10">
           <section class="bg-surface-container-low p-8 rounded-3xl">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="text-xs uppercase tracking-[0.2em] font-black text-primary font-headline">About the Kitchen</h3>
+              <h3 class="text-xs uppercase tracking-[0.2em] font-black text-primary font-headline">Descripción</h3>
               <button
                 @click="openAboutEdit"
                 class="p-1.5 rounded-lg hover:bg-surface-bright transition-colors text-on-surface-variant hover:text-on-surface"
@@ -516,7 +519,7 @@ const formatDate = (iso: string) =>
           <template v-else-if="activeTab === 'gallery'">
             <section>
               <div class="flex justify-between items-end mb-4">
-                <h3 class="text-xs uppercase tracking-[0.2em] font-black text-on-surface font-headline">Gallery</h3>
+                <h3 class="text-xs uppercase tracking-[0.2em] font-black text-on-surface font-headline">Galería</h3>
                 <span v-if="galleryUploading" class="text-xs text-on-surface-variant font-body">Subiendo…</span>
               </div>
               <div class="grid grid-cols-3 gap-2">
