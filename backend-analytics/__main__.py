@@ -5,8 +5,9 @@ Node.js (AnalyticsService.ts) delegates to the FastAPI server (server.py).
 This module is kept for direct CLI invocation and debugging.
 
 Modes (dispatched via stdin JSON):
-- {"mode": "train"}                              → full pipeline (retrain + IGE snapshots)
-- {"mode": "predict", "review_id": X, "text": Y} → single-review inference, no retraining
+- {"mode": "train"}                                          → full pipeline (retrain + IGE snapshots)
+- {"mode": "predict", "review_id": X, "text": Y}            → single-review inference, no retraining
+- {"mode": "trends", "establishment_id": X, "days": N}      → trend analysis for one establishment
 
 Default (no stdin): full pipeline.
 """
@@ -65,15 +66,33 @@ def run_train() -> dict:
     return run_uc.execute()
 
 
-def run_predict(review_id: str, text: str) -> dict:
-    """Single-review inference: load model, classify, persist."""
+def run_predict(
+    review_id: str,
+    text: str,
+    food_score: float = 0.0,
+    service_score: float = 0.0,
+    price_score: float = 0.0,
+) -> dict:
+    """Single-review inference: load model, classify, persist.
+
+    Optional numeric scores enable the hybrid SentimentReconciler.
+    """
     from application.use_cases.predict_single_review import PredictSingleReviewUseCase
 
     deps = _build_deps()
     uc = PredictSingleReviewUseCase(
         deps["model"], deps["model_repo"], deps["metrics_repo"]
     )
-    return uc.execute(review_id, text)
+    return uc.execute(review_id, text, food_score, service_score, price_score)
+
+
+def run_trends(establishment_id: str, days: int = 30) -> dict:
+    """Trend analysis for one establishment from its historical snapshots."""
+    from application.use_cases.get_establishment_trends import GetEstablishmentTrendsUseCase
+
+    deps = _build_deps()
+    uc = GetEstablishmentTrendsUseCase(deps["metrics_repo"], days=days)
+    return uc.execute(establishment_id)
 
 
 def _read_stdin_payload() -> dict:
@@ -100,7 +119,19 @@ def main() -> None:
             text = payload.get("text", "")
             if not review_id or not text:
                 raise ValueError("predict mode requires 'review_id' and 'text'")
-            result = run_predict(review_id, text)
+            result = run_predict(
+                review_id,
+                text,
+                food_score=float(payload.get("food_score", 0)),
+                service_score=float(payload.get("service_score", 0)),
+                price_score=float(payload.get("price_score", 0)),
+            )
+        elif mode == "trends":
+            establishment_id = payload.get("establishment_id", "")
+            if not establishment_id:
+                raise ValueError("trends mode requires 'establishment_id'")
+            days = int(payload.get("days", 30))
+            result = run_trends(establishment_id, days)
         else:
             result = run_train()
 
