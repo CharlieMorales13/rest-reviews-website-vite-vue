@@ -43,3 +43,23 @@ class MetricsSnapshot:
     total_reviews: int
     snapshot_date: Any  # datetime.date
     negative_terms: Any = None  # list[{"term": str, "mentions": int}] | None
+
+
+@dataclass
+class TrendDataPoint:
+    """Single time-series entry for trend analysis."""
+    snapshot_date: Any  # datetime.date
+    ige: float
+    negative_ratio: float
+    total_reviews: int
+
+
+@dataclass
+class EstablishmentTrend:
+    """Aggregated trend report for one establishment."""
+    establishment_id: str
+    ige_trend: str  # "improving" | "declining" | "stable"
+    ige_current: float
+    ige_delta: float
+    negative_ratio_trend: str  # "improving" | "worsening" | "stable"
+    data_points: Any  # List[TrendDataPoint]

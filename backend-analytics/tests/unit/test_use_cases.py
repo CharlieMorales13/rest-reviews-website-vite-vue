@@ -1,5 +1,5 @@
 """
-Unit tests for all four use cases in application/use_cases/.
+Unit tests for all use cases in application/use_cases/.
 
 All tests use mocks only — zero access to DB or filesystem.
 """
@@ -20,6 +20,8 @@ from application.use_cases.evaluate_model import EvaluateModelUseCase
 from application.use_cases.train_model import TrainModelUseCase
 from application.use_cases.generate_snapshots import GenerateMetricsSnapshotsUseCase
 from application.use_cases.run_pipeline import RunPipelineUseCase
+from application.use_cases.get_establishment_trends import GetEstablishmentTrendsUseCase
+from domain.entities import TrendDataPoint
 
 
 # ---------------------------------------------------------------------------
@@ -496,3 +498,151 @@ class TestRunPipelineUseCase:
         called_texts = mock_model.predict.call_args[0][0]
         expected_comments = sample_reviews_df["comment"].fillna("").tolist()
         assert called_texts == expected_comments
+
+
+# ---------------------------------------------------------------------------
+# GetEstablishmentTrendsUseCase
+# ---------------------------------------------------------------------------
+
+import datetime
+
+
+def _make_data_point(days_ago: int, ige: float, neg_ratio: float, total: int = 10) -> TrendDataPoint:
+    """Helper: build a TrendDataPoint with snapshot_date = today - days_ago."""
+    return TrendDataPoint(
+        snapshot_date=datetime.date.today() - datetime.timedelta(days=days_ago),
+        ige=ige,
+        negative_ratio=neg_ratio,
+        total_reviews=total,
+    )
+
+
+class TestGetEstablishmentTrendsUseCase:
+    """Tests for GetEstablishmentTrendsUseCase.execute()."""
+
+    def _make_uc(self, mock_metrics_repo, days: int = 30) -> GetEstablishmentTrendsUseCase:
+        return GetEstablishmentTrendsUseCase(mock_metrics_repo, days=days)
+
+    def test_returns_required_keys(self, mock_metrics_repo):
+        """execute() must return a dict with all required keys."""
+        mock_metrics_repo.get_snapshots_by_establishment.return_value = [
+            _make_data_point(20, 60.0, 0.20),
+            _make_data_point(10, 70.0, 0.15),
+        ]
+        result = self._make_uc(mock_metrics_repo).execute("est-1")
+        expected_keys = {
+            "establishment_id", "ige_trend", "ige_current",
+            "ige_delta", "negative_ratio_trend", "data_points",
+        }
+        assert set(result.keys()) == expected_keys
+
+    def test_improving_trend(self, mock_metrics_repo):
+        """IGE delta > 5 must be classified as 'improving'."""
+        mock_metrics_repo.get_snapshots_by_establishment.return_value = [
+            _make_data_point(25, 60.0, 0.25),
+            _make_data_point(10, 70.0, 0.15),
+        ]
+        result = self._make_uc(mock_metrics_repo).execute("est-1")
+        assert result["ige_trend"] == "improving"
+        assert result["ige_delta"] == pytest.approx(10.0)
+
+    def test_declining_trend(self, mock_metrics_repo):
+        """IGE delta < -5 must be classified as 'declining'."""
+        mock_metrics_repo.get_snapshots_by_establishment.return_value = [
+            _make_data_point(25, 80.0, 0.10),
+            _make_data_point(5,  70.0, 0.20),
+        ]
+        result = self._make_uc(mock_metrics_repo).execute("est-1")
+        assert result["ige_trend"] == "declining"
+        assert result["ige_delta"] == pytest.approx(-10.0)
+
+    def test_stable_trend(self, mock_metrics_repo):
+        """IGE delta within ±5 must be classified as 'stable'."""
+        mock_metrics_repo.get_snapshots_by_establishment.return_value = [
+            _make_data_point(20, 72.0, 0.18),
+            _make_data_point(5,  74.0, 0.17),
+        ]
+        result = self._make_uc(mock_metrics_repo).execute("est-1")
+        assert result["ige_trend"] == "stable"
+
+    def test_negative_ratio_improving(self, mock_metrics_repo):
+        """Falling negative ratio (> 0.05 decrease) must yield 'improving'."""
+        mock_metrics_repo.get_snapshots_by_establishment.return_value = [
+            _make_data_point(20, 65.0, 0.30),
+            _make_data_point(5,  66.0, 0.10),
+        ]
+        result = self._make_uc(mock_metrics_repo).execute("est-1")
+        assert result["negative_ratio_trend"] == "improving"
+
+    def test_negative_ratio_worsening(self, mock_metrics_repo):
+        """Rising negative ratio (> 0.05 increase) must yield 'worsening'."""
+        mock_metrics_repo.get_snapshots_by_establishment.return_value = [
+            _make_data_point(20, 65.0, 0.10),
+            _make_data_point(5,  63.0, 0.25),
+        ]
+        result = self._make_uc(mock_metrics_repo).execute("est-1")
+        assert result["negative_ratio_trend"] == "worsening"
+
+    def test_negative_ratio_stable(self, mock_metrics_repo):
+        """Small negative-ratio change (≤ 0.05) must yield 'stable'."""
+        mock_metrics_repo.get_snapshots_by_establishment.return_value = [
+            _make_data_point(20, 70.0, 0.18),
+            _make_data_point(5,  71.0, 0.20),
+        ]
+        result = self._make_uc(mock_metrics_repo).execute("est-1")
+        assert result["negative_ratio_trend"] == "stable"
+
+    def test_no_data_returns_stable_zeros(self, mock_metrics_repo):
+        """Zero data points must return ige_delta=0.0, trend='stable', empty data_points."""
+        mock_metrics_repo.get_snapshots_by_establishment.return_value = []
+        result = self._make_uc(mock_metrics_repo).execute("est-empty")
+        assert result["ige_trend"] == "stable"
+        assert result["ige_delta"] == 0.0
+        assert result["ige_current"] == 0.0
+        assert result["data_points"] == []
+
+    def test_single_data_point_returns_stable(self, mock_metrics_repo):
+        """With only one data point, trend must be 'stable' and delta 0.0."""
+        mock_metrics_repo.get_snapshots_by_establishment.return_value = [
+            _make_data_point(5, 75.0, 0.15),
+        ]
+        result = self._make_uc(mock_metrics_repo).execute("est-1")
+        assert result["ige_trend"] == "stable"
+        assert result["ige_delta"] == 0.0
+        assert result["ige_current"] == 75.0
+
+    def test_data_points_serialized_correctly(self, mock_metrics_repo):
+        """data_points must be a list of dicts with keys: date, ige, negative_ratio, total_reviews."""
+        mock_metrics_repo.get_snapshots_by_establishment.return_value = [
+            _make_data_point(15, 68.0, 0.20, total=25),
+        ]
+        result = self._make_uc(mock_metrics_repo).execute("est-1")
+        assert len(result["data_points"]) == 1
+        dp = result["data_points"][0]
+        assert set(dp.keys()) == {"date", "ige", "negative_ratio", "total_reviews"}
+        assert dp["ige"] == 68.0
+        assert dp["total_reviews"] == 25
+
+    def test_ige_current_is_latest(self, mock_metrics_repo):
+        """ige_current must be the IGE of the most recent (last) data point."""
+        mock_metrics_repo.get_snapshots_by_establishment.return_value = [
+            _make_data_point(20, 60.0, 0.25),
+            _make_data_point(10, 75.0, 0.15),
+            _make_data_point(2,  80.0, 0.10),
+        ]
+        result = self._make_uc(mock_metrics_repo).execute("est-1")
+        assert result["ige_current"] == 80.0
+
+    def test_establishment_id_echoed_in_result(self, mock_metrics_repo):
+        """The result must contain the exact establishment_id passed in."""
+        mock_metrics_repo.get_snapshots_by_establishment.return_value = []
+        est_id = "12345678-0000-0000-0000-000000000000"
+        result = self._make_uc(mock_metrics_repo).execute(est_id)
+        assert result["establishment_id"] == est_id
+
+    def test_calls_repo_with_correct_establishment_and_days(self, mock_metrics_repo):
+        """execute() must call get_snapshots_by_establishment with the right args."""
+        mock_metrics_repo.get_snapshots_by_establishment.return_value = []
+        uc = GetEstablishmentTrendsUseCase(mock_metrics_repo, days=60)
+        uc.execute("est-xyz")
+        mock_metrics_repo.get_snapshots_by_establishment.assert_called_once_with("est-xyz", 60)

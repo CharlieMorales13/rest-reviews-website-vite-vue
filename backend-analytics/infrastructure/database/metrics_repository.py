@@ -5,7 +5,7 @@ from typing import List
 from sqlalchemy import text, Engine
 
 from domain.interfaces import IMetricsRepository
-from domain.entities import SentimentPrediction, MetricsSnapshot
+from domain.entities import SentimentPrediction, MetricsSnapshot, TrendDataPoint
 
 logger = logging.getLogger(__name__)
 
@@ -197,3 +197,39 @@ class SqlAlchemyMetricsRepository(IMetricsRepository):
                     "save_metrics_snapshot fallback also failed: %s", e
                 )
                 raise
+
+    def get_snapshots_by_establishment(
+        self, establishment_id: str, days: int = 30
+    ) -> List[TrendDataPoint]:
+        """Return time-ordered TrendDataPoints for *establishment_id* within *days* days."""
+        sql = text(
+            """
+            SELECT snapshot_date, ige, negative_ratio, total_reviews
+            FROM metrics_snapshots
+            WHERE establishment_id = CAST(:establishment_id AS uuid)
+              AND snapshot_date >= CURRENT_DATE - CAST(:days AS int)
+            ORDER BY snapshot_date ASC
+            """
+        )
+        try:
+            with self._engine.connect() as conn:
+                rows = conn.execute(
+                    sql,
+                    {"establishment_id": establishment_id, "days": days},
+                ).fetchall()
+            return [
+                TrendDataPoint(
+                    snapshot_date=row[0],
+                    ige=float(row[1]),
+                    negative_ratio=float(row[2]),
+                    total_reviews=int(row[3]),
+                )
+                for row in rows
+            ]
+        except Exception as e:
+            logger.error(
+                "get_snapshots_by_establishment failed for %s: %s",
+                establishment_id,
+                e,
+            )
+            return []
