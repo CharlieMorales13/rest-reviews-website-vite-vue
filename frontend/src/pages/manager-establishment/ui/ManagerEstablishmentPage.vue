@@ -6,6 +6,8 @@ import { PostService } from '@/entities/post/api/PostService';
 import { EstablishmentService } from '@/entities/establishment/api/EstablishmentService';
 import { useAuthStore } from '@/entities/user/model/authStore';
 import ReviewCard from '@/shared/ui/ReviewCard.vue';
+import ReviewLightbox from '@/shared/ui/ReviewLightbox.vue';
+import ImageLightbox from '@/shared/ui/ImageLightbox.vue';
 import type { Establishment, EstablishmentReview } from '@/entities/review/model/types';
 import type { EstablishmentPost } from '@/entities/post/model/types';
 import CreatePostModal from '@/features/create-post/ui/CreatePostModal.vue';
@@ -27,8 +29,8 @@ const error = ref<string | null>(null);
 type TabKey = 'feed' | 'menu' | 'gallery' | 'reviews';
 const activeTab = ref<TabKey>('feed');
 const tabs: ReadonlyArray<{ key: TabKey; label: string }> = [
-  { key: 'feed', label: 'Publicaciones' },
-  { key: 'menu', label: 'Menú' },
+  { key: 'feed',    label: 'Publicaciones' },
+  { key: 'menu',    label: 'Menú' },
   { key: 'gallery', label: 'Galería' },
   { key: 'reviews', label: 'Reseñas' },
 ];
@@ -110,8 +112,6 @@ const ige = computed(() => {
   if (!aF && !aS && !aP) return '–';
   return ((aF * 0.5 + aS * 0.3 + aP * 0.2) * 20).toFixed(1);
 });
-
-
 
 // ── Cover + Logo upload ────────────────────────────────────────────────────────
 const coverInput = ref<HTMLInputElement | null>(null);
@@ -285,6 +285,37 @@ const handleReplySent = (updated: { reviewId: string; reply: string }) => {
   selectedReview.value = null;
 };
 
+// ── Lightbox — reseñas ────────────────────────────────────────────────────────
+const lightboxOpen = ref(false);
+const lightboxIdx = ref(0);
+
+const lightboxItems = computed(() =>
+  reviews.value
+    .filter(r => r.imageUrl)
+    .map(r => ({ url: r.imageUrl!, comment: r.comment ?? null, author: r.author }))
+);
+
+const openLightbox = (reviewId: string) => {
+  const index = lightboxItems.value.findIndex(
+    (_, i) => reviews.value.filter(r => r.imageUrl)[i]?.id === reviewId
+  );
+  if (index >= 0) {
+    lightboxIdx.value = index;
+    lightboxOpen.value = true;
+  }
+};
+
+// ── ImageLightbox — menú / galería / posts ────────────────────────────────────
+const imgLightboxOpen = ref(false);
+const imgLightboxIdx = ref(0);
+const imgLightboxImages = ref<string[]>([]);
+
+const openImgLightbox = (images: string[], index = 0) => {
+  imgLightboxImages.value = images;
+  imgLightboxIdx.value = index;
+  imgLightboxOpen.value = true;
+};
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const pendingCount = computed(() => reviews.value.filter(r => !r.managerReply).length);
 
@@ -294,9 +325,10 @@ const formatDate = (iso: string) =>
 
 <template>
   <div class="w-full animate-fade-in">
-    <!-- Loading -->
+
+    <!-- Skeleton -->
     <div v-if="loading" class="space-y-6">
-      <div class="w-full h-[450px] bg-surface-container animate-pulse"></div>
+      <div class="w-full h-[480px] bg-surface-container animate-pulse"></div>
       <div class="max-w-[1280px] mx-auto px-8 md:px-16 space-y-4 mt-20">
         <div class="h-16 bg-surface-container rounded-2xl w-1/3 animate-pulse"></div>
         <div class="h-4 bg-surface-container rounded w-1/2 animate-pulse"></div>
@@ -311,15 +343,18 @@ const formatDate = (iso: string) =>
     </div>
 
     <template v-else-if="est">
+
       <!-- ═══════════════════ COVER + LOGO ═══════════════════ -->
       <div class="relative w-full h-[480px]">
-        <img :src="est.coverUrl || FALLBACK_COVER" class="w-full h-full object-cover" />
+        <img :src="est.coverUrl || est.galleryUrls?.[0] || FALLBACK_COVER" class="w-full h-full object-cover" />
         <div class="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent"></div>
 
+        <!-- Cover uploading overlay -->
         <div v-if="coverUploading" class="absolute inset-0 flex items-center justify-center bg-black/60 z-10">
           <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
 
+        <!-- Cambiar portada -->
         <button
           @click="triggerCoverUpload"
           class="absolute bottom-4 right-4 z-20 flex items-center gap-2 px-4 py-2 bg-surface-container-high/80 backdrop-blur-md rounded-xl text-on-surface hover:bg-surface-bright transition-all border border-outline-variant/20"
@@ -330,7 +365,7 @@ const formatDate = (iso: string) =>
         <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="onCoverSelected" />
 
         <!-- Logo -->
-        <div class="absolute -bottom-20 md:-bottom-24 left-8 md:left-16">
+        <div class="absolute -bottom-20 md:-bottom-24 left-32 md:left-30">
           <div class="relative group w-40 h-40 md:w-52 md:h-52 rounded-full border-4 border-background bg-surface-container-high overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
             <div v-if="!est.logoUrl" class="w-full h-full flex items-center justify-center bg-surface-container-highest">
               <span class="text-5xl font-black font-headline text-primary">{{ est.name?.[0] }}</span>
@@ -352,13 +387,13 @@ const formatDate = (iso: string) =>
         </div>
       </div>
 
-      <!-- ═══════════════════ NAME + INFO ═══════════════════ -->
-      <div class="max-w-[1280px] mx-auto px-8 md:px-16 mt-24 md:mt-28 flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <!-- ═══════════════════ NAME + BADGES ═══════════════════ -->
+      <div class="max-w-[1280px] mx-auto px-8 md:px-16 mt-24 md:mt-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 class="text-4xl md:text-6xl font-black font-headline tracking-tighter text-on-surface">
             {{ est.name }}
           </h1>
-          <div class="flex flex-wrap items-center gap-4 mt-3">
+          <div class="flex flex-wrap items-center gap-4 mt-6">
             <span v-if="est.category"
               class="px-4 py-1.5 bg-primary/10 text-primary text-sm font-black uppercase rounded-full border border-primary/20 tracking-wider font-headline">
               {{ est.category }}
@@ -370,10 +405,19 @@ const formatDate = (iso: string) =>
             </span>
           </div>
         </div>
+
+        <!-- Nueva publicación CTA -->
+        <button
+          @click="openCreatePost"
+          class="flex-shrink-0 flex items-center gap-2.5 bg-gradient-to-r from-[#ff9153] to-[#ff7a23] text-white px-6 py-3.5 md:px-8 md:py-4 rounded-2xl font-headline font-bold text-sm uppercase tracking-widest shadow-[0_8px_24px_rgba(255,145,83,0.5)] active:scale-95 transition-all hover:shadow-[0_12px_32px_rgba(255,145,83,0.6)] hover:-translate-y-0.5"
+        >
+          <span class="material-symbols-outlined" style="font-size:22px;">add</span>
+          Nueva publicación
+        </button>
       </div>
 
       <!-- ═══════════════════ TABS ═══════════════════ -->
-      <div class="mt-8 border-b border-outline-variant/10 bg-background sticky top-[80px] md:top-[112px] z-40">
+      <div class="mt-8 border-b border-outline-variant/10 bg-background">
         <div class="max-w-[1280px] mx-auto px-8 md:px-16 flex gap-10 overflow-x-auto no-scrollbar">
           <button
             v-for="tab in tabs"
@@ -384,12 +428,17 @@ const formatDate = (iso: string) =>
               : 'pb-4 pt-4 text-on-surface-variant hover:text-on-surface font-headline font-bold text-sm uppercase tracking-widest whitespace-nowrap transition-colors'"
           >
             {{ tab.label }}
+            <span
+              v-if="tab.key === 'reviews' && pendingCount > 0"
+              class="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-on-primary text-[10px] font-black"
+            >{{ pendingCount }}</span>
           </button>
         </div>
       </div>
 
       <!-- ═══════════════════ MAIN GRID ═══════════════════ -->
       <div class="max-w-[1280px] mx-auto px-8 md:px-16 py-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
+
         <!-- LEFT — About -->
         <div class="lg:col-span-4 space-y-10">
           <section class="bg-surface-container-low p-8 rounded-3xl">
@@ -419,234 +468,265 @@ const formatDate = (iso: string) =>
         </div>
 
         <!-- RIGHT — Tab content -->
-        <div class="lg:col-span-8 space-y-8">
-          <!-- ═══ FEED ═══ -->
+        <div class="lg:col-span-8">
+
+          <!-- Tab: Feed -->
           <template v-if="activeTab === 'feed'">
-            <section>
-              <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xs uppercase tracking-[0.2em] font-black text-on-surface font-headline">Publicaciones</h3>
-                <button
-                  @click="openCreatePost"
-                  class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#ff9153] to-[#ff7a23] text-on-primary font-bold text-sm shadow-[0_4px_12px_rgba(255,145,83,0.2)] hover:brightness-110 active:scale-95 transition-all font-headline"
-                >
-                  <span class="material-symbols-outlined text-base">add</span>
-                  Nueva publicación
-                </button>
-              </div>
-
-              <div v-if="posts.length === 0" class="text-center py-12 bg-surface-container-low rounded-3xl">
-                <span class="material-symbols-outlined text-5xl text-on-surface-variant/40 block mb-2">campaign</span>
-                <p class="text-on-surface-variant font-bold font-headline">Sin publicaciones todavía</p>
-                <p class="text-sm text-on-surface-variant/60 mt-1 font-body">Comparte novedades con tus estudiantes.</p>
-              </div>
-
-              <div v-else class="space-y-4">
-                <div v-for="post in posts" :key="post.id" class="bg-surface-container-low rounded-3xl p-6">
-                  <div class="flex justify-between items-start mb-3">
-                    <p class="text-xs text-on-surface-variant font-body">{{ formatDate(post.createdAt) }}</p>
-                    <div class="flex items-center gap-2">
-                      <button @click="openEditPost(post)" class="text-on-surface-variant hover:text-on-surface transition-colors">
+            <div v-if="posts.length === 0" class="text-center py-20 bg-surface-container-low rounded-3xl">
+              <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 block mb-3" style="font-variation-settings: 'FILL' 1;">campaign</span>
+              <p class="text-on-surface-variant font-bold font-headline">Sin publicaciones aún</p>
+              <p class="text-sm text-on-surface-variant/60 mt-1 font-body">Usa el botón "Nueva publicación" para compartir novedades.</p>
+            </div>
+            <div v-else class="space-y-8">
+              <article
+                v-for="post in posts"
+                :key="post.id"
+                class="bg-surface-container-high rounded-[2rem] overflow-hidden border border-outline-variant/10 shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
+              >
+                <!-- Imágenes del post -->
+                <div v-if="post.imageUrls?.length" class="relative overflow-hidden group"
+                  :class="post.imageUrls.length === 1 ? 'h-[320px]' : 'grid grid-cols-2 h-56'">
+                  <div v-if="post.imageUrls.length === 1" class="h-full cursor-zoom-in" @click="openImgLightbox(post.imageUrls, 0)">
+                    <img :src="post.imageUrls[0]" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    <div class="absolute inset-0 bg-gradient-to-t from-surface-container-high to-transparent"></div>
+                  </div>
+                  <template v-else>
+                    <img v-for="(url, i) in post.imageUrls" :key="i"
+                      :src="url" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500 cursor-zoom-in"
+                      @click.stop="openImgLightbox(post.imageUrls, i)" />
+                  </template>
+                </div>
+                <!-- Contenido -->
+                <div class="p-8">
+                  <div class="flex items-start justify-between gap-4 mb-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">storefront</span>
+                      </div>
+                      <div>
+                        <p class="font-bold text-on-surface font-headline text-sm leading-none">{{ est.name }}</p>
+                        <p class="text-xs text-on-surface-variant mt-0.5 font-body">{{ formatDate(post.createdAt) }}</p>
+                      </div>
+                    </div>
+                    <!-- Edit / delete actions -->
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        @click="openEditPost(post)"
+                        class="p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-bright transition-colors"
+                      >
                         <span class="material-symbols-outlined text-base">edit</span>
                       </button>
-                      <button @click="deletePost(post.id)" class="text-on-surface-variant hover:text-red-400 transition-colors">
+                      <button
+                        @click="deletePost(post.id)"
+                        class="p-2 rounded-lg text-on-surface-variant hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                      >
                         <span class="material-symbols-outlined text-base">delete</span>
                       </button>
                     </div>
                   </div>
-                  <p class="text-on-surface mb-4 whitespace-pre-wrap font-body">{{ post.content }}</p>
-                  <div v-if="post.imageUrls?.length" class="grid gap-2" :class="post.imageUrls.length === 1 ? 'grid-cols-1' : 'grid-cols-2'">
-                    <img v-for="(url, i) in post.imageUrls" :key="i" :src="url" class="w-full rounded-2xl object-cover max-h-64" />
-                  </div>
+                  <p class="text-on-surface-variant leading-relaxed whitespace-pre-line font-body">{{ post.content }}</p>
                 </div>
+              </article>
 
-                <div v-if="totalPostPages > 1" class="flex items-center justify-between pt-2">
-                  <button
-                    :disabled="postPage === 1"
-                    @click="loadPosts(est!.slug!, postPage - 1)"
-                    class="flex items-center gap-1 px-4 py-2 rounded-xl bg-surface-container-high text-sm font-bold text-on-surface disabled:opacity-40 hover:bg-surface-bright transition-colors font-headline"
-                  >
-                    <span class="material-symbols-outlined" style="font-size:16px;">arrow_back_ios</span>
-                    Anterior
-                  </button>
-                  <span class="text-sm text-on-surface-variant font-body">{{ postPage }} / {{ totalPostPages }}</span>
-                  <button
-                    :disabled="postPage === totalPostPages"
-                    @click="loadPosts(est!.slug!, postPage + 1)"
-                    class="flex items-center gap-1 px-4 py-2 rounded-xl bg-surface-container-high text-sm font-bold text-on-surface disabled:opacity-40 hover:bg-surface-bright transition-colors font-headline"
-                  >
-                    Siguiente
-                    <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward_ios</span>
-                  </button>
-                </div>
+              <!-- Paginación posts -->
+              <div v-if="totalPostPages > 1" class="flex items-center justify-between">
+                <button
+                  :disabled="postPage === 1"
+                  @click="loadPosts(est!.slug!, postPage - 1)"
+                  class="flex items-center gap-1 px-5 py-2.5 rounded-xl bg-surface-container border border-outline-variant/20 text-sm font-bold text-on-surface disabled:opacity-40 hover:bg-surface-container-high transition-colors font-headline"
+                >
+                  <span class="material-symbols-outlined" style="font-size:16px;">arrow_back_ios</span>
+                  Anterior
+                </button>
+                <span class="text-sm text-on-surface-variant font-bold font-headline">{{ postPage }} / {{ totalPostPages }}</span>
+                <button
+                  :disabled="postPage === totalPostPages"
+                  @click="loadPosts(est!.slug!, postPage + 1)"
+                  class="flex items-center gap-1 px-5 py-2.5 rounded-xl bg-surface-container border border-outline-variant/20 text-sm font-bold text-on-surface disabled:opacity-40 hover:bg-surface-container-high transition-colors font-headline"
+                >
+                  Siguiente
+                  <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward_ios</span>
+                </button>
               </div>
-            </section>
+            </div>
           </template>
 
-          <!-- ═══ MENU ═══ -->
+          <!-- Tab: Menú -->
           <template v-else-if="activeTab === 'menu'">
-            <section>
-              <div class="flex justify-between items-end mb-4">
-                <h3 class="text-xs uppercase tracking-[0.2em] font-black text-on-surface font-headline">Menú</h3>
-                <span v-if="menuUploading" class="text-xs text-on-surface-variant font-body">Subiendo…</span>
-              </div>
-              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <div
-                  v-for="(url, i) in est.menuUrls"
-                  :key="i"
-                  class="relative group rounded-2xl overflow-hidden aspect-[3/4] bg-surface-container"
-                >
-                  <img :src="url" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                  <button
-                    @click="removeMenuImage(i)"
-                    class="absolute top-2 right-2 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/80"
-                  >
-                    <span class="material-symbols-outlined text-white" style="font-size:14px;">close</span>
-                  </button>
+            <div v-if="!est.menuUrls?.length && !menuUploading" class="text-center py-20 bg-surface-container-low rounded-3xl">
+              <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 block mb-3" style="font-variation-settings: 'FILL' 1;">menu_book</span>
+              <p class="text-on-surface-variant font-bold font-headline">Sin menú disponible</p>
+              <button
+                @click="triggerMenuUpload"
+                class="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-on-primary font-bold text-sm transition-all border border-primary/30 font-headline"
+              >
+                <span class="material-symbols-outlined text-base">add_photo_alternate</span>
+                Agregar imagen
+              </button>
+            </div>
+            <div v-else class="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div
+                v-for="(url, i) in est.menuUrls"
+                :key="i"
+                class="relative rounded-2xl overflow-hidden group aspect-[3/4] bg-surface-container-high shadow-[0_20px_40px_rgba(0,0,0,0.4)] border border-outline-variant/10 cursor-zoom-in"
+                @click="openImgLightbox(est.menuUrls!, i)"
+              >
+                <img :src="url" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span class="material-symbols-outlined text-on-surface text-3xl">zoom_in</span>
                 </div>
                 <button
-                  @click="triggerMenuUpload"
-                  class="rounded-2xl aspect-[3/4] flex flex-col items-center justify-center bg-surface-container border border-outline-variant/20 border-dashed hover:bg-surface-container-high transition-colors text-on-surface-variant hover:text-on-surface"
+                  @click.stop="removeMenuImage(i)"
+                  class="absolute top-2 right-2 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/80 z-10"
                 >
-                  <span class="material-symbols-outlined text-2xl">add_photo_alternate</span>
-                  <span class="text-xs font-bold font-headline mt-1">Agregar</span>
+                  <span class="material-symbols-outlined text-white" style="font-size:14px;">close</span>
                 </button>
-                <input ref="menuInput" type="file" accept="image/*" class="hidden" @change="onMenuImageSelected" />
               </div>
-            </section>
+              <!-- Add slot -->
+              <button
+                @click="triggerMenuUpload"
+                class="rounded-2xl aspect-[3/4] flex flex-col items-center justify-center bg-surface-container border border-outline-variant/20 border-dashed hover:bg-surface-container-high transition-colors text-on-surface-variant hover:text-on-surface"
+              >
+                <span class="material-symbols-outlined text-2xl">add_photo_alternate</span>
+                <span class="text-xs font-bold font-headline mt-1">Agregar</span>
+              </button>
+            </div>
+            <input ref="menuInput" type="file" accept="image/*" class="hidden" @change="onMenuImageSelected" />
           </template>
 
-          <!-- ═══ GALLERY ═══ -->
+          <!-- Tab: Galería -->
           <template v-else-if="activeTab === 'gallery'">
-            <section>
-              <div class="flex justify-between items-end mb-4">
-                <h3 class="text-xs uppercase tracking-[0.2em] font-black text-on-surface font-headline">Galería</h3>
-                <span v-if="galleryUploading" class="text-xs text-on-surface-variant font-body">Subiendo…</span>
-              </div>
-              <div class="grid grid-cols-3 gap-2">
-                <div
-                  v-for="(url, i) in est.galleryUrls"
-                  :key="i"
-                  class="relative group rounded-2xl overflow-hidden aspect-square bg-surface-container"
-                >
-                  <img :src="url" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                  <button
-                    @click="removeGalleryImage(i)"
-                    class="absolute top-2 right-2 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/80"
-                  >
-                    <span class="material-symbols-outlined text-white" style="font-size:14px;">close</span>
-                  </button>
+            <div v-if="!est.galleryUrls?.length && !galleryUploading" class="text-center py-20 bg-surface-container-low rounded-3xl">
+              <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 block mb-3" style="font-variation-settings: 'FILL' 1;">photo_library</span>
+              <p class="text-on-surface-variant font-bold font-headline">Sin fotos en la galería</p>
+              <button
+                @click="triggerGalleryUpload"
+                class="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-on-primary font-bold text-sm transition-all border border-primary/30 font-headline"
+              >
+                <span class="material-symbols-outlined text-base">add_photo_alternate</span>
+                Agregar foto
+              </button>
+            </div>
+            <div v-else class="grid grid-cols-3 gap-2">
+              <div
+                v-for="(url, i) in est.galleryUrls"
+                :key="i"
+                class="relative rounded-2xl overflow-hidden group aspect-square cursor-zoom-in"
+                @click="openImgLightbox(est.galleryUrls!, i)"
+              >
+                <img :src="url" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span class="material-symbols-outlined text-white text-3xl">zoom_in</span>
                 </div>
                 <button
-                  @click="triggerGalleryUpload"
-                  class="rounded-2xl aspect-square flex flex-col items-center justify-center bg-surface-container border border-outline-variant/20 border-dashed hover:bg-surface-container-high transition-colors text-on-surface-variant hover:text-on-surface"
+                  @click.stop="removeGalleryImage(i)"
+                  class="absolute top-2 right-2 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/80 z-10"
                 >
-                  <span class="material-symbols-outlined text-2xl">add_photo_alternate</span>
-                  <span class="text-xs font-bold font-headline mt-1">Agregar</span>
+                  <span class="material-symbols-outlined text-white" style="font-size:14px;">close</span>
                 </button>
-                <input ref="galleryInput" type="file" accept="image/*" class="hidden" @change="onGalleryImageSelected" />
               </div>
-            </section>
+              <!-- Add slot -->
+              <button
+                @click="triggerGalleryUpload"
+                class="rounded-2xl aspect-square flex flex-col items-center justify-center bg-surface-container border border-outline-variant/20 border-dashed hover:bg-surface-container-high transition-colors text-on-surface-variant hover:text-on-surface"
+              >
+                <span class="material-symbols-outlined text-2xl">add_photo_alternate</span>
+                <span class="text-xs font-bold font-headline mt-1">Agregar</span>
+              </button>
+            </div>
+            <input ref="galleryInput" type="file" accept="image/*" class="hidden" @change="onGalleryImageSelected" />
           </template>
 
-          <!-- ═══ REVIEWS ═══ -->
+          <!-- Tab: Reseñas -->
           <template v-else-if="activeTab === 'reviews'">
-            <section>
-              <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xs uppercase tracking-[0.2em] font-black text-on-surface font-headline">Reseñas de Estudiantes</h3>
-                <span v-if="pendingCount > 0" class="bg-primary/20 text-primary font-bold px-3 py-1 rounded-full text-xs font-headline">
-                  {{ pendingCount }} sin responder
-                </span>
-                <span v-else class="bg-emerald-500/10 text-emerald-400 font-bold px-3 py-1 rounded-full text-xs flex items-center gap-1 font-headline">
-                  <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">done_all</span>
-                  Todo respondido
-                </span>
-              </div>
-
-              <div class="flex flex-col sm:flex-row gap-3 mb-6">
-                <div class="relative flex-1">
-                  <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style="font-size:18px;">search</span>
-                  <input
-                    v-model="searchQuery"
-                    type="text"
-                    placeholder="Buscar por comentario o usuario..."
-                    class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/20 text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary/50 font-body"
-                  />
-                </div>
+            <!-- Filtros -->
+            <div class="flex flex-col sm:flex-row gap-3 mb-6">
+              <div class="relative flex-1">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style="font-size:18px;">search</span>
                 <input
-                  v-model="searchDate"
-                  type="date"
-                  class="px-4 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/20 text-sm text-on-surface focus:outline-none focus:border-primary/50 font-body"
+                  v-model="searchQuery"
+                  type="text"
+                  placeholder="Buscar por comentario o usuario..."
+                  class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/20 text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary/50 font-body"
                 />
+              </div>
+              <input
+                v-model="searchDate"
+                type="date"
+                class="px-4 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/20 text-sm text-on-surface focus:outline-none focus:border-primary/50 font-body"
+              />
+              <button
+                v-if="searchQuery || searchDate"
+                @click="clearSearch"
+                class="px-4 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/20 text-sm font-bold text-on-surface-variant hover:bg-surface-bright transition-colors flex items-center gap-1 font-headline"
+              >
+                <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+                Limpiar
+              </button>
+            </div>
+
+            <div v-if="reviewsLoading" class="space-y-5">
+              <div v-for="i in 3" :key="i" class="h-40 bg-surface-container rounded-3xl animate-pulse"></div>
+            </div>
+
+            <div v-else-if="reviews.length === 0" class="text-center py-20 bg-surface-container-low rounded-3xl">
+              <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 block mb-3" style="font-variation-settings: 'FILL' 1;">rate_review</span>
+              <p class="text-on-surface-variant font-bold font-headline">Aún no hay reseñas</p>
+            </div>
+
+            <div v-else-if="filteredReviews.length === 0" class="text-center py-12 bg-surface-container-low rounded-3xl">
+              <span class="material-symbols-outlined text-4xl text-on-surface-variant/40 mb-2 block">search_off</span>
+              <p class="text-on-surface-variant font-bold font-headline">Sin resultados</p>
+            </div>
+
+            <div v-else class="space-y-6">
+              <ReviewCard
+                v-for="review in paginatedReviews"
+                :key="review.id"
+                :review="review"
+                :show-author="true"
+                :show-sentiment="true"
+                :clickable-image="true"
+                @image-click="openLightbox"
+              >
+                <template #actions>
+                  <div v-if="!review.managerReply" class="flex justify-end mt-4">
+                    <button
+                      @click.stop="openReplyModal(review)"
+                      class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary/10 hover:bg-primary hover:text-on-primary text-primary font-bold text-sm transition-all border border-primary/30 hover:border-primary font-headline"
+                    >
+                      <span class="material-symbols-outlined text-sm">reply</span>
+                      Responder
+                    </button>
+                  </div>
+                </template>
+              </ReviewCard>
+
+              <!-- Paginación reviews -->
+              <div v-if="Math.ceil(filteredReviews.length / REVIEW_PAGE_SIZE) > 1" class="flex items-center justify-between mt-8">
                 <button
-                  v-if="searchQuery || searchDate"
-                  @click="clearSearch"
-                  class="px-4 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/20 text-sm font-bold text-on-surface-variant hover:bg-surface-bright transition-colors flex items-center gap-1 font-headline"
+                  :disabled="reviewPage === 1"
+                  @click="reviewPage--"
+                  class="flex items-center gap-1 px-5 py-2.5 rounded-xl bg-surface-container border border-outline-variant/20 text-sm font-bold text-on-surface disabled:opacity-40 hover:bg-surface-container-high transition-colors font-headline"
                 >
-                  <span class="material-symbols-outlined" style="font-size:16px;">close</span>
-                  Limpiar
+                  <span class="material-symbols-outlined" style="font-size:16px;">arrow_back_ios</span>
+                  Anterior
+                </button>
+                <span class="text-sm text-on-surface-variant font-bold font-headline">
+                  {{ reviewPage }} / {{ Math.ceil(filteredReviews.length / REVIEW_PAGE_SIZE) }}
+                </span>
+                <button
+                  :disabled="reviewPage === Math.ceil(filteredReviews.length / REVIEW_PAGE_SIZE)"
+                  @click="reviewPage++"
+                  class="flex items-center gap-1 px-5 py-2.5 rounded-xl bg-surface-container border border-outline-variant/20 text-sm font-bold text-on-surface disabled:opacity-40 hover:bg-surface-container-high transition-colors font-headline"
+                >
+                  Siguiente
+                  <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward_ios</span>
                 </button>
               </div>
-
-              <div v-if="reviewsLoading" class="space-y-4">
-                <div v-for="i in 3" :key="i" class="h-36 bg-surface-container rounded-2xl animate-pulse"></div>
-              </div>
-
-              <div v-else-if="reviews.length === 0" class="text-center py-16 bg-surface-container-low rounded-3xl">
-                <span class="material-symbols-outlined text-5xl text-on-surface-variant/40 mb-2 block">rate_review</span>
-                <p class="text-on-surface-variant font-bold font-headline">Sin reseñas todavía</p>
-              </div>
-
-              <div v-else-if="filteredReviews.length === 0" class="text-center py-12 bg-surface-container-low rounded-3xl">
-                <span class="material-symbols-outlined text-4xl text-on-surface-variant/40 mb-2 block">search_off</span>
-                <p class="text-on-surface-variant font-bold font-headline">Sin resultados</p>
-              </div>
-
-              <div v-else class="space-y-5">
-                <ReviewCard
-                  v-for="review in paginatedReviews"
-                  :key="review.id"
-                  :review="review"
-                  :show-author="true"
-                  :show-sentiment="true"
-                >
-                  <template #actions>
-                    <div v-if="!review.managerReply" class="flex justify-end mt-4">
-                      <button
-                        @click.stop="openReplyModal(review)"
-                        class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary/10 hover:bg-primary hover:text-on-primary text-primary font-bold text-sm transition-all border border-primary/30 hover:border-primary font-headline"
-                      >
-                        <span class="material-symbols-outlined text-sm">reply</span>
-                        Responder
-                      </button>
-                    </div>
-                  </template>
-                </ReviewCard>
-
-                <div v-if="Math.ceil(filteredReviews.length / REVIEW_PAGE_SIZE) > 1" class="flex items-center justify-between pt-4">
-                  <button
-                    :disabled="reviewPage === 1"
-                    @click="reviewPage--"
-                    class="flex items-center gap-1 px-4 py-2 rounded-xl bg-surface-container-high text-sm font-bold text-on-surface disabled:opacity-40 hover:bg-surface-bright transition-colors font-headline"
-                  >
-                    <span class="material-symbols-outlined" style="font-size:16px;">arrow_back_ios</span>
-                    Anterior
-                  </button>
-                  <span class="text-sm text-on-surface-variant font-bold font-body">
-                    Página {{ reviewPage }} de {{ Math.ceil(filteredReviews.length / REVIEW_PAGE_SIZE) }}
-                    <span class="text-on-surface-variant/60 font-normal ml-1">({{ filteredReviews.length }})</span>
-                  </span>
-                  <button
-                    :disabled="reviewPage === Math.ceil(filteredReviews.length / REVIEW_PAGE_SIZE)"
-                    @click="reviewPage++"
-                    class="flex items-center gap-1 px-4 py-2 rounded-xl bg-surface-container-high text-sm font-bold text-on-surface disabled:opacity-40 hover:bg-surface-bright transition-colors font-headline"
-                  >
-                    Siguiente
-                    <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward_ios</span>
-                  </button>
-                </div>
-              </div>
-            </section>
+            </div>
           </template>
+
         </div>
       </div>
 
@@ -667,7 +747,7 @@ const formatDate = (iso: string) =>
         @sent="handleReplySent"
       />
 
-      <!-- About edit panel -->
+      <!-- About edit modal -->
       <div v-if="aboutEditOpen" class="fixed inset-0 z-[100] flex items-center justify-center px-4">
         <div class="absolute inset-0 bg-background/80 backdrop-blur-xl" @click="aboutEditOpen = false"></div>
         <div class="relative w-full max-w-lg bg-surface-container rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.4)] border border-outline-variant/10 overflow-hidden">
@@ -722,11 +802,22 @@ const formatDate = (iso: string) =>
           </div>
         </div>
       </div>
+
     </template>
+
+    <ReviewLightbox
+      v-model="lightboxOpen"
+      :items="lightboxItems"
+      :initial-index="lightboxIdx"
+    />
+    <ImageLightbox
+      v-model="imgLightboxOpen"
+      :images="imgLightboxImages"
+      :initial-index="imgLightboxIdx"
+    />
   </div>
 </template>
 
 <style scoped>
 .no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>

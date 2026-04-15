@@ -7,6 +7,7 @@ import { PostService } from '@/entities/post/api/PostService';
 import { extractErrorMessage } from '@/shared/lib/extractError';
 import ReviewCard from '@/shared/ui/ReviewCard.vue';
 import ReviewLightbox from '@/shared/ui/ReviewLightbox.vue';
+import ImageLightbox from '@/shared/ui/ImageLightbox.vue';
 import type { Establishment, EstablishmentReview } from '@/entities/review/model/types';
 import type { EstablishmentPost } from '@/entities/post/model/types';
 
@@ -71,7 +72,7 @@ const loadReviews = async (page: number) => {
   }
 };
 
-// ── Lightbox ──────────────────────────────────────────────────────────────────
+// ── Lightbox — reseñas ────────────────────────────────────────────────────────
 const lightboxOpen = ref(false);
 const lightboxIdx = ref(0);
 
@@ -89,6 +90,17 @@ const openLightbox = (reviewId: string) => {
     lightboxIdx.value = index;
     lightboxOpen.value = true;
   }
+};
+
+// ── ImageLightbox — menú / galería / posts ────────────────────────────────────
+const imgLightboxOpen = ref(false);
+const imgLightboxIdx = ref(0);
+const imgLightboxImages = ref<string[]>([]);
+
+const openImgLightbox = (images: string[], index = 0) => {
+  imgLightboxImages.value = images;
+  imgLightboxIdx.value = index;
+  imgLightboxOpen.value = true;
 };
 
 // ── IGE ───────────────────────────────────────────────────────────────────────
@@ -140,7 +152,7 @@ onMounted(async () => {
       <!-- ── BOTÓN REGRESAR (fijo, permanece durante el scroll) ── -->
       <button
         @click="router.back()"
-        class="fixed top-[84px] md:top-[116px] left-4 z-50 flex items-center gap-2 px-4 py-2.5 bg-surface-container-high/80 hover:bg-surface-container-high backdrop-blur-md rounded-full text-on-surface transition-all border border-outline-variant/20 shadow-lg text-sm font-medium font-body"
+        class="fixed top-[100px] md:top-[125px] left-5 z-20 flex items-center gap-5 px-4 py-2.5 bg-surface-container-high/80 hover:bg-surface-container-high backdrop-blur-md rounded-full text-on-surface transition-all border border-outline-variant/20 shadow-lg text-sm font-medium font-body"
       >
         <span class="material-symbols-outlined" style="font-size:18px">arrow_back</span>
         <span class="hidden sm:inline">Regresar</span>
@@ -151,7 +163,7 @@ onMounted(async () => {
         <img :src="est.coverUrl || est.galleryUrls?.[0] || FALLBACK_COVER" class="w-full h-full object-cover" />
         <div class="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent"></div>
 
-        <div class="absolute -bottom-20 md:-bottom-24 left-8 md:left-16">
+        <div class="absolute -bottom-20 md:-bottom-24 left-32 md:left-30">
           <div class="w-40 h-40 md:w-52 md:h-52 rounded-full border-4 border-background bg-surface-container-high overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
             <div v-if="!est.logoUrl" class="w-full h-full flex items-center justify-center bg-surface-container-highest">
               <span class="text-5xl font-black font-headline text-primary">{{ est.name?.[0] }}</span>
@@ -163,12 +175,12 @@ onMounted(async () => {
       </div>
 
       <!-- ═══════════════════ NAME + ACCIONES ═══════════════════ -->
-      <div class="max-w-[1320px] mx-auto px-8 md:px-16 mt-24 md:mt-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div class="max-w-[1280px] mx-auto px-8 md:px-16 mt-24 md:mt-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 class="text-4xl md:text-6xl font-black font-headline tracking-tighter text-on-surface">
             {{ est.name }}
           </h1>
-          <div class="flex flex-wrap items-center gap-4 mt-3">
+          <div class="flex flex-wrap items-center gap-4 mt-6">
             <span v-if="est.category"
               class="px-4 py-1.5 bg-primary/10 text-primary text-sm font-black uppercase rounded-full border border-primary/20 tracking-wider font-headline">
               {{ est.category }}
@@ -193,7 +205,7 @@ onMounted(async () => {
       </div>
 
       <!-- ═══════════════════ TABS ═══════════════════ -->
-      <div class="mt-8 border-b border-outline-variant/10 bg-background sticky top-[80px] md:top-[112px] z-40">
+      <div class="mt-8 border-b border-outline-variant/10 bg-background">
         <div class="max-w-[1280px] mx-auto px-8 md:px-16 flex gap-10 overflow-x-auto no-scrollbar">
           <button
             v-for="tab in tabs"
@@ -253,13 +265,14 @@ onMounted(async () => {
                 <!-- Imágenes del post -->
                 <div v-if="post.imageUrls?.length" class="relative overflow-hidden group"
                   :class="post.imageUrls.length === 1 ? 'h-[320px]' : 'grid grid-cols-2 h-56'">
-                  <div v-if="post.imageUrls.length === 1" class="h-full">
+                  <div v-if="post.imageUrls.length === 1" class="h-full cursor-zoom-in" @click="openImgLightbox(post.imageUrls, 0)">
                     <img :src="post.imageUrls[0]" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                     <div class="absolute inset-0 bg-gradient-to-t from-surface-container-high to-transparent"></div>
                   </div>
                   <template v-else>
                     <img v-for="(url, i) in post.imageUrls" :key="i"
-                      :src="url" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                      :src="url" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500 cursor-zoom-in"
+                      @click="openImgLightbox(post.imageUrls, i)" />
                   </template>
                 </div>
                 <!-- Contenido -->
@@ -289,7 +302,8 @@ onMounted(async () => {
               <div
                 v-for="(url, i) in est.menuUrls"
                 :key="i"
-                class="relative rounded-2xl overflow-hidden group aspect-[3/4] bg-surface-container-high shadow-[0_20px_40px_rgba(0,0,0,0.4)] border border-outline-variant/10"
+                class="relative rounded-2xl overflow-hidden group aspect-[3/4] bg-surface-container-high shadow-[0_20px_40px_rgba(0,0,0,0.4)] border border-outline-variant/10 cursor-zoom-in"
+                @click="openImgLightbox(est.menuUrls!, i)"
               >
                 <img :src="url" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -309,9 +323,13 @@ onMounted(async () => {
               <div
                 v-for="(url, i) in est.galleryUrls"
                 :key="i"
-                class="relative rounded-2xl overflow-hidden group aspect-square"
+                class="relative rounded-2xl overflow-hidden group aspect-square cursor-zoom-in"
+                @click="openImgLightbox(est.galleryUrls!, i)"
               >
                 <img :src="url" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span class="material-symbols-outlined text-white text-3xl">zoom_in</span>
+                </div>
               </div>
             </div>
           </template>
@@ -369,6 +387,11 @@ onMounted(async () => {
       v-model="lightboxOpen"
       :items="lightboxItems"
       :initial-index="lightboxIdx"
+    />
+    <ImageLightbox
+      v-model="imgLightboxOpen"
+      :images="imgLightboxImages"
+      :initial-index="imgLightboxIdx"
     />
   </div>
 </template>
