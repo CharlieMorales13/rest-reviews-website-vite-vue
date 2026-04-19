@@ -49,8 +49,6 @@ def sample_metrics():
         f1=0.84,
         precision=0.83,
         recall=0.85,
-        cv_mean=0.82,
-        cv_std=0.03,
         dataset_size=181,
     )
 
@@ -104,8 +102,6 @@ def mock_model():
         f1=0.84,
         precision=0.83,
         recall=0.85,
-        cv_mean=0.82,
-        cv_std=0.03,
         dataset_size=181,
     )
     return model

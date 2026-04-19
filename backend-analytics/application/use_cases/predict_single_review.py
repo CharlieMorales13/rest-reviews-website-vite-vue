@@ -46,9 +46,9 @@ class PredictSingleReviewUseCase:
         """
         # 1. Check cached model exists
         try:
-            self._model.load_or_train([], [], force_retrain=False)
+            self._model.load()
         except Exception:
-            pass  # load_or_train with empty lists won't train if no cache
+            pass
 
         if not self._model.is_loaded():
             logger.warning(

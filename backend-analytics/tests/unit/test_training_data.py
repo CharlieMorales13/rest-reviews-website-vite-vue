@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 import pytest
 from collections import Counter
 
-from infrastructure.ml.training_data import TRAINING_DATA
+from infrastructure.ml.evaluation_dataset import TRAINING_DATA
 
 
 class TestTrainingData:

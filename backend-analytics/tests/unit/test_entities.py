@@ -111,16 +111,12 @@ class TestModelMetrics:
             f1=0.84,
             precision=0.83,
             recall=0.85,
-            cv_mean=0.82,
-            cv_std=0.03,
             dataset_size=181,
         )
         assert metrics.accuracy == 0.85
         assert metrics.f1 == 0.84
         assert metrics.precision == 0.83
         assert metrics.recall == 0.85
-        assert metrics.cv_mean == 0.82
-        assert metrics.cv_std == 0.03
         assert metrics.dataset_size == 181
 
     def test_model_metrics_accuracy_range(self):
@@ -131,8 +127,6 @@ class TestModelMetrics:
                 f1=0.5,
                 precision=0.5,
                 recall=0.5,
-                cv_mean=0.5,
-                cv_std=0.05,
                 dataset_size=100,
             )
             assert metrics.accuracy == value
@@ -144,8 +138,6 @@ class TestModelMetrics:
             f1=0.9,
             precision=0.9,
             recall=0.9,
-            cv_mean=0.88,
-            cv_std=0.02,
             dataset_size=500,
         )
         assert isinstance(metrics.dataset_size, int)

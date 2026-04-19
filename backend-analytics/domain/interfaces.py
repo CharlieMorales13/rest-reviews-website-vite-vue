@@ -71,12 +71,8 @@ class IMetricsRepository(ABC):
 
 class ISentimentModel(ABC):
     @abstractmethod
-    def load_or_train(
-        self,
-        texts: List[str],
-        labels: List[str],
-        force_retrain: bool = False,
-    ) -> None:
+    def load(self) -> None:
+        """Load the pretrained model (no-op if already loaded)."""
         ...
 
     @abstractmethod

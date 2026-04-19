@@ -59,14 +59,14 @@ class TestIsLoaded:
 # Tests: load_or_train
 # ---------------------------------------------------------------------------
 
-class TestLoadOrTrain:
+class TestLoad:
 
-    def test_load_or_train_sets_classifier(self):
-        """After load_or_train(), _classifier must not be None."""
+    def test_load_sets_classifier(self):
+        """After load(), _classifier must not be None."""
         p = _make_pipeline()
         mock_clf = MagicMock()
         with patch("infrastructure.ml.transformer_pipeline.hf_pipeline", return_value=mock_clf) as mock_hf:
-            p.load_or_train([], [])
+            p.load()
             mock_hf.assert_called_once_with(
                 "sentiment-analysis",
                 model="pysentimiento/robertuito-sentiment-analysis",
@@ -74,39 +74,23 @@ class TestLoadOrTrain:
             )
         assert p._classifier is mock_clf
 
-    def test_load_or_train_skips_if_already_loaded(self):
-        """Second call without force_retrain must not re-import the model."""
+    def test_load_skips_if_already_loaded(self):
+        """Second call must not re-import the model."""
         p = _make_pipeline()
         existing = MagicMock()
         p._classifier = existing
         with patch("infrastructure.ml.transformer_pipeline.hf_pipeline") as mock_hf:
-            p.load_or_train([], [])
+            p.load()
             mock_hf.assert_not_called()
         assert p._classifier is existing
 
-    def test_load_or_train_force_retrain_reloads(self):
-        """force_retrain=True must reload even when classifier is already set."""
-        p = _make_pipeline()
-        p._classifier = MagicMock()
-        new_clf = MagicMock()
-        with patch("infrastructure.ml.transformer_pipeline.hf_pipeline", return_value=new_clf):
-            p.load_or_train([], [], force_retrain=True)
-        assert p._classifier is new_clf
-
-    def test_load_or_train_ignores_texts_and_labels(self):
-        """texts and labels must be accepted but never used for training."""
-        p = _make_pipeline()
-        with patch("infrastructure.ml.transformer_pipeline.hf_pipeline", return_value=MagicMock()):
-            p.load_or_train(["texto"], ["positive"])
-        assert p.is_loaded()
-
-    def test_load_or_train_uses_custom_model_name(self):
+    def test_load_uses_custom_model_name(self):
         """The custom model name passed to __init__ must be forwarded to pipeline()."""
         custom_name = "nlptown/bert-base-multilingual-uncased-sentiment"
         p = _make_pipeline(model_name=custom_name)
         with patch("infrastructure.ml.transformer_pipeline.hf_pipeline") as mock_hf:
             mock_hf.return_value = MagicMock()
-            p.load_or_train([], [])
+            p.load()
             mock_hf.assert_called_once_with(
                 "sentiment-analysis",
                 model=custom_name,
@@ -229,7 +213,7 @@ class TestPredict:
         self.mock_clf.assert_called_once()
 
     def test_predict_raises_if_not_loaded(self):
-        """predict() before load_or_train() must raise RuntimeError."""
+        """predict() before load() must raise RuntimeError."""
         p = _make_pipeline()
         with pytest.raises(RuntimeError, match="Model not loaded"):
             p.predict(["texto"])
@@ -271,15 +255,6 @@ class TestEvaluate:
         result = self.p.evaluate(texts, labels)
         assert result.dataset_size == 4
 
-    def test_evaluate_cv_mean_and_std_are_zero(self):
-        """cv_mean and cv_std must be 0.0 — cross-validation is N/A for pretrained models."""
-        texts = ["bueno", "malo"]
-        labels = ["positive", "negative"]
-        self._setup_clf([("positive", 0.9), ("negative", 0.85)])
-        result = self.p.evaluate(texts, labels)
-        assert result.cv_mean == 0.0
-        assert result.cv_std == 0.0
-
     def test_evaluate_metrics_in_range(self):
         """All float metrics must be in [0.0, 1.0]."""
         texts = ["excelente", "horrible", "regular"]
@@ -309,7 +284,7 @@ class TestEvaluate:
         assert result.accuracy == 0.0
 
     def test_evaluate_raises_if_not_loaded(self):
-        """evaluate() before load_or_train() must raise RuntimeError."""
+        """evaluate() before load() must raise RuntimeError."""
         p = _make_pipeline()
         with pytest.raises(RuntimeError, match="Model not loaded"):
             p.evaluate(["texto"], ["positive"])

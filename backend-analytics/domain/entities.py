@@ -27,8 +27,6 @@ class ModelMetrics:
     f1: float
     precision: float
     recall: float
-    cv_mean: float
-    cv_std: float
     dataset_size: int
 
 

@@ -1,9 +1,10 @@
 import logging
 from collections import Counter
+from typing import List, Tuple
 
 from application.use_cases.generate_snapshots import GenerateMetricsSnapshotsUseCase
-from application.use_cases.train_model import TrainModelUseCase
-from domain.interfaces import IMetricsRepository, IReviewRepository, ISentimentModel
+from domain.entities import ModelMetrics
+from domain.interfaces import IMetricsRepository, IModelRepository, IReviewRepository, ISentimentModel
 from domain.services import IGECalculator, SentimentReconciler
 
 logger = logging.getLogger(__name__)
@@ -16,15 +17,42 @@ class RunPipelineUseCase:
         self,
         review_repo: IReviewRepository,
         model: ISentimentModel,
-        train_use_case: TrainModelUseCase,
+        model_repo: IModelRepository,
         metrics_repo: IMetricsRepository,
         snapshots_use_case: GenerateMetricsSnapshotsUseCase,
+        training_data: List[Tuple[str, str]],
+        version: str,
     ) -> None:
         self._review_repo = review_repo
         self._model = model
-        self._train_use_case = train_use_case
+        self._model_repo = model_repo
         self._metrics_repo = metrics_repo
         self._snapshots_use_case = snapshots_use_case
+        self._training_data = training_data
+        self._version = version
+
+    def _load_and_evaluate(self) -> tuple[str, ModelMetrics]:
+        """Load pretrained model, evaluate against gold set, persist run lifecycle."""
+        dataset_size = len(self._training_data)
+        version_id = self._model_repo.get_or_create_model_version(self._version, dataset_size)
+        run_id = self._model_repo.create_training_run(version_id)
+        logger.info("Training run created — run_id=%s version=%s", run_id, self._version)
+
+        try:
+            self._model.load()
+            texts = [t for t, _ in self._training_data]
+            labels = [lbl for _, lbl in self._training_data]
+            metrics = self._model.evaluate(texts, labels)
+            self._model_repo.update_model_metrics(version_id, metrics)
+            self._model_repo.finish_training_run(run_id, "success")
+            logger.info(
+                "Model evaluated — accuracy=%.4f f1=%.4f", metrics.accuracy, metrics.f1
+            )
+            return version_id, metrics
+        except Exception as e:
+            self._model_repo.finish_training_run(run_id, "failed", str(e))
+            logger.error("Model load/evaluate failed — run_id=%s error=%s", run_id, e)
+            raise RuntimeError(f"Model load/evaluate failed: {e}") from e
 
     def execute(self) -> dict:
         """Run the pipeline and return the JSON contract dict.
@@ -49,8 +77,8 @@ class RunPipelineUseCase:
         ige_global = IGECalculator.calculate_global(df)
         logger.info("IGE global = %.2f", ige_global)
 
-        # 3. Train / load model + persist metrics + training run lifecycle
-        version_id, metrics = self._train_use_case.execute()
+        # 3. Load model + evaluate + persist run lifecycle
+        version_id, metrics = self._load_and_evaluate()
 
         # 4. Predict sentiments for all reviews
         comments = df["comment"].fillna("").tolist()
@@ -76,10 +104,10 @@ class RunPipelineUseCase:
         inserted = self._metrics_repo.save_predictions(predictions, version_id)
         logger.info("Predictions persisted — count=%d", inserted)
 
-        # 7. Generate metrics_snapshots per establishment (Bug Fix 4)
+        # 7. Generate metrics_snapshots per establishment
         self._snapshots_use_case.execute()
 
-        # 8. Determine overall sentiment_label as the majority label (batch mode)
+        # 8. Determine overall sentiment_label as the majority label
         label_counts = Counter(p.label for p in predictions)
         sentiment_label = label_counts.most_common(1)[0][0]
 

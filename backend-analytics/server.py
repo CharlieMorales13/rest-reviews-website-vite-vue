@@ -74,7 +74,7 @@ async def startup() -> None:
     async def _preload():
         loop = asyncio.get_event_loop()
         try:
-            await loop.run_in_executor(None, lambda: _deps["model"].load_or_train([], []))
+            await loop.run_in_executor(None, _deps["model"].load)
             logger.info("Model pre-loaded in background")
         except Exception as e:
             logger.warning("Could not pre-load model: %s", e)
@@ -93,7 +93,7 @@ class PredictRequest(BaseModel):
 
 
 class TrainRequest(BaseModel):
-    force_retrain: bool = False
+    pass
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────
@@ -113,24 +113,17 @@ async def predict(req: PredictRequest) -> dict:
 
 @app.post("/train", dependencies=[Security(_require_api_key)])
 async def train(req: TrainRequest = TrainRequest()) -> dict:
-    from infrastructure.ml.training_data import TRAINING_DATA
+    from infrastructure.ml.evaluation_dataset import TRAINING_DATA
     from domain.value_objects import IGEWeights
-    from application.use_cases.evaluate_model import EvaluateModelUseCase
-    from application.use_cases.train_model import TrainModelUseCase
     from application.use_cases.generate_snapshots import GenerateMetricsSnapshotsUseCase
     from application.use_cases.run_pipeline import RunPipelineUseCase
 
-    evaluate_uc = EvaluateModelUseCase(_deps["model"], TRAINING_DATA)
-    train_uc = TrainModelUseCase(
-        _deps["model"], _deps["model_repo"], evaluate_uc,
-        TRAINING_DATA, config.MODEL_VERSION,
-    )
     snapshots_uc = GenerateMetricsSnapshotsUseCase(
         _deps["review_repo"], _deps["metrics_repo"], _deps["model"], IGEWeights()
     )
     run_uc = RunPipelineUseCase(
-        _deps["review_repo"], _deps["model"], train_uc,
-        _deps["metrics_repo"], snapshots_uc,
+        _deps["review_repo"], _deps["model"], _deps["model_repo"],
+        _deps["metrics_repo"], snapshots_uc, TRAINING_DATA, config.MODEL_VERSION,
     )
     try:
         result = run_uc.execute()

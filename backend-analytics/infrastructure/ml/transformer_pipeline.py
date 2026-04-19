@@ -4,11 +4,8 @@ TransformerSentimentPipeline
 HuggingFace-based sentiment classifier using a pretrained Spanish model.
 Default: pysentimiento/robertuito-sentiment-analysis (POS/NEG/NEU).
 
-Key differences from SklearnSentimentPipeline:
-- No training — model is downloaded from HuggingFace Hub and cached locally.
-- load_or_train() ignores texts/labels/force_retrain (nothing to train).
-- TextNormalizer is NOT applied — the transformer tokenizer handles raw Spanish text.
-- evaluate() runs inference on the full dataset; cv_mean/cv_std are set to 0.0.
+No training — model is downloaded from HuggingFace Hub and cached locally.
+TextNormalizer is NOT applied — the transformer tokenizer handles raw Spanish text.
 """
 import logging
 from collections import Counter
@@ -45,17 +42,9 @@ class TransformerSentimentPipeline(ISentimentModel):
     def is_loaded(self) -> bool:
         return self._classifier is not None
 
-    def load_or_train(
-        self,
-        texts: List[str],
-        labels: List[str],
-        force_retrain: bool = False,
-    ) -> None:
-        """Load the pretrained model from HuggingFace Hub (cached after first download).
-
-        texts, labels, and force_retrain are ignored — this model is pretrained.
-        """
-        if self._classifier is not None and not force_retrain:
+    def load(self) -> None:
+        """Load the pretrained model from HuggingFace Hub (cached after first download)."""
+        if self._classifier is not None:
             return
 
         logger.info("Loading transformer model: %s", self._model_name)
@@ -69,7 +58,7 @@ class TransformerSentimentPipeline(ISentimentModel):
     def predict(self, texts: List[str]) -> List[SentimentPrediction]:
         """Classify a batch of texts. Empty texts return neutral with probability 0."""
         if self._classifier is None:
-            raise RuntimeError("Model not loaded. Call load_or_train() before predict().")
+            raise RuntimeError("Model not loaded. Call load() before predict().")
 
         results: List[SentimentPrediction] = []
         for text in texts:
@@ -93,7 +82,7 @@ class TransformerSentimentPipeline(ISentimentModel):
         cv_mean and cv_std are 0.0 (cross-validation is not applicable).
         """
         if self._classifier is None:
-            raise RuntimeError("Model not loaded. Call load_or_train() before evaluate().")
+            raise RuntimeError("Model not loaded. Call load() before evaluate().")
 
         predictions = self.predict(texts)
         y_pred = [p.label for p in predictions]
@@ -116,7 +105,5 @@ class TransformerSentimentPipeline(ISentimentModel):
             f1=f1,
             precision=precision,
             recall=recall,
-            cv_mean=0.0,
-            cv_std=0.0,
             dataset_size=dataset_size,
         )
