@@ -127,7 +127,7 @@ export class MetricsController {
         const { id } = req.params;
         const user = req.user;
 
-        if (!user) throw new AppError('Unauthorized', 0);
+        if (!user) throw new AppError('Unauthorized', 401);
 
         // Security Check: Only admin or the establishment's manager can see its metrics
         if (user.role !== 'admin') {
