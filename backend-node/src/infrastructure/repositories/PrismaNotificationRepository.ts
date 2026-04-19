@@ -32,6 +32,7 @@ export class PrismaNotificationRepository implements INotificationRepository {
   }
 
   async update(notification: Notification): Promise<Notification> {
+    if (!notification.id) throw new Error('Cannot update a notification without an id');
     const data = await prisma.notification.update({
       where: { id: notification.id },
       data: { isRead: notification.isRead },

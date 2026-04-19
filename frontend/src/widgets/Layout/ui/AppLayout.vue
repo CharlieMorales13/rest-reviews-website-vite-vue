@@ -39,7 +39,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   document.removeEventListener('click', onClickOutside);
-  notifStore.unsubscribe();
+  if (authStore.user?.role === 'student') notifStore.unsubscribe();
 });
 
 // Close menus on route change
