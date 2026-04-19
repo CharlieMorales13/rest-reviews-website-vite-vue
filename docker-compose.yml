@@ -1,28 +1,31 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15
-    container_name: postgres_db
-    restart: always
-    environment:
-      POSTGRES_USER: user_admin
-      POSTGRES_PASSWORD: secure_password
-      POSTGRES_DB: satisfaction_db
+  backend-node:
+    build: ./backend-node
+    container_name: uao_eats_node
     ports:
-      - "5432:5432"
-    networks:
-      - analytics_net
-
-  backend:
-    build: ./backend
-    container_name: node_backend
+      - "3000:3000"
+    env_file:
+      - ./backend-node/.env
     depends_on:
-      - postgres
+      backend-analytics:
+        condition: service_healthy
     networks:
-      - analytics_net
+      - uao_net
+    restart: unless-stopped
+
+  backend-analytics:
+    build: ./backend-analytics
+    container_name: uao_eats_analytics
+    ports:
+      - "8001:8001"
+    env_file:
+      - ./backend-analytics/.env
+    networks:
+      - uao_net
+    restart: unless-stopped
 
 networks:
-  analytics_net:
+  uao_net:
     driver: bridge
-
