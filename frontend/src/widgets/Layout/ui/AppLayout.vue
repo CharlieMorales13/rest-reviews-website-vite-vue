@@ -2,10 +2,14 @@
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '@/entities/user/model/authStore';
 import { useRoute, useRouter } from 'vue-router';
+import NotificationBell from '@/entities/notification/ui/NotificationBell.vue';
+import { useNotificationStore } from '@/entities/notification/model/notificationStore';
 
 const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
+
+const notifStore = useNotificationStore();
 
 const userName = computed(() => authStore.user?.name || 'Usuario');
 const userInitials = computed(() => {
@@ -26,8 +30,17 @@ const onClickOutside = (e: MouseEvent) => {
     showDropdown.value = false;
   }
 };
-onMounted(() => document.addEventListener('click', onClickOutside));
-onUnmounted(() => document.removeEventListener('click', onClickOutside));
+onMounted(async () => {
+  document.addEventListener('click', onClickOutside);
+  if (authStore.user?.role === 'student') {
+    await notifStore.init();
+  }
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', onClickOutside);
+  notifStore.unsubscribe();
+});
 
 // Close menus on route change
 watch(() => route.path, () => {
@@ -110,6 +123,9 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
 
         <!-- Desktop Right Actions -->
         <div class="hidden md:flex items-center space-x-4">
+
+          <!-- Bell — students only -->
+          <NotificationBell v-if="authStore.user?.role === 'student'" />
 
           <!-- User Dropdown -->
           <div class="relative" ref="dropdownRef">
@@ -259,7 +275,11 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
 
     <!-- Main Content -->
     <main class="flex-1 w-full pt-20 md:pt-28">
-      <router-view />
+      <router-view v-slot="{ Component }">
+        <transition name="fade-scale" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </main>
 
     <!-- Footer -->
@@ -303,5 +323,21 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
 .mobile-menu-leave-to {
   opacity: 0;
   max-height: 0;
+}
+
+/* Page Transition (Fade & Scale) */
+.fade-scale-enter-active,
+.fade-scale-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fade-scale-enter-from {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+.fade-scale-leave-to {
+  opacity: 0;
+  transform: scale(0.98);
 }
 </style>
