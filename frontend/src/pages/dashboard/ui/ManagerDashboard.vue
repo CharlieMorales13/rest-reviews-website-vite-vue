@@ -27,6 +27,7 @@ interface CriticalReview {
 
 interface EstablishmentMetrics {
   id: string;
+  slug?: string;
   name: string;
   avgFood: number;
   avgService: number;
@@ -104,6 +105,13 @@ const criticalReviews = computed(() => establishment.value?.criticalReviews ?? [
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function goToReview(reviewId: string) {
+  const slug = establishment.value?.slug;
+  if (!slug) return;
+  showCriticalModal.value = false;
+  router.push(`/establishments/${slug}?highlight=${reviewId}`);
 }
 
 const criticalLabel = computed(() => {
@@ -596,12 +604,14 @@ onMounted(() => loadMetrics());
               <div
                 v-for="review in criticalReviews"
                 :key="review.id"
-                class="bg-white/5 border border-red-500/20 rounded-2xl p-4"
+                class="bg-white/5 border border-red-500/20 rounded-2xl p-4 cursor-pointer hover:bg-white/10 hover:border-red-400/40 transition-colors"
+                @click="goToReview(review.id)"
               >
                 <div class="flex items-center gap-2 mb-2">
                   <span class="material-symbols-outlined text-red-400 text-sm" style="font-variation-settings: 'FILL' 1; font-size: 16px;">person</span>
                   <span class="text-sm font-semibold text-white">{{ review.authorName || 'Estudiante' }}</span>
                   <span class="text-xs text-[#adaaad] ml-auto">{{ formatDate(review.createdAt) }}</span>
+                  <span class="material-symbols-outlined text-[#adaaad] text-sm">open_in_new</span>
                 </div>
                 <p class="text-sm text-[#c9c7cc] leading-relaxed">{{ review.comment }}</p>
               </div>
