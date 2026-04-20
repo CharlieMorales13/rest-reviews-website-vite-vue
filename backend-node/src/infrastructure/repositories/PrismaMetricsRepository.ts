@@ -174,6 +174,7 @@ export class PrismaMetricsRepository implements IMetricsRepository {
 
         return {
             id: e.id,
+            slug: e.slug ?? undefined,
             name: e.name,
             avgFood: this.calculateAvg(foodScores),
             avgService: this.calculateAvg(serviceScores),

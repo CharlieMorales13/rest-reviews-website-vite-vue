@@ -21,6 +21,7 @@ export interface ScoreDistribution {
 
 export interface EstablishmentMetric {
     id: string;
+    slug?: string;
     name: string;
     avgFood: number;
     avgService: number;

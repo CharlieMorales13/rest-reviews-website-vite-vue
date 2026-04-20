@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/entities/user/model/authStore';
 import { ReviewService } from '@/entities/review/api/ReviewService';
@@ -116,11 +116,25 @@ const ige = computed(() => {
 // ── Init ──────────────────────────────────────────────────────────────────────
 const FALLBACK_COVER = 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=1400&q=80';
 
+const highlightId = route.query.highlight as string | undefined;
+
 onMounted(async () => {
   try {
     est.value = await ReviewService.getEstablishment(slug);
     loadPosts();
-    loadReviews(1);
+    if (highlightId) {
+      activeTab.value = 'reviews';
+      await loadReviews(1);
+      await nextTick();
+      const el = document.getElementById(`review-${highlightId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('ring-2', 'ring-orange-400/60');
+        setTimeout(() => el.classList.remove('ring-2', 'ring-orange-400/60'), 2500);
+      }
+    } else {
+      loadReviews(1);
+    }
   } catch (e: unknown) {
     error.value = extractErrorMessage(e, 'No se pudo cargar el establecimiento.');
   } finally {
@@ -159,7 +173,7 @@ onMounted(async () => {
       </button>
 
       <!-- ═══════════════════ COVER + LOGO + TÍTULO ═══════════════════ -->
-      <div class="relative w-full h-[480px]">
+      <div class="relative w-full h-[400px]">
         <img :src="est.coverUrl || est.galleryUrls?.[0] || FALLBACK_COVER" class="w-full h-full object-cover" />
         <div class="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent"></div>
 
@@ -175,7 +189,7 @@ onMounted(async () => {
       </div>
 
       <!-- ═══════════════════ NAME + ACCIONES ═══════════════════ -->
-      <div class="max-w-[1280px] mx-auto px-8 md:px-16 mt-24 md:mt-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div class="max-w-[1000px] mx-auto px-8 md:px-16 mt-24 md:mt-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 class="text-4xl md:text-6xl font-black font-headline tracking-tighter text-on-surface">
             {{ est.name }}
@@ -346,14 +360,14 @@ onMounted(async () => {
                 <p class="text-sm text-on-surface-variant/60 mt-1 font-body">¡Sé el primero en compartir tu experiencia!</p>
               </div>
               <div v-else class="space-y-6">
-                <ReviewCard
-                  v-for="rev in reviews"
-                  :key="rev.id"
-                  :review="rev"
-                  :show-author="true"
-                  :clickable-image="true"
-                  @image-click="openLightbox"
-                />
+                <div v-for="rev in reviews" :key="rev.id" :id="`review-${rev.id}`" class="rounded-3xl transition-shadow duration-700">
+                  <ReviewCard
+                    :review="rev"
+                    :show-author="true"
+                    :clickable-image="true"
+                    @image-click="openLightbox"
+                  />
+                </div>
               </div>
 
               <!-- Paginación -->
