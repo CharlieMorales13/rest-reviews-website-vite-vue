@@ -108,10 +108,8 @@ function formatDate(iso: string): string {
 }
 
 function goToReview(reviewId: string) {
-  const slug = establishment.value?.slug;
-  if (!slug) return;
   showCriticalModal.value = false;
-  router.push(`/establishments/${slug}?highlight=${reviewId}`);
+  router.push(`/manager/mi-establecimiento?highlight=${reviewId}`);
 }
 
 const criticalLabel = computed(() => {

@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { uploadImage } from '@/shared/api/uploadImage';
 import { ReviewService } from '@/entities/review/api/ReviewService';
 import { PostService } from '@/entities/post/api/PostService';
 import { EstablishmentService } from '@/entities/establishment/api/EstablishmentService';
+import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/entities/user/model/authStore';
 import ReviewCard from '@/shared/ui/ReviewCard.vue';
 import ReviewLightbox from '@/shared/ui/ReviewLightbox.vue';
@@ -13,7 +14,10 @@ import type { EstablishmentPost } from '@/entities/post/model/types';
 import CreatePostModal from '@/features/create-post/ui/CreatePostModal.vue';
 import ManagerReplyModal from '@/pages/dashboard/ui/ManagerReplyModal.vue';
 
+const route = useRoute();
 const authStore = useAuthStore();
+
+const highlightId = route.query.highlight as string | undefined;
 
 const FALLBACK_COVER =
   'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=1400&q=80';
@@ -75,7 +79,19 @@ const fetchAll = async () => {
       return;
     }
     est.value = mine;
-    await Promise.all([loadPosts(mine.slug!), loadReviews(mine.slug!)]);
+    if (highlightId) {
+      activeTab.value = 'reviews';
+      await Promise.all([loadPosts(mine.slug!), loadReviews(mine.slug!)]);
+      await nextTick();
+      const el = document.getElementById(`review-${highlightId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('ring-2', 'ring-orange-400/60');
+        setTimeout(() => el.classList.remove('ring-2', 'ring-orange-400/60'), 2500);
+      }
+    } else {
+      await Promise.all([loadPosts(mine.slug!), loadReviews(mine.slug!)]);
+    }
   } catch {
     error.value = 'Error al cargar el establecimiento.';
   } finally {
@@ -388,7 +404,7 @@ const formatDate = (iso: string) =>
       </div>
 
       <!-- ═══════════════════ NAME + BADGES ═══════════════════ -->
-      <div class="max-w-[1280px] mx-auto px-8 md:px-16 mt-24 md:mt-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div class="max-w-[1000px] mx-auto px-8 md:px-16 mt-24 md:mt-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 class="text-4xl md:text-6xl font-black font-headline tracking-tighter text-on-surface">
             {{ est.name }}
@@ -680,9 +696,8 @@ const formatDate = (iso: string) =>
             </div>
 
             <div v-else class="space-y-6">
+              <div v-for="review in paginatedReviews" :key="review.id" :id="`review-${review.id}`" class="rounded-3xl transition-shadow duration-700">
               <ReviewCard
-                v-for="review in paginatedReviews"
-                :key="review.id"
                 :review="review"
                 :show-author="true"
                 :show-sentiment="true"
@@ -701,6 +716,7 @@ const formatDate = (iso: string) =>
                   </div>
                 </template>
               </ReviewCard>
+              </div>
 
               <!-- Paginación reviews -->
               <div v-if="Math.ceil(filteredReviews.length / REVIEW_PAGE_SIZE) > 1" class="flex items-center justify-between mt-8">
