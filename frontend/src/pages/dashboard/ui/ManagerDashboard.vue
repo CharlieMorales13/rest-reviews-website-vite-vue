@@ -563,6 +563,7 @@ onMounted(() => loadMetrics());
       </section>
 
       <!-- Critical Reviews Modal -->
+      <Teleport to="body">
       <Transition name="fade-scale">
         <div
           v-if="showCriticalModal"
@@ -608,6 +609,7 @@ onMounted(() => loadMetrics());
           </div>
         </div>
       </Transition>
+      </Teleport>
 
     </template>
   </div>
