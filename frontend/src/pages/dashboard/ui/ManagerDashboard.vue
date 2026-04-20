@@ -158,6 +158,27 @@ const netSentiment = computed(() => {
 
 const netBarWidth = (value: number) => `${Math.min(Math.abs(value) / 2, 50)}%`;
 
+// ── Section 3 — Tópicos Frecuentes ────────────────────────────────────────────
+const sortedNegativeTerms = computed(() => {
+  const terms = establishment.value?.negativeTerms ?? [];
+  return [...terms].sort((a, b) => b.mentions - a.mentions);
+});
+
+const maxMentions = computed(() => sortedNegativeTerms.value[0]?.mentions ?? 1);
+
+function termTier(mentions: number): 'high' | 'mid' | 'low' {
+  const max = maxMentions.value;
+  if (mentions >= max * 0.66) return 'high';
+  if (mentions >= max * 0.33) return 'mid';
+  return 'low';
+}
+
+const tierClasses = {
+  high: 'bg-red-500/10 border border-red-500/20 text-red-300',
+  mid: 'bg-amber-500/10 border border-amber-500/20 text-amber-300',
+  low: 'bg-white/5 border border-white/10 text-[#adaaad]',
+};
+
 // ── Data fetching ──────────────────────────────────────────────────────────────
 const loadMetrics = async () => {
   metricsLoading.value = true;
@@ -460,6 +481,43 @@ onMounted(() => loadMetrics());
         </div>
       </section>
 
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+           SECCIÓN 3 — Tópicos Frecuentes
+      ══════════════════════════════════════════════════════════════════════════ -->
+      <section class="mb-16">
+        <h2 class="text-2xl font-bold tracking-tight text-white mb-6 brand">Tópicos Frecuentes</h2>
+
+        <div class="bg-white/5 backdrop-blur border border-white/10 rounded-[1.5rem] p-6">
+          <p class="text-xs text-[#adaaad]">
+            Términos negativos detectados por IA en las reseñas de tu establecimiento
+          </p>
+
+          <!-- Empty state -->
+          <div
+            v-if="sortedNegativeTerms.length === 0 || establishment.reviewCount === 0"
+            class="flex flex-col items-center justify-center py-10 gap-3 text-center"
+          >
+            <span class="material-symbols-outlined text-4xl text-[#adaaad]/40" style="font-variation-settings: 'FILL' 0;">psychology</span>
+            <p class="text-sm text-[#adaaad] max-w-xs">
+              El modelo aún no ha procesado reseñas. Ejecuta el pipeline desde el panel de administración.
+            </p>
+          </div>
+
+          <!-- Pills -->
+          <div v-else class="flex flex-wrap gap-3 mt-4">
+            <span
+              v-for="term in sortedNegativeTerms"
+              :key="term.term"
+              class="px-3 py-1.5 rounded-full inline-flex items-center"
+              :class="tierClasses[termTier(term.mentions)]"
+              :style="{ fontSize: `clamp(0.8rem, ${0.8 + (term.mentions / maxMentions) * 0.8}rem, 1.6rem)` }"
+            >
+              {{ term.term.toLowerCase() }}<sup class="text-[10px] ml-0.5 opacity-60">{{ term.mentions }}</sup>
+            </span>
+          </div>
+        </div>
+      </section>
 
       <!-- ══════════════════════════════════════════════════════════════════════
            ACCESO RÁPIDO — Mi Establecimiento
