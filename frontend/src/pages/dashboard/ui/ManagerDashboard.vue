@@ -110,7 +110,7 @@ const criticalColor = computed(() => {
 const ige = computed(() => {
   const e = establishment.value;
   if (!e) return 0;
-  return Number(((e.avgFood * 0.5 + e.avgService * 0.3 + e.avgPrice * 0.2) * 20).toFixed(1));
+  return Math.min(Math.round(((e.avgFood * 0.5 + e.avgService * 0.3 + e.avgPrice * 0.2) * 20) * 10) / 10, 100);
 });
 
 const igeLabel = computed(() => {
@@ -396,7 +396,7 @@ onMounted(() => loadMetrics());
               <!-- Negativo -->
               <div>
                 <div class="flex justify-between text-sm mb-1.5">
-                  <span class="flex items-center gap-1.5 font-bold text-red-500">
+                  <span class="flex items-center gap-1.5 font-bold text-red-400">
                     <span class="w-2.5 h-2.5 rounded-full bg-red-400"></span>Insatisfechos
                   </span>
                   <span class="font-black text-white">{{ healthDistribution.negative }}%</span>
@@ -470,7 +470,7 @@ onMounted(() => loadMetrics());
           @click="router.push('/manager/mi-establecimiento')"
         >
           <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
+            <div class="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
               <span class="material-symbols-outlined text-orange-500 text-2xl" style="font-variation-settings: 'FILL' 1;">storefront</span>
             </div>
             <div>
