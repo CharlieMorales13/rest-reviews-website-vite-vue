@@ -498,7 +498,7 @@ onMounted(() => loadMetrics());
             v-if="sortedNegativeTerms.length === 0 || establishment.reviewCount === 0"
             class="flex flex-col items-center justify-center py-10 gap-3 text-center"
           >
-            <span class="material-symbols-outlined text-4xl text-[#adaaad]/40" style="font-variation-settings: 'FILL' 0;">psychology</span>
+            <span class="material-symbols-outlined text-4xl text-[#adaaad]/40" style="font-variation-settings: 'FILL' 1;">psychology</span>
             <p class="text-sm text-[#adaaad] max-w-xs">
               El modelo aún no ha procesado reseñas. Ejecuta el pipeline desde el panel de administración.
             </p>
