@@ -40,7 +40,7 @@ export interface CriticalReview {
     id: string;
     comment: string;
     createdAt: Date;
-    authorName: string | undefined;
+    authorName?: string;
 }
 
 export interface EstablishmentMetricSummary extends EstablishmentMetric {

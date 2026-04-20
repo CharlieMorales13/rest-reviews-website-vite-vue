@@ -85,7 +85,7 @@ export class PrismaMetricsRepository implements IMetricsRepository {
                             priceScore: true,
                             comment: true,
                             createdAt: true,
-                            authorName: true,
+                            user: { select: { name: true } },
                             sentimentResults: {
                                 orderBy: { createdAt: 'desc' },
                                 take: 1,
@@ -154,20 +154,17 @@ export class PrismaMetricsRepository implements IMetricsRepository {
             'asqueroso', 'asco',
             'basura', 'mugre',
         ];
-        const criticalMentionsCount = e.reviews.filter((r: any) =>
+        const allCritical = e.reviews.filter((r: any) =>
             r.comment && CRITICAL_WORDS.some((w: string) => (r.comment as string).toLowerCase().includes(w))
-        ).length;
-
-        const criticalReviews: CriticalReview[] = e.reviews
-            .filter((r: any) =>
-                r.comment && CRITICAL_WORDS.some((w: string) => (r.comment as string).toLowerCase().includes(w))
-            )
+        );
+        const criticalMentionsCount = allCritical.length;
+        const criticalReviews: CriticalReview[] = allCritical
             .slice(0, 10)
             .map((r: any) => ({
                 id: r.id,
                 comment: r.comment as string,
                 createdAt: r.createdAt,
-                authorName: r.authorName as string | undefined,
+                authorName: (r.user?.name as string | undefined) ?? undefined,
             }));
 
         const negativeTerms: NegativeTerm[] =
