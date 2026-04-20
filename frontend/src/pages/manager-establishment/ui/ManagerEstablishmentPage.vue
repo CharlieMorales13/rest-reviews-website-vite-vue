@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { uploadImage } from '@/shared/api/uploadImage';
 import { ReviewService } from '@/entities/review/api/ReviewService';
 import { PostService } from '@/entities/post/api/PostService';
@@ -79,18 +79,14 @@ const fetchAll = async () => {
       return;
     }
     est.value = mine;
+    await Promise.all([loadPosts(mine.slug!), loadReviews(mine.slug!)]);
     if (highlightId) {
       activeTab.value = 'reviews';
-      await Promise.all([loadPosts(mine.slug!), loadReviews(mine.slug!)]);
-      await nextTick();
-      const el = document.getElementById(`review-${highlightId}`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.classList.add('ring-2', 'ring-orange-400/60');
-        setTimeout(() => el.classList.remove('ring-2', 'ring-orange-400/60'), 2500);
+      const idx = reviews.value.findIndex(r => r.id === highlightId);
+      if (idx > 0) {
+        const [highlighted] = reviews.value.splice(idx, 1);
+        reviews.value.unshift(highlighted);
       }
-    } else {
-      await Promise.all([loadPosts(mine.slug!), loadReviews(mine.slug!)]);
     }
   } catch {
     error.value = 'Error al cargar el establecimiento.';
@@ -696,7 +692,14 @@ const formatDate = (iso: string) =>
             </div>
 
             <div v-else class="space-y-6">
-              <div v-for="review in paginatedReviews" :key="review.id" :id="`review-${review.id}`" class="rounded-3xl transition-shadow duration-700">
+              <div v-for="review in paginatedReviews" :key="review.id" :id="`review-${review.id}`"
+                class="rounded-3xl"
+                :class="review.id === highlightId ? 'ring-2 ring-orange-400/60' : ''"
+              >
+                <div v-if="review.id === highlightId" class="flex items-center gap-2 px-1 pb-2 text-xs text-orange-400 font-semibold">
+                  <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">warning</span>
+                  Mención crítica detectada
+                </div>
               <ReviewCard
                 :review="review"
                 :show-author="true"
