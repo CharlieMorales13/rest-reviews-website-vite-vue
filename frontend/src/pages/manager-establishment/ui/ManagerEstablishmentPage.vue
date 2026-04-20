@@ -53,19 +53,32 @@ const totalPostPages = computed(() => Math.ceil(postTotal.value / POST_PAGE_SIZE
 // Search - reviews
 const searchQuery = ref('');
 const searchDate = ref('');
+type SentimentFilter = 'all' | 'positive' | 'neutral' | 'negative';
+const sentimentFilter = ref<SentimentFilter>('all');
+const sentimentSort = ref<'desc' | 'asc'>('desc');
+
+const avgScore = (r: { foodScore: number; serviceScore: number; priceScore: number }) =>
+  (r.foodScore * 0.5 + r.serviceScore * 0.3 + r.priceScore * 0.2);
+
 const filteredReviews = computed(() => {
   let list = reviews.value;
   const q = searchQuery.value.trim().toLowerCase();
   if (q) list = list.filter(r => r.comment?.toLowerCase().includes(q) || r.author?.toLowerCase().includes(q));
   if (searchDate.value) list = list.filter(r => r.createdAt.startsWith(searchDate.value));
+  if (sentimentFilter.value !== 'all') list = list.filter(r => r.sentiment === sentimentFilter.value);
+  if (sentimentFilter.value !== 'all') {
+    list = [...list].sort((a, b) =>
+      sentimentSort.value === 'desc' ? avgScore(b) - avgScore(a) : avgScore(a) - avgScore(b)
+    );
+  }
   return list;
 });
 const paginatedReviews = computed(() => {
   const start = (reviewPage.value - 1) * REVIEW_PAGE_SIZE;
   return filteredReviews.value.slice(start, start + REVIEW_PAGE_SIZE);
 });
-watch([searchQuery, searchDate], () => { reviewPage.value = 1; });
-const clearSearch = () => { searchQuery.value = ''; searchDate.value = ''; };
+watch([searchQuery, searchDate, sentimentFilter, sentimentSort], () => { reviewPage.value = 1; });
+const clearSearch = () => { searchQuery.value = ''; searchDate.value = ''; sentimentFilter.value = 'all'; };
 
 // ── Fetch ──────────────────────────────────────────────────────────────────────
 const fetchAll = async () => {
@@ -652,29 +665,57 @@ const formatDate = (iso: string) =>
           <!-- Tab: Reseñas -->
           <template v-else-if="activeTab === 'reviews'">
             <!-- Filtros -->
-            <div class="flex flex-col sm:flex-row gap-3 mb-6">
-              <div class="relative flex-1">
-                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style="font-size:18px;">search</span>
+            <div class="flex flex-col gap-3 mb-6">
+              <div class="flex flex-col sm:flex-row gap-3">
+                <div class="relative flex-1">
+                  <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style="font-size:18px;">search</span>
+                  <input
+                    v-model="searchQuery"
+                    type="text"
+                    placeholder="Buscar por comentario o usuario..."
+                    class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/20 text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary/50 font-body"
+                  />
+                </div>
                 <input
-                  v-model="searchQuery"
-                  type="text"
-                  placeholder="Buscar por comentario o usuario..."
-                  class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/20 text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary/50 font-body"
+                  v-model="searchDate"
+                  type="date"
+                  class="px-4 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/20 text-sm text-on-surface focus:outline-none focus:border-primary/50 font-body"
                 />
+                <button
+                  v-if="searchQuery || searchDate || sentimentFilter !== 'all'"
+                  @click="clearSearch"
+                  class="px-4 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/20 text-sm font-bold text-on-surface-variant hover:bg-surface-bright transition-colors flex items-center gap-1 font-headline"
+                >
+                  <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+                  Limpiar
+                </button>
               </div>
-              <input
-                v-model="searchDate"
-                type="date"
-                class="px-4 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/20 text-sm text-on-surface focus:outline-none focus:border-primary/50 font-body"
-              />
-              <button
-                v-if="searchQuery || searchDate"
-                @click="clearSearch"
-                class="px-4 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/20 text-sm font-bold text-on-surface-variant hover:bg-surface-bright transition-colors flex items-center gap-1 font-headline"
-              >
-                <span class="material-symbols-outlined" style="font-size:16px;">close</span>
-                Limpiar
-              </button>
+              <!-- Filtro de sentimiento -->
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs text-on-surface-variant font-semibold font-headline uppercase tracking-wide">Sentimiento:</span>
+                <button
+                  v-for="opt in ([{ key: 'all', label: 'Todos' }, { key: 'positive', label: 'Positivo' }, { key: 'neutral', label: 'Neutral' }, { key: 'negative', label: 'Negativo' }] as const)"
+                  :key="opt.key"
+                  @click="sentimentFilter = opt.key"
+                  class="px-3 py-1 rounded-full text-xs font-bold font-headline border transition-colors"
+                  :class="sentimentFilter === opt.key
+                    ? opt.key === 'positive' ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
+                      : opt.key === 'negative' ? 'bg-red-500/20 border-red-500/50 text-red-400'
+                      : opt.key === 'neutral' ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
+                      : 'bg-primary/20 border-primary/50 text-primary'
+                    : 'bg-surface-container-high border-outline-variant/20 text-on-surface-variant hover:bg-surface-bright'"
+                >{{ opt.label }}</button>
+                <template v-if="sentimentFilter !== 'all'">
+                  <span class="text-on-surface-variant/40 text-xs">|</span>
+                  <button
+                    @click="sentimentSort = sentimentSort === 'desc' ? 'asc' : 'desc'"
+                    class="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold font-headline border bg-surface-container-high border-outline-variant/20 text-on-surface-variant hover:bg-surface-bright transition-colors"
+                  >
+                    <span class="material-symbols-outlined" style="font-size:14px;">{{ sentimentSort === 'desc' ? 'arrow_downward' : 'arrow_upward' }}</span>
+                    {{ sentimentSort === 'desc' ? 'Mayor a menor' : 'Menor a mayor' }}
+                  </button>
+                </template>
+              </div>
             </div>
 
             <div v-if="reviewsLoading" class="space-y-5">
