@@ -1,11 +1,11 @@
 import datetime
 import logging
 
+from application.use_cases.extract_negative_terms import ExtractNegativeTermsUseCase
 from domain.entities import MetricsSnapshot
 from domain.interfaces import IMetricsRepository, IReviewRepository, ISentimentModel
 from domain.services import IGECalculator
 from domain.value_objects import IGEWeights
-from application.use_cases.extract_negative_terms import ExtractNegativeTermsUseCase
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ class GenerateMetricsSnapshotsUseCase:
                 comments = df["comment"].fillna("").tolist()
                 predictions = self._model.predict(comments)
                 labels = [p.label for p in predictions]
-                negative_count = sum(1 for l in labels if l == "negative")
+                negative_count = sum(1 for label in labels if label == "negative")
                 negative_ratio = round(negative_count / total_reviews, 4) if total_reviews else 0.0
 
                 negative_terms = ExtractNegativeTermsUseCase.execute(comments, labels)

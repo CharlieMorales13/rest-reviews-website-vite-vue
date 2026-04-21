@@ -16,6 +16,8 @@ show_missing = true
 
 [tool.ruff]
 target-version = "py312"
-line-length = 100
-select = ["E", "F", "W", "I"]
+line-length = 120
 exclude = ["venv/", "legacy/"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
