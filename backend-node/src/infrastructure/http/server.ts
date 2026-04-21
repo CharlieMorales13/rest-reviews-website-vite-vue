@@ -24,11 +24,10 @@ const PORT = env.PORT;
 
 // Security & Utility Middlewares
 app.use(helmet());
-const corsOrigins = env.NODE_ENV === 'production'
+const allowedOrigins = env.NODE_ENV === 'production'
     ? (process.env.CORS_ORIGINS ?? '').split(',').map(o => o.trim()).filter(Boolean)
     : ['http://localhost:5173', 'http://localhost:4173'];
-const corsOrigin = corsOrigins.includes('*') ? true : corsOrigins;
-app.use(cors({ origin: corsOrigin, credentials: true }));
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 
 // Replace Morgan with Pino for structured logging
