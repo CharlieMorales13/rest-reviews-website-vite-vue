@@ -1,10 +1,10 @@
 import logging
 from typing import Optional
 
-from sqlalchemy import text, Engine
+from sqlalchemy import Engine, text
 
-from domain.interfaces import IModelRepository
 from domain.entities import ModelMetrics
+from domain.interfaces import IModelRepository
 
 logger = logging.getLogger(__name__)
 

@@ -3,21 +3,23 @@ Unit tests for all use cases in application/use_cases/.
 
 All tests use mocks only — zero access to DB or filesystem.
 """
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
-import pytest
-import pandas as pd
 from unittest.mock import MagicMock
 
-from domain.entities import ModelMetrics, SentimentPrediction, MetricsSnapshot
-from domain.interfaces import ISentimentModel, IModelRepository, IMetricsRepository, IReviewRepository
-from domain.value_objects import IGEWeights
+import pandas as pd
+import pytest
+
 from application.use_cases.generate_snapshots import GenerateMetricsSnapshotsUseCase
 from application.use_cases.run_pipeline import RunPipelineUseCase
-
+from domain.entities import SentimentPrediction
+from domain.interfaces import (
+    IModelRepository,
+)
+from domain.value_objects import IGEWeights
 
 # ---------------------------------------------------------------------------
 # GenerateMetricsSnapshotsUseCase

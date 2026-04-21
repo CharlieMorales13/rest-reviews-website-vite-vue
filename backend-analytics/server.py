@@ -22,8 +22,8 @@ from fastapi import FastAPI, HTTPException, Security
 from fastapi.security.api_key import APIKeyHeader
 from pydantic import BaseModel
 
-from infrastructure.logging_config import setup_logging
 from config import config
+from infrastructure.logging_config import setup_logging
 
 setup_logging(config.LOG_LEVEL)
 logger = logging.getLogger("analytics.server")
@@ -47,9 +47,9 @@ _deps: dict = {}
 
 def _build_deps() -> dict:
     from infrastructure.database.engine import get_engine
-    from infrastructure.database.review_repository import SqlAlchemyReviewRepository
-    from infrastructure.database.model_repository import SqlAlchemyModelRepository
     from infrastructure.database.metrics_repository import SqlAlchemyMetricsRepository
+    from infrastructure.database.model_repository import SqlAlchemyModelRepository
+    from infrastructure.database.review_repository import SqlAlchemyReviewRepository
     from infrastructure.ml.transformer_pipeline import TransformerSentimentPipeline
 
     engine = get_engine()
@@ -113,10 +113,10 @@ async def predict(req: PredictRequest) -> dict:
 
 @app.post("/train", dependencies=[Security(_require_api_key)])
 async def train(req: TrainRequest = TrainRequest()) -> dict:
-    from infrastructure.ml.evaluation_dataset import TRAINING_DATA
-    from domain.value_objects import IGEWeights
     from application.use_cases.generate_snapshots import GenerateMetricsSnapshotsUseCase
     from application.use_cases.run_pipeline import RunPipelineUseCase
+    from domain.value_objects import IGEWeights
+    from infrastructure.ml.evaluation_dataset import TRAINING_DATA
 
     snapshots_uc = GenerateMetricsSnapshotsUseCase(
         _deps["review_repo"], _deps["metrics_repo"], _deps["model"], IGEWeights()

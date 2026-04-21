@@ -3,15 +3,16 @@ Unit tests for domain/value_objects.py
 
 Tests SentimentLabel enum and IGEWeights frozen dataclass.
 """
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
-import pytest
 from dataclasses import FrozenInstanceError
 
-from domain.value_objects import SentimentLabel, IGEWeights
+import pytest
+
+from domain.value_objects import IGEWeights, SentimentLabel
 
 
 class TestSentimentLabel:

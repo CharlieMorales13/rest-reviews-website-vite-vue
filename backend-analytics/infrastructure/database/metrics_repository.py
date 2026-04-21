@@ -2,10 +2,10 @@ import json
 import logging
 from typing import List
 
-from sqlalchemy import text, Engine
+from sqlalchemy import Engine, text
 
+from domain.entities import MetricsSnapshot, SentimentPrediction, TrendDataPoint
 from domain.interfaces import IMetricsRepository
-from domain.entities import SentimentPrediction, MetricsSnapshot, TrendDataPoint
 
 logger = logging.getLogger(__name__)
 

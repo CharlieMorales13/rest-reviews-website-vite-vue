@@ -1,14 +1,18 @@
 """
 Unit tests for application/use_cases/predict_single_review.py
 """
-import sys, os
+import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import MagicMock, patch
-from domain.entities import SentimentPrediction
-from domain.interfaces import ISentimentModel, IModelRepository, IMetricsRepository
+
 from application.use_cases.predict_single_review import PredictSingleReviewUseCase
+from domain.entities import SentimentPrediction
+from domain.interfaces import IMetricsRepository, IModelRepository, ISentimentModel
 
 
 @pytest.fixture

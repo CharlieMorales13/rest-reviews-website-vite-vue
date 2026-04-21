@@ -1,19 +1,24 @@
 """
 Shared pytest fixtures for the backend-analytics test suite.
 """
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-import pytest
-import pandas as pd
 from unittest.mock import MagicMock
 
-from domain.entities import Review, SentimentPrediction, ModelMetrics, MetricsSnapshot
-from domain.interfaces import IReviewRepository, IModelRepository, IMetricsRepository, ISentimentModel
-from domain.value_objects import IGEWeights
+import pandas as pd
+import pytest
 
+from domain.entities import ModelMetrics, SentimentPrediction
+from domain.interfaces import (
+    IMetricsRepository,
+    IModelRepository,
+    IReviewRepository,
+    ISentimentModel,
+)
+from domain.value_objects import IGEWeights
 
 # --- DataFrames de prueba ---
 

@@ -2,7 +2,7 @@ import logging
 from typing import List
 
 import pandas as pd
-from sqlalchemy import text, Engine
+from sqlalchemy import Engine, text
 
 from domain.interfaces import IReviewRepository
 

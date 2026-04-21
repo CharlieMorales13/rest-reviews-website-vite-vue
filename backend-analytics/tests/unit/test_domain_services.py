@@ -3,13 +3,13 @@ Unit tests for domain/services.py
 
 Tests IGECalculator (IGE scoring).
 """
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
-import pytest
 import pandas as pd
+import pytest
 
 from domain.services import IGECalculator
 from domain.value_objects import IGEWeights

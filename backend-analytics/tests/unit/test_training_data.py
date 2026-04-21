@@ -3,12 +3,11 @@ Unit tests for infrastructure/ml/training_data.py
 
 Validates the TRAINING_DATA dataset used for sentiment model training.
 """
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
-import pytest
 from collections import Counter
 
 from infrastructure.ml.evaluation_dataset import TRAINING_DATA

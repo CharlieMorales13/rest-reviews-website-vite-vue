@@ -3,7 +3,7 @@ from typing import List, Optional
 
 import pandas as pd
 
-from .entities import SentimentPrediction, ModelMetrics, MetricsSnapshot, TrendDataPoint
+from .entities import MetricsSnapshot, ModelMetrics, SentimentPrediction, TrendDataPoint
 
 
 class IReviewRepository(ABC):

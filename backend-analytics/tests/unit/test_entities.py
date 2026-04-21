@@ -3,15 +3,14 @@ Unit tests for domain/entities.py
 
 Tests Review, SentimentPrediction, ModelMetrics, and MetricsSnapshot dataclasses.
 """
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
-import pytest
 import datetime
 
-from domain.entities import Review, SentimentPrediction, ModelMetrics, MetricsSnapshot
+from domain.entities import MetricsSnapshot, ModelMetrics, Review, SentimentPrediction
 
 
 class TestReview:

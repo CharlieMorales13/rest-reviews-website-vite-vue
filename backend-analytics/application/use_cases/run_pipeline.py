@@ -4,7 +4,12 @@ from typing import List, Tuple
 
 from application.use_cases.generate_snapshots import GenerateMetricsSnapshotsUseCase
 from domain.entities import ModelMetrics
-from domain.interfaces import IMetricsRepository, IModelRepository, IReviewRepository, ISentimentModel
+from domain.interfaces import (
+    IMetricsRepository,
+    IModelRepository,
+    IReviewRepository,
+    ISentimentModel,
+)
 from domain.services import IGECalculator, SentimentReconciler
 
 logger = logging.getLogger(__name__)

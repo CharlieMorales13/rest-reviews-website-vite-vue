@@ -4,17 +4,17 @@ Unit tests for infrastructure/ml/transformer_pipeline.py
 TransformerSentimentPipeline wraps a HuggingFace pipeline — all tests mock
 the underlying `transformers.pipeline` so no model download happens.
 """
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 from domain.entities import ModelMetrics, SentimentPrediction
 from infrastructure.ml.transformer_pipeline import TransformerSentimentPipeline
-
 
 # ---------------------------------------------------------------------------
 # Helpers
