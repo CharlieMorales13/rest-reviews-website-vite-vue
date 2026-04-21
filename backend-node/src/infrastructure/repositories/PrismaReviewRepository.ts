@@ -1,153 +1,157 @@
-import prisma from '../database/prisma.service';
-import { IReviewRepository } from '../../domain/repositories/IReviewRepository';
-import { Review } from '../../domain/entities/Review';
-import { injectable } from 'tsyringe';
-
+import prisma from "../database/prisma.service";
+import { IReviewRepository } from "../../domain/repositories/IReviewRepository";
+import { Review } from "../../domain/entities/Review";
+import { injectable } from "tsyringe";
 
 @injectable()
 export class PrismaReviewRepository implements IReviewRepository {
-    async findById(id: string): Promise<Review | null> {
-        const data = await prisma.review.findUnique({ where: { id } });
-        if (!data) return null;
-        return this.mapToDomain(data);
-    }
+  async findById(id: string): Promise<Review | null> {
+    const data = await prisma.review.findUnique({ where: { id } });
+    if (!data) return null;
+    return this.mapToDomain(data);
+  }
 
-    async findAll(
-        pagination?: { page: number; limit: number }
-    ): Promise<{ data: Review[]; total: number }> {
-        const skip = pagination ? (pagination.page - 1) * pagination.limit : undefined;
-        const take = pagination ? pagination.limit : undefined;
+  async findAll(pagination?: {
+    page: number;
+    limit: number;
+  }): Promise<{ data: Review[]; total: number }> {
+    const skip = pagination
+      ? (pagination.page - 1) * pagination.limit
+      : undefined;
+    const take = pagination ? pagination.limit : undefined;
 
-        const [data, total] = await Promise.all([
-            prisma.review.findMany({
-                include: {
-                    user: { select: { name: true, carrera: true } },
-                    establishment: { select: { name: true } },
-                    sentimentResults: {
-                        orderBy: { createdAt: 'desc' },
-                        take: 1,
-                        select: { predictedLabel: true }
-                    }
-                },
-                orderBy: { createdAt: 'desc' },
-                skip,
-                take
-            }),
-            prisma.review.count()
-        ]);
+    const [data, total] = await Promise.all([
+      prisma.review.findMany({
+        include: {
+          user: { select: { name: true, carrera: true } },
+          establishment: { select: { name: true } },
+          sentimentResults: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: { predictedLabel: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take,
+      }),
+      prisma.review.count(),
+    ]);
 
-        return {
-            data: data.map(this.mapToDomain),
-            total
-        };
-    }
+    return {
+      data: data.map(this.mapToDomain),
+      total,
+    };
+  }
 
-    async findByEstablishmentId(
-        establishmentId: string,
-        pagination?: { page: number; limit: number }
-    ): Promise<{ data: Review[]; total: number }> {
-        const skip = pagination ? (pagination.page - 1) * pagination.limit : undefined;
-        const take = pagination ? pagination.limit : undefined;
+  async findByEstablishmentId(
+    establishmentId: string,
+    pagination?: { page: number; limit: number },
+  ): Promise<{ data: Review[]; total: number }> {
+    const skip = pagination
+      ? (pagination.page - 1) * pagination.limit
+      : undefined;
+    const take = pagination ? pagination.limit : undefined;
 
-        const [data, total] = await Promise.all([
-            prisma.review.findMany({
-                where: { establishmentId },
-                include: {
-                    user: { select: { name: true, carrera: true } },
-                    sentimentResults: {
-                        orderBy: { createdAt: 'desc' },
-                        take: 1,
-                        select: { predictedLabel: true }
-                    }
-                },
-                orderBy: { createdAt: 'desc' },
-                skip,
-                take
-            }),
-            prisma.review.count({ where: { establishmentId } })
-        ]);
+    const [data, total] = await Promise.all([
+      prisma.review.findMany({
+        where: { establishmentId },
+        include: {
+          user: { select: { name: true, carrera: true } },
+          sentimentResults: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: { predictedLabel: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take,
+      }),
+      prisma.review.count({ where: { establishmentId } }),
+    ]);
 
-        return {
-            data: data.map(this.mapToDomain),
-            total
-        };
-    }
+    return {
+      data: data.map(this.mapToDomain),
+      total,
+    };
+  }
 
-    async findByUserId(userId: string): Promise<Review[]> {
-        const data = await prisma.review.findMany({
-            where: { userId },
-            include: {
-                establishment: { select: { name: true } },
-                sentimentResults: {
-                    orderBy: { createdAt: 'desc' },
-                    take: 1,
-                    select: { predictedLabel: true }
-                }
-            },
-            orderBy: { createdAt: 'desc' }
-        });
-        return data.map(this.mapToDomain);
-    }
+  async findByUserId(userId: string): Promise<Review[]> {
+    const data = await prisma.review.findMany({
+      where: { userId },
+      include: {
+        establishment: { select: { name: true } },
+        sentimentResults: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { predictedLabel: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return data.map(this.mapToDomain);
+  }
 
-    async save(review: Review): Promise<Review> {
-        const data = await prisma.review.create({
-            data: {
-                id: review.id,
-                userId: review.userId,
-                establishmentId: review.establishmentId,
-                foodScore: review.foodScore,
-                serviceScore: review.serviceScore,
-                priceScore: review.priceScore,
-                title: review.title,
-                comment: review.comment,
-                imageUrl: review.imageUrl,
-                createdAt: review.createdAt,
-                updatedAt: review.updatedAt,
-            } as any,
-        });
-        return this.mapToDomain(data);
-    }
+  async save(review: Review): Promise<Review> {
+    const data = await prisma.review.create({
+      data: {
+        id: review.id,
+        userId: review.userId,
+        establishmentId: review.establishmentId,
+        foodScore: review.foodScore,
+        serviceScore: review.serviceScore,
+        priceScore: review.priceScore,
+        title: review.title,
+        comment: review.comment,
+        imageUrl: review.imageUrl,
+        createdAt: review.createdAt,
+        updatedAt: review.updatedAt,
+      } as any,
+    });
+    return this.mapToDomain(data);
+  }
 
-    async update(review: Review): Promise<Review> {
-        const data = await prisma.review.update({
-            where: { id: review.id },
-            data: {
-                foodScore: review.foodScore,
-                serviceScore: review.serviceScore,
-                priceScore: review.priceScore,
-                title: review.title,
-                comment: review.comment,
-                managerReply: review.managerReply,
-                managerReplyAt: review.managerReplyAt,
-                updatedAt: review.updatedAt,
-            } as any,
-        });
-        return this.mapToDomain(data);
-    }
+  async update(review: Review): Promise<Review> {
+    const data = await prisma.review.update({
+      where: { id: review.id },
+      data: {
+        foodScore: review.foodScore,
+        serviceScore: review.serviceScore,
+        priceScore: review.priceScore,
+        title: review.title,
+        comment: review.comment,
+        managerReply: review.managerReply,
+        managerReplyAt: review.managerReplyAt,
+        updatedAt: review.updatedAt,
+      } as any,
+    });
+    return this.mapToDomain(data);
+  }
 
-    async delete(id: string): Promise<void> {
-        await prisma.review.delete({ where: { id } });
-    }
+  async delete(id: string): Promise<void> {
+    await prisma.review.delete({ where: { id } });
+  }
 
-    private mapToDomain(data: any): Review {
-        return Review.create({
-            id: data.id,
-            userId: data.userId,
-            establishmentId: data.establishmentId,
-            foodScore: data.foodScore,
-            serviceScore: data.serviceScore,
-            priceScore: data.priceScore,
-            title: data.title,
-            comment: data.comment,
-            imageUrl: data.imageUrl,
-            authorName: data.user?.name,
-            authorCarrera: data.user?.carrera,
-            establishmentName: data.establishment?.name,
-            sentiment: data.sentimentResults?.[0]?.predictedLabel,
-            managerReply: data.managerReply,
-            managerReplyAt: data.managerReplyAt,
-            createdAt: data.createdAt,
-            updatedAt: data.updatedAt,
-        });
-    }
+  private mapToDomain(data: any): Review {
+    return Review.create({
+      id: data.id,
+      userId: data.userId,
+      establishmentId: data.establishmentId,
+      foodScore: data.foodScore,
+      serviceScore: data.serviceScore,
+      priceScore: data.priceScore,
+      title: data.title,
+      comment: data.comment,
+      imageUrl: data.imageUrl,
+      authorName: data.user?.name,
+      authorCarrera: data.user?.carrera,
+      establishmentName: data.establishment?.name,
+      sentiment: data.sentimentResults?.[0]?.predictedLabel,
+      managerReply: data.managerReply,
+      managerReplyAt: data.managerReplyAt,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+    });
+  }
 }

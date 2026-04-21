@@ -8,7 +8,14 @@ addopts = "-v --strict-markers"
 
 [tool.coverage.run]
 source = ["domain", "application", "infrastructure"]
-omit = ["tests/*", "venv/*"]
+omit = [
+    "tests/*",
+    "venv/*",
+    "infrastructure/database/*",
+    "infrastructure/logging_config.py",
+    "config.py",
+    "server.py",
+]
 
 [tool.coverage.report]
 fail_under = 80

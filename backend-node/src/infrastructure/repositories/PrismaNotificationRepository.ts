@@ -1,7 +1,7 @@
-import prisma from '../database/prisma.service';
-import { INotificationRepository } from '../../domain/repositories/INotificationRepository';
-import { Notification } from '../../domain/entities/Notification';
-import { injectable } from 'tsyringe';
+import prisma from "../database/prisma.service";
+import { INotificationRepository } from "../../domain/repositories/INotificationRepository";
+import { Notification } from "../../domain/entities/Notification";
+import { injectable } from "tsyringe";
 
 @injectable()
 export class PrismaNotificationRepository implements INotificationRepository {
@@ -20,7 +20,7 @@ export class PrismaNotificationRepository implements INotificationRepository {
   async findByUserId(userId: string): Promise<Notification[]> {
     const data = await prisma.notification.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
     return data.map(this.mapToDomain);
   }
@@ -32,7 +32,8 @@ export class PrismaNotificationRepository implements INotificationRepository {
   }
 
   async update(notification: Notification): Promise<Notification> {
-    if (!notification.id) throw new Error('Cannot update a notification without an id');
+    if (!notification.id)
+      throw new Error("Cannot update a notification without an id");
     const data = await prisma.notification.update({
       where: { id: notification.id },
       data: { isRead: notification.isRead },

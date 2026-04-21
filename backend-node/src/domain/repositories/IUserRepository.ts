@@ -1,10 +1,13 @@
-import { User } from '../entities/User';
+import { User } from "../entities/User";
 
 export interface IUserRepository {
-    findById(id: string): Promise<User | null>;
-    findByEmail(email: string): Promise<User | null>;
-    findAll(pagination?: { page: number; limit: number }): Promise<{ data: User[]; total: number }>;
-    save(user: User): Promise<User>;
-    update(user: User): Promise<User>;
-    delete(id: string): Promise<void>;
+  findById(id: string): Promise<User | null>;
+  findByEmail(email: string): Promise<User | null>;
+  findAll(pagination?: {
+    page: number;
+    limit: number;
+  }): Promise<{ data: User[]; total: number }>;
+  save(user: User): Promise<User>;
+  update(user: User): Promise<User>;
+  delete(id: string): Promise<void>;
 }

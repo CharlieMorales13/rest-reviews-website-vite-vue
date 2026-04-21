@@ -1,8 +1,8 @@
-import { Router } from 'express';
-import { container } from '../../config/container';
-import { ReviewController } from '../controllers/ReviewController';
-import { authenticateToken, requireRole } from '../middlewares/AuthMiddleware';
-import { reviewRateLimiter } from '../middlewares/RateLimitMiddleware';
+import { Router } from "express";
+import { container } from "../../config/container";
+import { ReviewController } from "../controllers/ReviewController";
+import { authenticateToken, requireRole } from "../middlewares/AuthMiddleware";
+import { reviewRateLimiter } from "../middlewares/RateLimitMiddleware";
 
 const reviewRouter = Router();
 
@@ -10,8 +10,8 @@ const reviewRouter = Router();
 const reviewController = container.resolve(ReviewController);
 
 // Routes
-reviewRouter.get('/', reviewController.getAll);
-reviewRouter.get('/my', authenticateToken, reviewController.getMyReviews);
+reviewRouter.get("/", reviewController.getAll);
+reviewRouter.get("/my", authenticateToken, reviewController.getMyReviews);
 
 /**
  * @swagger
@@ -38,9 +38,30 @@ reviewRouter.get('/my', authenticateToken, reviewController.getMyReviews);
  *       400:
  *         description: Invalid input
  */
-reviewRouter.post('/', authenticateToken, requireRole(['student']), reviewRateLimiter, reviewController.create);
-reviewRouter.patch('/:id', authenticateToken, requireRole(['student']), reviewController.updateUserReview);
-reviewRouter.delete('/:id', authenticateToken, requireRole(['student']), reviewController.deleteUserReview);
-reviewRouter.patch('/:id/reply', authenticateToken, requireRole(['admin', 'manager']), reviewController.reply);
+reviewRouter.post(
+  "/",
+  authenticateToken,
+  requireRole(["student"]),
+  reviewRateLimiter,
+  reviewController.create,
+);
+reviewRouter.patch(
+  "/:id",
+  authenticateToken,
+  requireRole(["student"]),
+  reviewController.updateUserReview,
+);
+reviewRouter.delete(
+  "/:id",
+  authenticateToken,
+  requireRole(["student"]),
+  reviewController.deleteUserReview,
+);
+reviewRouter.patch(
+  "/:id/reply",
+  authenticateToken,
+  requireRole(["admin", "manager"]),
+  reviewController.reply,
+);
 
 export default reviewRouter;

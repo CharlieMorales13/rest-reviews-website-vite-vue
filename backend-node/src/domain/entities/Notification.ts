@@ -12,7 +12,7 @@ export class Notification {
 
   private constructor(props: NotificationProps) {
     this.props = {
-      type: 'manager_reply',
+      type: "manager_reply",
       isRead: false,
       ...props,
       createdAt: props.createdAt ?? new Date(),
@@ -23,12 +23,24 @@ export class Notification {
     return new Notification(props);
   }
 
-  get id(): string | undefined { return this.props.id; }
-  get userId(): string { return this.props.userId; }
-  get reviewId(): string { return this.props.reviewId; }
-  get type(): string { return this.props.type!; }
-  get isRead(): boolean { return this.props.isRead!; }
-  get createdAt(): Date { return this.props.createdAt!; }
+  get id(): string | undefined {
+    return this.props.id;
+  }
+  get userId(): string {
+    return this.props.userId;
+  }
+  get reviewId(): string {
+    return this.props.reviewId;
+  }
+  get type(): string {
+    return this.props.type!;
+  }
+  get isRead(): boolean {
+    return this.props.isRead!;
+  }
+  get createdAt(): Date {
+    return this.props.createdAt!;
+  }
 
   markAsRead(): void {
     this.props.isRead = true;
