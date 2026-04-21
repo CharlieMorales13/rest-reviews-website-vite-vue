@@ -43,27 +43,23 @@ const goToDetails = (slug: string) => {
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-3xl md:text-4xl font-black tracking-tight text-white brand mb-2">
+      <h1 class="text-3xl md:text-4xl font-black tracking-tight text-white brand mb-2 animate-appear">
         Establecimientos
       </h1>
-      <p class="text-[#adaaad] text-sm">de la Universidad Anáhuac Oaxaca.</p>
+      <p class="text-[#adaaad] text-sm animate-appear delay-100">de la Universidad Anáhuac Oaxaca.</p>
     </div>
 
     <!-- Skeleton -->
-    <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-      <div v-for="i in 4" :key="i" class="bg-white/5 rounded-2xl p-6 animate-pulse">
-        <div class="h-5 bg-white/10 rounded w-2/3 mb-3"></div>
-        <div class="h-4 bg-white/10 rounded-full w-20 mb-6"></div>
-        <div class="h-10 bg-white/10 rounded-xl w-full"></div>
-      </div>
+    <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div v-for="i in 4" :key="i" class="rounded-3xl overflow-hidden animate-pulse bg-surface-variant h-80"></div>
     </div>
 
     <!-- Error -->
-    <div v-else-if="errorMsg" class="flex flex-col items-center py-16 text-center">
+    <div v-else-if="errorMsg" class="flex flex-col items-center py-16 text-center animate-appear">
       <div class="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
         <Icon name="error" class="text-red-400" />
       </div>
@@ -77,46 +73,83 @@ const goToDetails = (slug: string) => {
     </div>
 
     <!-- Grid -->
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+    <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <div
-        v-for="est in establishments"
+        v-for="(est, index) in establishments"
         :key="est.id"
-        class="group bg-white/5 hover:bg-white/8 border border-white/8 hover:border-orange-500/30 rounded-2xl p-6 flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(255,145,83,0.12)]"
+        class="group relative h-80 rounded-3xl overflow-hidden shadow-md transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_24px_64px_rgba(249,115,22,0.3)] bg-surface-variant animate-appear"
+        :style="{ animationDelay: `${200 + (index * 150)}ms` }"
       >
-        <!-- Card header -->
-        <div class="flex items-start justify-between mb-3">
+        <!-- Background Image -->
+        <img
+          v-if="est.coverUrl || est.galleryUrls?.[0]"
+          class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          :src="est.coverUrl || est.galleryUrls?.[0]"
+          :alt="est.name"
+          loading="lazy"
+        />
+        <div v-else class="absolute inset-0 flex items-center justify-center bg-white/5 text-[#adaaad]">
+          <Icon name="restaurant" :size="64" />
+        </div>
+
+        <!-- Overlays -->
+        <div class="absolute inset-0 bg-black/40 transition-colors duration-500 group-hover:bg-black/20"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
+
+        <!-- Content Area -->
+        <div class="absolute inset-0 p-6 flex flex-col justify-between z-10 pointer-events-none">
+          
+          <!-- Top area: category -->
+          <div class="flex items-start justify-between">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-widest text-orange-400 mb-1 drop-shadow-md block">
+                {{ est.category }}
+              </span>
+              <h2 class="text-2xl font-bold text-white brand leading-tight drop-shadow-lg">{{ est.name }}</h2>
+            </div>
+          </div>
+
+          <!-- Bottom area: desc & buttons -->
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-widest text-orange-500/80 mb-1 block">
-              {{ est.category }}
-            </span>
-            <h2 class="text-xl font-bold text-white brand leading-tight">{{ est.name }}</h2>
-          </div>
-          <div class="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0">
-            <Icon name="storefront" class="text-orange-400" :size="20" />
+            <p v-if="est.description" class="text-white/90 text-sm line-clamp-2 mb-5 drop-shadow-md font-medium">
+              {{ est.description }}
+            </p>
+            <div class="flex gap-3 pointer-events-auto relative z-20">
+              <button
+                @click="goToDetails(est.slug!)"
+                class="flex-1 py-3 text-sm font-semibold text-white/90 hover:text-white border border-white/20 hover:border-white/50 backdrop-blur-md bg-black/30 hover:bg-black/50 rounded-xl transition-all"
+              >
+                Ver Detalles
+              </button>
+              <button
+                v-if="authStore.user?.role === 'student'"
+                @click="goToReview(est.slug!)"
+                class="flex-1 py-3 text-sm font-bold bg-orange-500 hover:bg-orange-400 text-white rounded-xl transition-all active:scale-95 shadow-[0_8px_20px_rgba(249,115,22,0.25)]"
+              >
+                Evaluar
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- Spacer -->
-        <div class="flex-1"></div>
-
-        <!-- Actions -->
-        <div class="flex gap-3 mt-6">
-          <button
-            @click="goToDetails(est.slug!)"
-            class="flex-1 py-2.5 text-sm font-semibold text-[#adaaad] hover:text-white border border-white/10 hover:border-white/20 rounded-xl transition-colors"
-          >
-            Ver Detalles
-          </button>
-          <button
-            v-if="authStore.user?.role === 'student'"
-            @click="goToReview(est.slug!)"
-            class="flex-1 py-2.5 text-sm font-bold bg-orange-500 hover:bg-orange-400 text-white rounded-xl transition-colors active:scale-95"
-          >
-            Evaluar
-          </button>
-        </div>
+        <!-- Background clickable area -->
+        <div class="absolute inset-0 z-0 cursor-pointer" @click="goToDetails(est.slug!)"></div>
       </div>
     </div>
 
   </div>
 </template>
+
+<style scoped>
+@keyframes appearUp {
+  0% { opacity: 0; transform: translateY(30px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-appear {
+  opacity: 0;
+  animation: appearUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.delay-100 { animation-delay: 100ms; }
+</style>
