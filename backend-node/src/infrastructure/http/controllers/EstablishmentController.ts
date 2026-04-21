@@ -53,7 +53,7 @@ export class EstablishmentController {
      *         description: Array of all establishments
      */
     public getOne = async (req: Request, res: Response): Promise<void> => {
-        const { slug } = req.params;
+        const slug = req.params.slug as string;
         const e = await this.getUseCase.execute(slug);
         res.status(200).json({
             success: true,

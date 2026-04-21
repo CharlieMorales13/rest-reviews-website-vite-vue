@@ -226,7 +226,7 @@ export class ReviewController {
     };
 
     public reply = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
-        const { id } = req.params;
+        const id = req.params.id as string;
         const user = (req as any).user;
         const payload = {
             reviewId: id,
@@ -254,7 +254,7 @@ export class ReviewController {
             res.status(401).json({ success: false, message: 'Unauthorized' });
             return;
         }
-        const { id } = req.params;
+        const id = req.params.id as string;
         const dto = UpdateReviewSchema.parse(req.body);
         const review = await this.updateReviewUseCase.execute(id, userId, dto);
 
@@ -284,7 +284,7 @@ export class ReviewController {
             res.status(401).json({ success: false, message: 'Unauthorized' });
             return;
         }
-        const { id } = req.params;
+        const id = req.params.id as string;
         await this.deleteReviewUseCase.execute(id, userId);
         res.status(200).json({ success: true, message: 'Reseña eliminada correctamente' });
     };

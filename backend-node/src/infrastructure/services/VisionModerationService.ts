@@ -33,7 +33,7 @@ export async function checkImageSafety(imageBuffer: Buffer, mimeType: string): P
     form.append('api_secret', env.SIGHTENGINE_API_SECRET);
     form.append('models', 'nudity,gore');
     // File extends Blob and is natively available in Node 18+
-    form.append('media', new File([imageBuffer], 'upload', { type: mimeType }));
+    form.append('media', new File([new Uint8Array(imageBuffer)], 'upload', { type: mimeType }));
 
     let response: Response;
     try {

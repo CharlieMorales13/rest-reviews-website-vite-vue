@@ -1,7 +1,7 @@
 import { injectable, inject } from 'tsyringe';
 import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { IEstablishmentRepository } from '../../../domain/repositories/IEstablishmentRepository';
-import { User, UserRole } from '../../../domain/entities/User';
+import { User } from '../../../domain/entities/User';
 import { UpdateUserDTO } from '../../dtos/UserDTO';
 import { AppError } from '../../../infrastructure/http/errors/AppError';
 import * as argon2 from 'argon2';

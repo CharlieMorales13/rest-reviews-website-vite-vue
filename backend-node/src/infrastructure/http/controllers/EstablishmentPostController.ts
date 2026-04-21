@@ -17,7 +17,7 @@ export class EstablishmentPostController {
     ) { }
 
     public list = async (req: Request, res: Response): Promise<void> => {
-        const { slug } = req.params;
+        const slug = req.params.slug as string;
         const page = parseInt(req.query.page as string) || 1;
         const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
 
@@ -39,7 +39,7 @@ export class EstablishmentPostController {
     };
 
     public create = async (req: AuthRequest, res: Response): Promise<void> => {
-        const { slug } = req.params;
+        const slug = req.params.slug as string;
         const user = req.user!;
         const dto = CreateEstablishmentPostSchema.parse(req.body);
 
@@ -57,7 +57,7 @@ export class EstablishmentPostController {
     };
 
     public update = async (req: AuthRequest, res: Response): Promise<void> => {
-        const { postId } = req.params;
+        const postId = req.params.postId as string;
         const user = req.user!;
         const dto = UpdateEstablishmentPostSchema.parse(req.body);
 
@@ -75,7 +75,7 @@ export class EstablishmentPostController {
     };
 
     public delete = async (req: AuthRequest, res: Response): Promise<void> => {
-        const { postId } = req.params;
+        const postId = req.params.postId as string;
         const user = req.user!;
 
         await this.deleteUseCase.execute(postId, { id: user.userId, role: user.role });
