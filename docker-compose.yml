@@ -6,6 +6,8 @@ services:
       - "3000:3000"
     env_file:
       - ./backend-node/.env
+    environment:
+      - NODE_ENV=production
     depends_on:
       backend-analytics:
         condition: service_healthy
