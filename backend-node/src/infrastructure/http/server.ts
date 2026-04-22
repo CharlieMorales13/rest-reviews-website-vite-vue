@@ -4,11 +4,14 @@ import cors from "cors";
 import helmet from "helmet";
 import pinoHttp from "pino-http";
 import swaggerUi from "swagger-ui-express";
+import cron from "node-cron";
 
 // Application Imports
 import { env } from "../config/env.config";
 import { logger } from "../config/logger";
 import { swaggerSpec } from "../config/swagger.config";
+import { container } from "../config/container";
+import { RunAnalyticsUseCase } from "../../application/use-cases/metrics/RunAnalyticsUseCase";
 import authRouter from "./routes/auth.routes";
 import reviewRouter from "./routes/review.routes";
 import establishmentRouter from "./routes/establishment.routes";
@@ -62,6 +65,18 @@ app.use("/api/notifications", notificationRouter);
 
 // Global Error Handler
 app.use(globalErrorHandler);
+
+// Nightly analytics pipeline — runs at 02:00 AM every day
+cron.schedule("0 2 * * *", async () => {
+  logger.info("[cron] Running nightly analytics pipeline...");
+  try {
+    const useCase = container.resolve(RunAnalyticsUseCase);
+    const result = await useCase.execute();
+    logger.info({ result }, "[cron] Analytics pipeline completed");
+  } catch (err) {
+    logger.error({ err }, "[cron] Analytics pipeline failed");
+  }
+});
 
 // Start Server (If explicitly run, not exported)
 if (require.main === module) {
