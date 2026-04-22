@@ -62,7 +62,7 @@ const variantMap: Record<string, Record<string, string>> = {
     :class="[
       sizeMap[props.size],
       shapeMap[props.shape],
-      variantMap[props.variant][props.theme],
+      variantMap[props.variant]?.[props.theme] ?? '',
       block ? 'w-full' : '',
     ]"
   >

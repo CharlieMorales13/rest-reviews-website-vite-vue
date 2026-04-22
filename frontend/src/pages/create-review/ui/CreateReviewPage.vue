@@ -119,7 +119,7 @@ const submitReview = async () => {
 
   try {
     const imageUrl = uploadedImages.value.find(img => img.remoteUrl)?.remoteUrl ?? undefined;
-    const response = await ReviewService.create({
+    await ReviewService.create({
       establishmentId: establishmentId.value,
       foodScore: foodScore.value,
       serviceScore: serviceScore.value,
