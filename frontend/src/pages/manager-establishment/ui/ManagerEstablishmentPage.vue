@@ -5,6 +5,7 @@ import { ReviewService } from '@/entities/review/api/ReviewService';
 import { PostService } from '@/entities/post/api/PostService';
 import { EstablishmentService } from '@/entities/establishment/api/EstablishmentService';
 import { useRoute } from 'vue-router';
+import { useToast } from '@/shared/lib/useToast';
 import { useAuthStore } from '@/entities/user/model/authStore';
 import ReviewCard from '@/shared/ui/ReviewCard.vue';
 import ReviewLightbox from '@/shared/ui/ReviewLightbox.vue';
@@ -16,6 +17,7 @@ import ManagerReplyModal from '@/pages/dashboard/ui/ManagerReplyModal.vue';
 
 const route = useRoute();
 const authStore = useAuthStore();
+const toast = useToast();
 
 const highlightId = route.query.highlight as string | undefined;
 
@@ -161,7 +163,7 @@ const onCoverSelected = async (e: Event) => {
     est.value = { ...est.value, coverUrl: url };
   } catch (err: any) {
     const msg = err?.response?.data?.message || err.message;
-    if (msg) alert(msg);
+    if (msg) toast.error(msg);
   } finally {
     coverUploading.value = false;
   }
@@ -179,7 +181,7 @@ const onLogoSelected = async (e: Event) => {
     est.value = { ...est.value, logoUrl: url };
   } catch (err: any) {
     const msg = err?.response?.data?.message || err.message;
-    if (msg) alert(msg);
+    if (msg) toast.error(msg);
   } finally {
     logoUploading.value = false;
   }
@@ -203,7 +205,7 @@ const onGalleryImageSelected = async (e: Event) => {
     est.value = { ...est.value, galleryUrls: newUrls };
   } catch (err: any) {
     const msg = err?.response?.data?.message || err.message;
-    if (msg) alert(msg);
+    if (msg) toast.error(msg);
   } finally {
     galleryUploading.value = false;
   }
@@ -234,7 +236,7 @@ const onMenuImageSelected = async (e: Event) => {
     est.value = { ...est.value, menuUrls: newUrls };
   } catch (err: any) {
     const msg = err?.response?.data?.message || err.message;
-    if (msg) alert(msg);
+    if (msg) toast.error(msg);
   } finally {
     menuUploading.value = false;
   }
