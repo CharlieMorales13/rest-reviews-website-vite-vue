@@ -189,13 +189,14 @@ class TestPredict:
         for r in results:
             assert 0.0 <= r.probability <= 1.0
 
-    def test_predict_truncates_long_text(self):
-        """Texts longer than 512 chars must be truncated before passing to classifier."""
+    def test_predict_passes_truncation_kwargs(self):
+        """predict() must delegate truncation to the transformer via truncation=True, max_length=512."""
         long_text = "a" * 600
         self.mock_clf.side_effect = [_make_hf_output("POS", 0.9)]
         self.p.predict([long_text])
-        called_with = self.mock_clf.call_args[0][0]
-        assert len(called_with) <= 512
+        _, kwargs = self.mock_clf.call_args
+        assert kwargs.get("truncation") is True
+        assert kwargs.get("max_length") == 512
 
     def test_predict_large_batch(self):
         """predict() handles a batch of 50 texts without errors."""

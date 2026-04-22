@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from collections import Counter
 from typing import List, Tuple
@@ -109,8 +111,10 @@ class RunPipelineUseCase:
         inserted = self._metrics_repo.save_predictions(predictions, version_id)
         logger.info("Predictions persisted — count=%d", inserted)
 
-        # 7. Generate metrics_snapshots per establishment
-        self._snapshots_use_case.execute()
+        # 7. Generate metrics_snapshots per establishment — pass precomputed predictions
+        # to avoid running the transformer a second time over the same reviews.
+        predictions_by_id = {p.review_id: p for p in predictions}
+        self._snapshots_use_case.execute(predictions_by_id)
 
         # 8. Determine overall sentiment_label as the majority label
         label_counts = Counter(p.label for p in predictions)

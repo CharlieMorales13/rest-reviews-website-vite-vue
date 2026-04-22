@@ -1,8 +1,9 @@
 import datetime
 import logging
+from typing import Dict, Optional
 
 from application.use_cases.extract_negative_terms import ExtractNegativeTermsUseCase
-from domain.entities import MetricsSnapshot
+from domain.entities import MetricsSnapshot, SentimentPrediction
 from domain.interfaces import IMetricsRepository, IReviewRepository, ISentimentModel
 from domain.services import IGECalculator
 from domain.value_objects import IGEWeights
@@ -28,8 +29,12 @@ class GenerateMetricsSnapshotsUseCase:
         self._model = model
         self._ige_weights = ige_weights
 
-    def execute(self) -> int:
+    def execute(self, precomputed: Optional[Dict[str, SentimentPrediction]] = None) -> int:
         """Generate one snapshot per establishment for today's date.
+
+        If *precomputed* is provided (a review_id → SentimentPrediction mapping), those
+        predictions are reused instead of running the transformer again — avoids double
+        inference when called from RunPipelineUseCase which already predicted all reviews.
 
         Returns the number of snapshots successfully saved.
         """
@@ -54,7 +59,11 @@ class GenerateMetricsSnapshotsUseCase:
                 ige = IGECalculator.calculate(avg_food, avg_service, avg_price, self._ige_weights)
 
                 comments = df["comment"].fillna("").tolist()
-                predictions = self._model.predict(comments)
+                if precomputed is not None:
+                    review_ids = df["id"].astype(str).tolist()
+                    predictions = [precomputed[rid] for rid in review_ids if rid in precomputed]
+                else:
+                    predictions = self._model.predict(comments)
                 labels = [p.label for p in predictions]
                 negative_count = sum(1 for label in labels if label == "negative")
                 negative_ratio = round(negative_count / total_reviews, 4) if total_reviews else 0.0
@@ -69,7 +78,7 @@ class GenerateMetricsSnapshotsUseCase:
                     avg_price=round(avg_price, 2),
                     negative_ratio=negative_ratio,
                     total_reviews=total_reviews,
-                    snapshot_date=datetime.date.today(),
+                    snapshot_date=datetime.datetime.now(datetime.timezone.utc).date(),
                     negative_terms=negative_terms,
                 )
                 self._metrics_repo.save_metrics_snapshot(snapshot)

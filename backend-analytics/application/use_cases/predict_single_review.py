@@ -47,8 +47,8 @@ class PredictSingleReviewUseCase:
         # 1. Check cached model exists
         try:
             self._model.load()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("predict_single: model.load() failed — %s", e)
 
         if not self._model.is_loaded():
             logger.warning(

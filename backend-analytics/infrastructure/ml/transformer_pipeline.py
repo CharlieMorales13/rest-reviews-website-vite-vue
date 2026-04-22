@@ -65,8 +65,7 @@ class TransformerSentimentPipeline(ISentimentModel):
             if not text or not text.strip():
                 results.append(SentimentPrediction(review_id="", label="neutral", probability=0.0))
                 continue
-            # Truncate to 512 tokens max (transformer limit)
-            output = self._classifier(text[:512])[0]
+            output = self._classifier(text, truncation=True, max_length=512)[0]
             label = _LABEL_MAP.get(output["label"], "neutral")
             results.append(SentimentPrediction(
                 review_id="",
