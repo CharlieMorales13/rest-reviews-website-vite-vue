@@ -2,7 +2,10 @@ import { Router } from "express";
 import { container } from "../../config/container";
 import { AuthController } from "../controllers/AuthController";
 import { authenticateToken } from "../middlewares/AuthMiddleware";
-import { loginRateLimiter, registerRateLimiter } from "../middlewares/RateLimitMiddleware";
+import {
+  loginRateLimiter,
+  registerRateLimiter,
+} from "../middlewares/RateLimitMiddleware";
 
 const authRouter = Router();
 const authController = container.resolve(AuthController);

@@ -17,7 +17,6 @@ from fastapi.testclient import TestClient
 import server as server_module
 from server import app
 
-
 # ── Fixtures ─────────────────────────────────────────────────────────────
 
 @pytest.fixture
