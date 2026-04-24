@@ -12,6 +12,9 @@ const confirmPassword = ref('');
 const saving = ref(false);
 const error = ref<string | null>(null);
 const success = ref(false);
+const showCurrent = ref(false);
+const showNew = ref(false);
+const showConfirm = ref(false);
 
 function reset() {
   currentPassword.value = '';
@@ -79,35 +82,53 @@ async function handleSave() {
         <div class="flex flex-col gap-4">
           <div class="flex flex-col gap-2">
             <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest">Contraseña actual</label>
-            <input
-              v-model="currentPassword"
-              type="password"
-              autocomplete="current-password"
-              placeholder="Tu contraseña actual"
-              class="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 text-black font-sans placeholder-on-surface-variant/60 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all"
-            />
+            <div class="relative">
+              <input
+                v-model="currentPassword"
+                :type="showCurrent ? 'text' : 'password'"
+                autocomplete="current-password"
+                placeholder="Tu contraseña actual"
+                class="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 pr-12 text-black font-sans placeholder-on-surface-variant/60 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all"
+              />
+              <button type="button" @click="showCurrent = !showCurrent" class="absolute right-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-colors focus:outline-none" :aria-label="showCurrent ? 'Ocultar' : 'Mostrar'">
+                <svg v-if="showCurrent" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
           </div>
 
           <div class="flex flex-col gap-2">
             <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest">Nueva contraseña</label>
-            <input
-              v-model="newPassword"
-              type="password"
-              autocomplete="new-password"
-              placeholder="Mínimo 6 caracteres"
-              class="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 text-black font-sans placeholder-on-surface-variant/60 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all"
-            />
+            <div class="relative">
+              <input
+                v-model="newPassword"
+                :type="showNew ? 'text' : 'password'"
+                autocomplete="new-password"
+                placeholder="Mínimo 6 caracteres"
+                class="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 pr-12 text-black font-sans placeholder-on-surface-variant/60 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all"
+              />
+              <button type="button" @click="showNew = !showNew" class="absolute right-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-colors focus:outline-none" :aria-label="showNew ? 'Ocultar' : 'Mostrar'">
+                <svg v-if="showNew" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
           </div>
 
           <div class="flex flex-col gap-2">
             <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest">Confirmar nueva contraseña</label>
-            <input
-              v-model="confirmPassword"
-              type="password"
-              autocomplete="new-password"
-              placeholder="Repite la nueva contraseña"
-              class="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 text-black font-sans placeholder-on-surface-variant/60 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all"
-            />
+            <div class="relative">
+              <input
+                v-model="confirmPassword"
+                :type="showConfirm ? 'text' : 'password'"
+                autocomplete="new-password"
+                placeholder="Repite la nueva contraseña"
+                class="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 pr-12 text-black font-sans placeholder-on-surface-variant/60 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all"
+              />
+              <button type="button" @click="showConfirm = !showConfirm" class="absolute right-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-colors focus:outline-none" :aria-label="showConfirm ? 'Ocultar' : 'Mostrar'">
+                <svg v-if="showConfirm" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
           </div>
 
           <div v-if="error" class="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm">
