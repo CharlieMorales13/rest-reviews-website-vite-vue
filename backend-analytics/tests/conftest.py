@@ -7,10 +7,6 @@ import warnings
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-# Silence C-extension warnings from SWIG/onnxruntime that we cannot control
-warnings.filterwarnings("ignore", message=".*SwigPyPacked.*", category=DeprecationWarning)
-warnings.filterwarnings("ignore", message=".*SwigPyObject.*", category=DeprecationWarning)
-
 from unittest.mock import MagicMock
 
 import pandas as pd
@@ -24,6 +20,10 @@ from domain.interfaces import (
     ISentimentModel,
 )
 from domain.value_objects import IGEWeights
+
+# Silence C-extension warnings from SWIG/onnxruntime that we cannot control
+warnings.filterwarnings("ignore", message=".*SwigPyPacked.*", category=DeprecationWarning)
+warnings.filterwarnings("ignore", message=".*SwigPyObject.*", category=DeprecationWarning)
 
 # --- DataFrames de prueba ---
 
