@@ -2,16 +2,33 @@ import rateLimit from "express-rate-limit";
 import { AuthRequest } from "./AuthMiddleware";
 
 /**
- * Rate limiter for sensitive endpoints (e.g., login, register)
- * Limits each IP to 10 requests per 15 minutes.
+ * Rate limiter for login attempts.
+ * Limits each IP to 30 requests per 15 minutes.
+ * Higher limit because the campus shares a single public IP across all devices.
  */
-export const authRateLimiter = rateLimit({
+export const loginRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 30,
   message: {
     success: false,
     error:
       "Too many login attempts from this IP, please try again after 15 minutes",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+/**
+ * Rate limiter for registration.
+ * Limits each IP to 10 registrations per hour — stricter than login.
+ */
+export const registerRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: {
+    success: false,
+    error:
+      "Too many registration attempts from this IP, please try again later",
   },
   standardHeaders: true,
   legacyHeaders: false,

@@ -2,14 +2,14 @@ import { Router } from "express";
 import { container } from "../../config/container";
 import { AuthController } from "../controllers/AuthController";
 import { authenticateToken } from "../middlewares/AuthMiddleware";
-import { authRateLimiter } from "../middlewares/RateLimitMiddleware";
+import { loginRateLimiter, registerRateLimiter } from "../middlewares/RateLimitMiddleware";
 
 const authRouter = Router();
 const authController = container.resolve(AuthController);
 
-authRouter.post("/register", authRateLimiter, authController.register);
-authRouter.post("/login", authRateLimiter, authController.login);
-authRouter.post("/refresh", authRateLimiter, authController.refresh);
+authRouter.post("/register", registerRateLimiter, authController.register);
+authRouter.post("/login", loginRateLimiter, authController.login);
+authRouter.post("/refresh", loginRateLimiter, authController.refresh);
 
 /**
  * @swagger
