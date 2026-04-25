@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import UserAvatar from './UserAvatar.vue';
 import StarRating from './StarRating.vue';
 import Icon from './Icon.vue';
+import { useAuthStore } from '@/entities/user/model/authStore';
+import { ReviewService } from '@/entities/review/api/ReviewService';
 
 export interface ReviewCardData {
   id: string;
@@ -18,6 +20,8 @@ export interface ReviewCardData {
   managerReply?: string | null;
   createdAt: string;
   establishmentName?: string | null;
+  likesCount?: number;
+  likedByMe?: boolean;
 }
 
 const props = withDefaults(defineProps<{
@@ -30,16 +34,47 @@ const props = withDefaults(defineProps<{
   showSentiment?: boolean;
   /** Enable clicking on image to open lightbox */
   clickableImage?: boolean;
+  /** Show like button (only for students) */
+  showLike?: boolean;
 }>(), {
   showAuthor: true,
   showEstablishment: false,
   showSentiment: false,
   clickableImage: false,
+  showLike: false,
 });
 
 const emit = defineEmits<{
   (e: 'image-click', reviewId: string): void;
 }>();
+
+const authStore = useAuthStore();
+const canLike = computed(() => authStore.userRole === 'student' && props.showLike);
+
+const localLikesCount = ref(props.review.likesCount ?? 0);
+const localLikedByMe = ref(props.review.likedByMe ?? false);
+const likeLoading = ref(false);
+
+const toggleLike = async () => {
+  if (likeLoading.value) return;
+  likeLoading.value = true;
+  const prevCount = localLikesCount.value;
+  const prevLiked = localLikedByMe.value;
+  localLikedByMe.value = !prevLiked;
+  localLikesCount.value = prevLiked ? prevCount - 1 : prevCount + 1;
+  try {
+    const result = localLikedByMe.value
+      ? await ReviewService.likeReview(props.review.id)
+      : await ReviewService.unlikeReview(props.review.id);
+    localLikesCount.value = result.likesCount;
+    localLikedByMe.value = result.likedByMe;
+  } catch {
+    localLikesCount.value = prevCount;
+    localLikedByMe.value = prevLiked;
+  } finally {
+    likeLoading.value = false;
+  }
+};
 
 const displayName = computed(() => {
   if (props.showEstablishment) return props.review.establishmentName || 'Establecimiento';
@@ -170,6 +205,23 @@ const handleImageClick = () => {
           </div>
           <p class="rc__reply-text">"{{ review.managerReply }}"</p>
         </div>
+      </div>
+
+      <!-- Like button -->
+      <div v-if="canLike" class="flex justify-end mt-3">
+        <button
+          data-testid="like-btn"
+          class="flex items-center gap-1 px-3 py-1 rounded-full text-sm transition-colors border border-transparent"
+          :class="localLikedByMe ? 'text-orange-500' : 'text-on-surface-variant hover:bg-white/5'"
+          :disabled="likeLoading"
+          @click="toggleLike"
+        >
+          <span
+            class="material-symbols-outlined text-base"
+            :style="localLikedByMe ? 'font-variation-settings: FILL 1' : ''"
+          >favorite</span>
+          <span data-testid="like-count">{{ localLikesCount }}</span>
+        </button>
       </div>
     </div>
   </article>
