@@ -11,6 +11,46 @@ const authStore = useAuthStore();
 const reviews = ref<MyReview[]>([]);
 const reviewCount = ref<number | null>(null);
 
+const filterEstablishment = ref('');
+const filterMinScore = ref(0);
+const filterOrder = ref<'newest' | 'oldest'>('newest');
+const showFilterPanel = ref(false);
+
+const totalLikes = computed(() =>
+  reviews.value.reduce((sum, r) => sum + (r.likesCount ?? 0), 0),
+);
+
+const uniqueEstablishments = computed(() => {
+  const names = reviews.value.map((r) => r.establishmentName).filter((n): n is string => !!n);
+  return [...new Set(names)];
+});
+
+const uniqueEstablishmentCount = computed(() => new Set(reviews.value.map((r) => r.establishmentId)).size);
+
+const filteredReviews = computed(() => {
+  let result = [...reviews.value];
+  if (filterEstablishment.value)
+    result = result.filter((r) => r.establishmentName === filterEstablishment.value);
+  if (filterMinScore.value > 0)
+    result = result.filter((r) => (r.foodScore + r.serviceScore + r.priceScore) / 3 >= filterMinScore.value);
+  result = result.sort((a, b) =>
+    filterOrder.value === 'oldest'
+      ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+  return result.slice(0, 5);
+});
+
+const hasActiveFilters = computed(
+  () => filterEstablishment.value !== '' || filterMinScore.value > 0 || filterOrder.value !== 'newest',
+);
+
+const clearFilters = () => {
+  filterEstablishment.value = '';
+  filterMinScore.value = 0;
+  filterOrder.value = 'newest';
+};
+
 onMounted(async () => {
   authStore.fetchProfile();
   try {
@@ -26,12 +66,9 @@ const userName = computed(() => authStore.user?.name || 'Cargando...');
 const userBio = computed(() => authStore.user?.bio || null);
 const userAvatar = computed(() => authStore.user?.avatarUrl || null);
 const userCarrera = computed(() => authStore.user?.carrera || null);
-
 const userInitials = computed(() => {
   const parts = userName.value.split(' ');
-  if (parts.length >= 2 && parts[0] && parts[1]) {
-    return (parts[0][0] || '') + (parts[1][0] || '');
-  }
+  if (parts.length >= 2 && parts[0] && parts[1]) return (parts[0][0] || '') + (parts[1][0] || '');
   return (parts[0] || '').substring(0, 2).toUpperCase();
 });
 
@@ -93,12 +130,12 @@ const isChangePasswordOpen = ref(false);
             <span class="text-xs text-on-surface-variant uppercase tracking-widest font-semibold">Reseñas</span>
           </div>
           <div class="text-center border-x border-outline-variant/15">
-            <span class="block text-2xl font-headline font-black text-on-surface">48</span>
+            <span data-testid="total-likes" class="block text-2xl font-headline font-black text-on-surface">{{ totalLikes }}</span>
             <span class="text-xs text-on-surface-variant uppercase tracking-widest font-semibold">Likes</span>
           </div>
           <div class="text-center">
-            <span class="block text-2xl font-headline font-black text-on-surface">Oax</span>
-            <span class="text-xs text-on-surface-variant uppercase tracking-widest font-semibold">Campus</span>
+            <span class="block text-2xl font-headline font-black text-on-surface">{{ uniqueEstablishmentCount || '—' }}</span>
+            <span class="text-xs text-on-surface-variant uppercase tracking-widest font-semibold">Establecimientos</span>
           </div>
         </div>
       </section>
@@ -107,21 +144,61 @@ const isChangePasswordOpen = ref(false);
       <section>
         <div class="flex items-center justify-between mb-8">
           <h3 class="text-2xl font-headline font-bold text-[#f9f5f8]">Mis Reseñas Históricas</h3>
-          <div class="flex gap-2">
-            <button class="p-2 rounded-lg bg-surface-container-high text-on-surface-variant hover:text-primary transition-colors">
+          <div class="relative">
+            <button
+              class="p-2 rounded-lg bg-surface-container-high text-on-surface-variant hover:text-primary transition-colors"
+              :class="{ 'text-primary': hasActiveFilters }"
+              @click="showFilterPanel = !showFilterPanel"
+            >
               <span class="material-symbols-outlined">filter_list</span>
             </button>
+            <div v-show="showFilterPanel" class="absolute right-0 mt-2 w-64 bg-surface-container-high rounded-2xl border border-outline-variant/20 shadow-xl p-4 z-10 space-y-4">
+              <div>
+                <label class="text-xs text-on-surface-variant uppercase tracking-wider block mb-1">Establecimiento</label>
+                <select data-testid="filter-establishment" v-model="filterEstablishment"
+                  class="w-full bg-surface-variant text-on-surface rounded-lg px-3 py-2 text-sm border border-outline-variant/20">
+                  <option value="">Todos</option>
+                  <option v-for="name in uniqueEstablishments" :key="name" :value="name">{{ name }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-on-surface-variant uppercase tracking-wider block mb-1">Calificación mínima</label>
+                <select v-model.number="filterMinScore"
+                  class="w-full bg-surface-variant text-on-surface rounded-lg px-3 py-2 text-sm border border-outline-variant/20">
+                  <option :value="0">Cualquiera</option>
+                  <option :value="1">1+ estrella</option>
+                  <option :value="2">2+ estrellas</option>
+                  <option :value="3">3+ estrellas</option>
+                  <option :value="4">4+ estrellas</option>
+                  <option :value="5">5 estrellas</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-on-surface-variant uppercase tracking-wider block mb-1">Orden</label>
+                <select v-model="filterOrder"
+                  class="w-full bg-surface-variant text-on-surface rounded-lg px-3 py-2 text-sm border border-outline-variant/20">
+                  <option value="newest">Más reciente</option>
+                  <option value="oldest">Más antiguo</option>
+                </select>
+              </div>
+              <button v-if="hasActiveFilters" @click="clearFilters"
+                class="w-full text-xs text-on-surface-variant hover:text-error transition-colors">
+                Limpiar filtros
+              </button>
+            </div>
           </div>
         </div>
 
         <div class="space-y-8">
           <ReviewCard
-            v-for="rev in reviews.slice(0, 3)"
+            v-for="rev in filteredReviews"
             :key="rev.id"
+            data-testid="review-card"
             :review="rev"
             :show-author="false"
             :show-establishment="true"
             :show-sentiment="true"
+            :show-like="false"
           />
 
           <div v-if="reviews.length === 0" class="text-center py-10 bg-surface-variant/30 rounded-3xl border border-white/5">
@@ -131,7 +208,7 @@ const isChangePasswordOpen = ref(false);
                 Evaluar ahora
             </RouterLink>
           </div>
-          
+
           <div v-else-if="reviews.length > 0" class="text-center mt-8">
             <RouterLink to="/my-reviews" class="inline-flex items-center gap-2 px-6 py-3 border border-outline-variant/30 text-on-surface-variant hover:text-white hover:border-white/30 rounded-xl transition-colors font-medium">
               Ver todas en Mis Reseñas
