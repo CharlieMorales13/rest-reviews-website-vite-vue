@@ -199,5 +199,19 @@ CREATE TABLE training_runs (
 CREATE INDEX idx_training_runs_model_version 
   ON training_runs(model_version_id);
 
-CREATE INDEX idx_training_runs_status 
+CREATE INDEX idx_training_runs_status
   ON training_runs(status);
+
+-- =========================================
+-- REVIEW LIKES
+-- =========================================
+CREATE TABLE review_likes (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  review_id  uuid NOT NULL REFERENCES reviews(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (user_id, review_id)
+);
+
+CREATE INDEX idx_review_likes_review_id ON review_likes(review_id);
+CREATE INDEX idx_review_likes_user_id   ON review_likes(user_id);
