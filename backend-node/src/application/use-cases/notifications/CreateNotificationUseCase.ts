@@ -6,6 +6,7 @@ interface CreateNotificationDTO {
   userId: string;
   reviewId: string;
   type?: string;
+  actorName?: string;
 }
 
 @injectable()
@@ -20,6 +21,7 @@ export class CreateNotificationUseCase {
       userId: dto.userId,
       reviewId: dto.reviewId,
       type: dto.type ?? "manager_reply",
+      actorName: dto.actorName,
     });
     return this.notificationRepository.save(notification);
   }

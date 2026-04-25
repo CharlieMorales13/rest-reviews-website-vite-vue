@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LikeReviewUseCase } from '../../../src/application/use-cases/reviews/LikeReviewUseCase';
 import { CreateNotificationUseCase } from '../../../src/application/use-cases/notifications/CreateNotificationUseCase';
 import type { IReviewRepository } from '../../../src/domain/repositories/IReviewRepository';
+import type { IUserRepository } from '../../../src/domain/repositories/IUserRepository';
 import { AppError } from '../../../src/infrastructure/http/errors/AppError';
 
 const mockReviewRepo = {
@@ -11,6 +12,10 @@ const mockReviewRepo = {
   findByUserId: vi.fn(), save: vi.fn(), update: vi.fn(), delete: vi.fn(), removeLike: vi.fn(),
 } as unknown as IReviewRepository;
 
+const mockUserRepo = {
+  findById: vi.fn(),
+} as unknown as IUserRepository;
+
 const mockCreateNotification = {
   execute: vi.fn().mockResolvedValue({}),
 } as unknown as CreateNotificationUseCase;
@@ -18,7 +23,7 @@ const mockCreateNotification = {
 describe('LikeReviewUseCase', () => {
   let useCase: LikeReviewUseCase;
   beforeEach(() => {
-    useCase = new LikeReviewUseCase(mockReviewRepo, mockCreateNotification);
+    useCase = new LikeReviewUseCase(mockReviewRepo, mockUserRepo, mockCreateNotification);
     vi.clearAllMocks();
   });
 
@@ -48,9 +53,10 @@ describe('LikeReviewUseCase', () => {
     vi.mocked(mockReviewRepo.findById).mockResolvedValue(review);
     vi.mocked(mockReviewRepo.hasLiked).mockResolvedValue(false);
     vi.mocked(mockReviewRepo.addLike).mockResolvedValue(5);
+    vi.mocked(mockUserRepo.findById).mockResolvedValue({ name: 'Carlos' } as any);
     const result = await useCase.execute({ userId: 'u1', reviewId: 'r1' });
     expect(mockReviewRepo.addLike).toHaveBeenCalledWith('u1', 'r1');
-    expect(mockCreateNotification.execute).toHaveBeenCalledWith({ userId: 'author-1', reviewId: 'r1', type: 'like' });
+    expect(mockCreateNotification.execute).toHaveBeenCalledWith({ userId: 'author-1', reviewId: 'r1', type: 'like', actorName: 'Carlos' });
     expect(result).toEqual({ likesCount: 5, likedByMe: true });
   });
 });

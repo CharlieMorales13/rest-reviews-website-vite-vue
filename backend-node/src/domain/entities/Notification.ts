@@ -5,6 +5,7 @@ export interface NotificationProps {
   type?: string;
   isRead?: boolean;
   createdAt?: Date;
+  actorName?: string;
 }
 
 export class Notification {
@@ -40,6 +41,9 @@ export class Notification {
   }
   get createdAt(): Date {
     return this.props.createdAt!;
+  }
+  get actorName(): string | undefined {
+    return this.props.actorName;
   }
 
   markAsRead(): void {

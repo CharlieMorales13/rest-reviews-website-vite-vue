@@ -5,13 +5,11 @@ import { useRouter } from 'vue-router';
 const notifStore = useNotificationStore();
 const router = useRouter();
 
-const notificationConfig: Record<string, { message: string; icon: string }> = {
-  manager_reply: { message: 'El gerente respondió tu reseña', icon: 'reply' },
-  like: { message: 'A alguien le gustó tu reseña', icon: 'favorite' },
+const getConfig = (type: string, actorName?: string | null) => {
+  if (type === 'manager_reply') return { message: 'El gerente respondió tu reseña', icon: 'reply' };
+  if (type === 'like') return { message: `A ${actorName ?? 'alguien'} le gustó tu reseña`, icon: 'favorite' };
+  return { message: 'Nueva notificación', icon: 'notifications' };
 };
-
-const getConfig = (type: string) =>
-  notificationConfig[type] ?? { message: 'Nueva notificación', icon: 'notifications' };
 
 const handleClick = async (id: string) => {
   await notifStore.markAsRead(id);
@@ -38,10 +36,10 @@ const handleClick = async (id: string) => {
         @click="handleClick(n.id)"
       >
         <span class="material-symbols-outlined text-orange-400 text-base mt-0.5 shrink-0">
-          {{ getConfig(n.type).icon }}
+          {{ getConfig(n.type, n.actorName).icon }}
         </span>
         <div class="min-w-0">
-          <p class="text-xs text-white leading-snug">{{ getConfig(n.type).message }}</p>
+          <p class="text-xs text-white leading-snug">{{ getConfig(n.type, n.actorName).message }}</p>
           <p class="text-[10px] text-[#adaaad] mt-0.5">{{ new Date(n.createdAt).toLocaleDateString('es-MX') }}</p>
         </div>
         <span v-if="!n.isRead" class="ml-auto mt-1.5 w-2 h-2 rounded-full bg-orange-500 shrink-0"></span>

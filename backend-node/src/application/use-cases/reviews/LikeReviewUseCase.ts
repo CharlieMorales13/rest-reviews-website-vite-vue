@@ -1,5 +1,6 @@
 import { injectable, inject } from "tsyringe";
 import { IReviewRepository } from "../../../domain/repositories/IReviewRepository";
+import { IUserRepository } from "../../../domain/repositories/IUserRepository";
 import { CreateNotificationUseCase } from "../notifications/CreateNotificationUseCase";
 import { AppError } from "../../../infrastructure/http/errors/AppError";
 
@@ -12,6 +13,7 @@ interface LikeReviewDTO {
 export class LikeReviewUseCase {
   constructor(
     @inject("IReviewRepository") private reviewRepository: IReviewRepository,
+    @inject("IUserRepository") private userRepository: IUserRepository,
     @inject(CreateNotificationUseCase)
     private createNotificationUseCase: CreateNotificationUseCase,
   ) {}
@@ -32,8 +34,14 @@ export class LikeReviewUseCase {
       dto.userId,
       dto.reviewId,
     );
+    const actor = await this.userRepository.findById(dto.userId);
     this.createNotificationUseCase
-      .execute({ userId: review.userId, reviewId: dto.reviewId, type: "like" })
+      .execute({
+        userId: review.userId,
+        reviewId: dto.reviewId,
+        type: "like",
+        actorName: actor?.name ?? undefined,
+      })
       .catch(() => {});
     return { likesCount, likedByMe: true };
   }

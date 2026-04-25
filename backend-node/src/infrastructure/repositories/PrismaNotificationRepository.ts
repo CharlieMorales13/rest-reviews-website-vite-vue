@@ -12,6 +12,7 @@ export class PrismaNotificationRepository implements INotificationRepository {
         reviewId: notification.reviewId,
         type: notification.type,
         isRead: notification.isRead,
+        actorName: notification.actorName,
       } as any,
     });
     return this.mapToDomain(data);
@@ -49,6 +50,7 @@ export class PrismaNotificationRepository implements INotificationRepository {
       type: data.type,
       isRead: data.isRead,
       createdAt: data.createdAt,
+      actorName: data.actorName ?? undefined,
     });
   }
 }

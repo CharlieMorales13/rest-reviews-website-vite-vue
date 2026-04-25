@@ -4,4 +4,5 @@ export interface Notification {
   type: string;
   isRead: boolean;
   createdAt: string;
+  actorName?: string | null;
 }

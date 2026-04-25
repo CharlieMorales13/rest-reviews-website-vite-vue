@@ -40,6 +40,7 @@ export const useNotificationStore = defineStore('notifications', () => {
             type: row.type,
             isRead: row.is_read,
             createdAt: row.created_at,
+            actorName: row.actor_name ?? null,
           });
         }
       )

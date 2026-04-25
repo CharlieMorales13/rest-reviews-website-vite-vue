@@ -28,6 +28,7 @@ export class NotificationController {
         type: n.type,
         isRead: n.isRead,
         createdAt: n.createdAt,
+        actorName: n.actorName ?? null,
       }));
       res.json({ success: true, data });
     } catch (err) {
