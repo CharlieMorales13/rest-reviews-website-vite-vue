@@ -3,7 +3,11 @@ import { container } from "../../config/container";
 import { EstablishmentController } from "../controllers/EstablishmentController";
 import { ReviewController } from "../controllers/ReviewController";
 import { EstablishmentPostController } from "../controllers/EstablishmentPostController";
-import { authenticateToken, requireRole, optionalAuth } from "../middlewares/AuthMiddleware";
+import {
+  authenticateToken,
+  requireRole,
+  optionalAuth,
+} from "../middlewares/AuthMiddleware";
 
 const establishmentRouter = Router();
 const controller = container.resolve(EstablishmentController);
@@ -13,7 +17,11 @@ const postController = container.resolve(EstablishmentPostController);
 // Public Routes
 establishmentRouter.get("/", controller.getAll);
 establishmentRouter.get("/:slug", controller.getOne);
-establishmentRouter.get("/:slug/reviews", optionalAuth, reviewController.getByEstablishment);
+establishmentRouter.get(
+  "/:slug/reviews",
+  optionalAuth,
+  reviewController.getByEstablishment,
+);
 establishmentRouter.get("/:slug/posts", postController.list);
 
 // Protected Routes

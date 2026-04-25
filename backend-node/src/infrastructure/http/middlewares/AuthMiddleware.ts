@@ -50,13 +50,22 @@ export const requireRole = (roles: string[]) => {
   };
 };
 
-export const optionalAuth = (req: AuthRequest, _res: Response, next: NextFunction): void => {
+export const optionalAuth = (
+  req: AuthRequest,
+  _res: Response,
+  next: NextFunction,
+): void => {
   const authHeader = req.headers["authorization"];
-  if (!authHeader?.startsWith("Bearer ")) { next(); return; }
+  if (!authHeader?.startsWith("Bearer ")) {
+    next();
+    return;
+  }
   const token = authHeader.split(" ")[1];
   try {
     const decoded = jwt.verify(token, env.JWT_SECRET) as AuthRequest["user"];
     req.user = decoded;
-  } catch { /* token inválido — continuar sin usuario */ }
+  } catch {
+    /* token inválido — continuar sin usuario */
+  }
   next();
 };

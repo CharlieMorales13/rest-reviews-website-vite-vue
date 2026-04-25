@@ -2,7 +2,10 @@ import { Review } from "../entities/Review";
 
 export interface IReviewRepository {
   findById(id: string): Promise<Review | null>;
-  findAll(pagination?: { page: number; limit: number }): Promise<{ data: Review[]; total: number }>;
+  findAll(pagination?: {
+    page: number;
+    limit: number;
+  }): Promise<{ data: Review[]; total: number }>;
   findByEstablishmentId(
     establishmentId: string,
     pagination?: { page: number; limit: number },
