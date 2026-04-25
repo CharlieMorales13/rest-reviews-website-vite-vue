@@ -41,4 +41,18 @@ export class ReviewService {
     const response = await httpClient.get<{ success: boolean; data: MetricsSnapshot }>(`/api/metrics/establishment/${establishmentId}`);
     return response.data.data;
   }
+
+  static async likeReview(reviewId: string): Promise<{ likesCount: number; likedByMe: boolean }> {
+    const response = await httpClient.post<{ success: boolean; data: { likesCount: number; likedByMe: boolean } }>(
+      `/api/reviews/${reviewId}/like`,
+    );
+    return response.data.data;
+  }
+
+  static async unlikeReview(reviewId: string): Promise<{ likesCount: number; likedByMe: boolean }> {
+    const response = await httpClient.delete<{ success: boolean; data: { likesCount: number; likedByMe: boolean } }>(
+      `/api/reviews/${reviewId}/like`,
+    );
+    return response.data.data;
+  }
 }
