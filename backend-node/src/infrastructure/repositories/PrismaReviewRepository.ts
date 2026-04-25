@@ -65,7 +65,14 @@ export class PrismaReviewRepository implements IReviewRepository {
             select: { predictedLabel: true },
           },
           _count: { select: { likes: true } },
-          ...(viewerId ? { likes: { where: { userId: viewerId }, select: { userId: true } } } : {}),
+          ...(viewerId
+            ? {
+                likes: {
+                  where: { userId: viewerId },
+                  select: { userId: true },
+                },
+              }
+            : {}),
         },
         orderBy: { createdAt: "desc" },
         skip,
@@ -99,7 +106,9 @@ export class PrismaReviewRepository implements IReviewRepository {
       },
       orderBy: { createdAt: "desc" },
     });
-    return data.map((d) => this.mapToDomain(d, { likesCount: (d as any)._count?.likes ?? 0 }));
+    return data.map((d) =>
+      this.mapToDomain(d, { likesCount: (d as any)._count?.likes ?? 0 }),
+    );
   }
 
   async save(review: Review): Promise<Review> {
@@ -148,7 +157,9 @@ export class PrismaReviewRepository implements IReviewRepository {
   }
 
   async removeLike(userId: string, reviewId: string): Promise<number> {
-    await prisma.reviewLike.delete({ where: { userId_reviewId: { userId, reviewId } } });
+    await prisma.reviewLike.delete({
+      where: { userId_reviewId: { userId, reviewId } },
+    });
     return prisma.reviewLike.count({ where: { reviewId } });
   }
 
@@ -157,16 +168,24 @@ export class PrismaReviewRepository implements IReviewRepository {
   }
 
   async hasLiked(userId: string, reviewId: string): Promise<boolean> {
-    const like = await prisma.reviewLike.findUnique({ where: { userId_reviewId: { userId, reviewId } } });
+    const like = await prisma.reviewLike.findUnique({
+      where: { userId_reviewId: { userId, reviewId } },
+    });
     return like !== null;
   }
 
   async getReviewAuthorId(reviewId: string): Promise<string | null> {
-    const review = await prisma.review.findUnique({ where: { id: reviewId }, select: { userId: true } });
+    const review = await prisma.review.findUnique({
+      where: { id: reviewId },
+      select: { userId: true },
+    });
     return review?.userId ?? null;
   }
 
-  private mapToDomain(data: any, extras?: { likesCount?: number; likedByMe?: boolean }): Review {
+  private mapToDomain(
+    data: any,
+    extras?: { likesCount?: number; likedByMe?: boolean },
+  ): Review {
     return Review.create({
       id: data.id,
       userId: data.userId,

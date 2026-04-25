@@ -38,7 +38,8 @@ export class ReviewController {
     @inject(ClassifyReviewUseCase)
     private classifyReviewUseCase: ClassifyReviewUseCase,
     @inject(LikeReviewUseCase) private likeReviewUseCase: LikeReviewUseCase,
-    @inject(UnlikeReviewUseCase) private unlikeReviewUseCase: UnlikeReviewUseCase,
+    @inject(UnlikeReviewUseCase)
+    private unlikeReviewUseCase: UnlikeReviewUseCase,
   ) {}
 
   /**
@@ -346,17 +347,35 @@ export class ReviewController {
       .json({ success: true, message: "Reseña eliminada correctamente" });
   };
 
-  public likeReview = async (req: AuthRequest, res: Response): Promise<void> => {
+  public likeReview = async (
+    req: AuthRequest,
+    res: Response,
+  ): Promise<void> => {
     const userId = req.user?.userId;
-    if (!userId) { res.status(401).json({ success: false, message: "Unauthorized" }); return; }
-    const result = await this.likeReviewUseCase.execute({ userId, reviewId: req.params.id });
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
+    }
+    const result = await this.likeReviewUseCase.execute({
+      userId,
+      reviewId: req.params.id,
+    });
     res.status(200).json({ success: true, data: result });
   };
 
-  public unlikeReview = async (req: AuthRequest, res: Response): Promise<void> => {
+  public unlikeReview = async (
+    req: AuthRequest,
+    res: Response,
+  ): Promise<void> => {
     const userId = req.user?.userId;
-    if (!userId) { res.status(401).json({ success: false, message: "Unauthorized" }); return; }
-    const result = await this.unlikeReviewUseCase.execute({ userId, reviewId: req.params.id });
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
+    }
+    const result = await this.unlikeReviewUseCase.execute({
+      userId,
+      reviewId: req.params.id,
+    });
     res.status(200).json({ success: true, data: result });
   };
 }
