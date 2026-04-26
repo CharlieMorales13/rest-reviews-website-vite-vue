@@ -40,7 +40,7 @@ export class LikeReviewUseCase {
         userId: review.userId,
         reviewId: dto.reviewId,
         type: "like",
-        actorName: actor?.name ?? undefined,
+        actorName: actor?.username ?? undefined,
       })
       .catch(() => {});
     return { likesCount, likedByMe: true };

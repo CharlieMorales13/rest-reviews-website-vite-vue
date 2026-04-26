@@ -17,6 +17,12 @@ export class PrismaUserRepository implements IUserRepository {
     return this.mapToDomain(data);
   }
 
+  async findByUsername(username: string): Promise<User | null> {
+    const data = await prisma.user.findUnique({ where: { username } } as any);
+    if (!data) return null;
+    return this.mapToDomain(data);
+  }
+
   async findAll(pagination?: {
     page: number;
     limit: number;
@@ -44,8 +50,9 @@ export class PrismaUserRepository implements IUserRepository {
   async save(user: User): Promise<User> {
     const data = await prisma.user.create({
       data: {
-        id: user.id, // Usually undefined on creation so Prisma generates it
+        id: user.id,
         name: user.name,
+        username: user.username,
         email: user.email,
         passwordHash: user.passwordHash,
         role: user.role,
@@ -71,6 +78,7 @@ export class PrismaUserRepository implements IUserRepository {
       where: { id: user.id },
       data: {
         name: user.name,
+        username: user.username,
         email: user.email,
         passwordHash: user.passwordHash,
         role: user.role,
@@ -97,6 +105,7 @@ export class PrismaUserRepository implements IUserRepository {
     return User.create({
       id: data.id,
       name: data.name,
+      username: data.username,
       email: data.email,
       passwordHash: data.passwordHash,
       role: data.role as UserRole,

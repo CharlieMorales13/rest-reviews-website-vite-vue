@@ -8,6 +8,7 @@ import {
 describe('RegisterUserSchema', () => {
   const validInput = {
     name: 'Carlos Gomez',
+    username: 'carlos_gomez',
     email: 'carlos@anahuac.mx',
     password: 'secure123',
     carrera: 'Ingenieria en Software',

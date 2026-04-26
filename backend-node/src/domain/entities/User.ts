@@ -7,6 +7,7 @@ export enum UserRole {
 export interface UserProps {
   id?: string;
   name: string;
+  username: string;
   email: string;
   passwordHash: string;
   role: UserRole;
@@ -49,6 +50,9 @@ export class User {
   }
   get name(): string {
     return this.props.name;
+  }
+  get username(): string {
+    return this.props.username;
   }
   get email(): string {
     return this.props.email;

@@ -13,6 +13,7 @@ export type AdminCreateUserDTO = z.infer<typeof AdminCreateUserSchema>;
 
 export const UpdateUserSchema = z.object({
   name: z.string().min(2).max(120).optional(),
+  username: z.string().min(3).max(30).optional(),
   email: z.string().email().optional(),
   role: z.nativeEnum(UserRole).optional(),
   isActive: z.boolean().optional(),
@@ -29,6 +30,7 @@ export type UpdateUserDTO = z.infer<typeof UpdateUserSchema>;
 // Safe subset for self-service profile updates — never allows role/isActive/establishmentId
 export const UpdateProfileSchema = z.object({
   name: z.string().min(2).max(120).optional(),
+  username: z.string().min(3).max(30).optional(),
   avatarUrl: z.string().url().optional().nullable(),
   bio: z.string().max(500).optional().nullable(),
   universityId: z.string().optional().nullable(),

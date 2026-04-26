@@ -23,7 +23,7 @@ export class PrismaReviewRepository implements IReviewRepository {
     const [data, total] = await Promise.all([
       prisma.review.findMany({
         include: {
-          user: { select: { name: true, carrera: true } },
+          user: { select: { username: true, carrera: true } },
           establishment: { select: { name: true } },
           sentimentResults: {
             orderBy: { createdAt: "desc" },
@@ -58,7 +58,7 @@ export class PrismaReviewRepository implements IReviewRepository {
       prisma.review.findMany({
         where: { establishmentId },
         include: {
-          user: { select: { name: true, carrera: true } },
+          user: { select: { username: true, carrera: true } },
           sentimentResults: {
             orderBy: { createdAt: "desc" },
             take: 1,
@@ -196,7 +196,7 @@ export class PrismaReviewRepository implements IReviewRepository {
       title: data.title,
       comment: data.comment,
       imageUrl: data.imageUrl,
-      authorName: data.user?.name,
+      authorName: data.user?.username,
       authorCarrera: data.user?.carrera,
       establishmentName: data.establishment?.name,
       sentiment: data.sentimentResults?.[0]?.predictedLabel,

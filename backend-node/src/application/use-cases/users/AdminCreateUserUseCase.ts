@@ -34,12 +34,24 @@ export class AdminCreateUserUseCase {
       );
     }
 
+    const baseUsername = dto.name
+      .toLowerCase()
+      .replace(/\s+/g, "_")
+      .replace(/[^a-z0-9_]/g, "")
+      .slice(0, 28);
+    let username = baseUsername;
+    let suffix = 1;
+    while (await this.userRepository.findByUsername(username)) {
+      username = `${baseUsername}${suffix++}`;
+    }
+
     const passwordHash = await argon2.hash(dto.password, {
       type: argon2.argon2id,
     });
 
     const user = User.create({
       name: dto.name,
+      username,
       email: dto.email,
       passwordHash,
       role: dto.role as UserRole,

@@ -25,9 +25,15 @@ export class UpdateUserUseCase {
       passwordHash = await argon2.hash(dto.password);
     }
 
+    if (dto.username && dto.username !== existingUser.username) {
+      const taken = await this.userRepository.findByUsername(dto.username);
+      if (taken) throw new AppError("Este username ya está en uso", 409);
+    }
+
     const updatedUser = User.create({
       id: id,
       name: dto.name ?? existingUser.name,
+      username: dto.username ?? existingUser.username,
       email: dto.email ?? existingUser.email,
       passwordHash: passwordHash,
       role: dto.role ?? existingUser.role,

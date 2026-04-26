@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const RegisterUserSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(120),
+  username: z.string().min(3, "El username debe tener al menos 3 caracteres").max(30, "El username no puede tener más de 30 caracteres"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   carrera: z.string().min(1, "La carrera es requerida").max(100),

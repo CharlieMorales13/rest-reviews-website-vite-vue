@@ -46,6 +46,7 @@ describe('AdminCreateUserUseCase', () => {
   const makeRepos = (existing: any = null, savedUser: any = mockUser()) => ({
     userRepo: {
       findByEmail: vi.fn().mockResolvedValue(existing),
+      findByUsername: vi.fn().mockResolvedValue(null),
       save: vi.fn().mockResolvedValue(savedUser),
     } as any as IUserRepository,
     estRepo: {
@@ -80,6 +81,7 @@ describe('AdminCreateUserUseCase', () => {
     };
     const userRepo: IUserRepository = {
       findByEmail: vi.fn().mockResolvedValue(null),
+      findByUsername: vi.fn().mockResolvedValue(null),
       save: vi.fn().mockResolvedValue(mockUser({ id: 'u-2', role: UserRole.MANAGER })),
     } as any;
     const estRepo: IEstablishmentRepository = {

@@ -43,6 +43,7 @@ enum TrainingStatus {
 model User {
   id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name          String         @db.VarChar(120)
+  username      String         @unique @db.VarChar(50)
   email         String         @unique @db.VarChar(150)
   passwordHash  String         @map("password_hash")
   role          UserRole

@@ -13,6 +13,7 @@ interface RegisterResponse {
     email: string;
     role: string;
     name: string;
+    username: string;
   };
   token: string;
 }
@@ -29,10 +30,16 @@ export class RegisterUserUseCase {
       throw new AppError("User with this email already exists", 409);
     }
 
+    const existingUsername = await this.userRepository.findByUsername(dto.username);
+    if (existingUsername) {
+      throw new AppError("Este username ya está en uso", 409);
+    }
+
     const hashedPassword = await argon2.hash(dto.password);
 
     const newUser = User.create({
       name: dto.name,
+      username: dto.username,
       email: dto.email,
       passwordHash: hashedPassword,
       role: UserRole.STUDENT,
@@ -57,6 +64,7 @@ export class RegisterUserUseCase {
         id: savedUser.id,
         email: savedUser.email,
         name: savedUser.name,
+        username: savedUser.username,
         role: savedUser.role,
       },
       token,
