@@ -81,6 +81,7 @@ const routes = [
 export const router = createRouter({
   history: createWebHistory(),
   routes,
+  scrollBehavior: () => ({ top: 0, behavior: 'instant' }),
 });
 
 router.beforeEach(async (to) => {
