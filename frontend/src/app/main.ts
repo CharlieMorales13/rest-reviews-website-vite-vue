@@ -1,12 +1,18 @@
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import App from './App.vue'
-import { router } from './router'
-import '@/shared/assets/css/main.css'
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import { useAuthStore } from '@/entities/user/model/authStore';
+import App from './App.vue';
+import { router } from './router';
+import '@/shared/assets/css/main.css';
 
-const app = createApp(App)
+const app = createApp(App);
+const pinia = createPinia();
 
-app.use(createPinia())
-app.use(router)
+app.use(pinia);
+app.use(router);
 
-app.mount('#app')
+// Verify token before the router's first beforeEach runs
+const authStore = useAuthStore();
+authStore.initAuth();
+
+app.mount('#app');
