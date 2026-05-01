@@ -18,13 +18,19 @@ httpClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Lazy singleton — avoids calling useAuthStore() before Pinia is installed
+let _authStore: ReturnType<typeof useAuthStore> | null = null;
+const getAuthStore = () => {
+  if (!_authStore) _authStore = useAuthStore();
+  return _authStore;
+};
+
 // ── Response: handle expired / invalid token ────────────────────────────────
 httpClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      const authStore = useAuthStore();
-      authStore.logout();
+      getAuthStore().logout();
       if (router.currentRoute.value.path !== '/login') {
         router.push('/login');
       }
