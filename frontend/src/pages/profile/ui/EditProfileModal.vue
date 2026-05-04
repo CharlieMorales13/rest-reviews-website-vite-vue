@@ -90,6 +90,7 @@ const handleSave = async () => {
 </script>
 
 <template>
+  <Teleport to="body">
   <div v-if="isOpen" class="fixed inset-0 z-[100] flex items-center justify-center animate-fade-in">
     <div class="absolute inset-0 bg-surface/60 backdrop-blur-glass" @click="handleClose"></div>
 
@@ -147,7 +148,7 @@ const handleSave = async () => {
             v-model="name"
             type="text"
             maxlength="120"
-            class="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 text-black font-sans placeholder-on-surface-variant/100 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all shadow-inner"
+            class="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 text-on-surface font-sans placeholder-on-surface-variant/100 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all shadow-inner"
             placeholder="Tu nombre completo"
           />
         </div>
@@ -158,7 +159,7 @@ const handleSave = async () => {
             v-model="bio"
             rows="3"
             maxlength="500"
-            class="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 text-black  font-sans placeholder-on-surface-variant/100 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all resize-none shadow-inner"
+            class="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 text-on-surface font-sans placeholder-on-surface-variant/100 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all resize-none shadow-inner"
             placeholder="Cuéntanos sobre ti…"
           ></textarea>
           <span class="text-right text-xs text-on-surface-variant/50">{{ bio.length }} / 500</span>
@@ -169,7 +170,7 @@ const handleSave = async () => {
           <div class="relative">
             <select
               v-model="carrera"
-              class="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 text-black font-sans focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all appearance-none"
+              class="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-xl px-4 py-3.5 text-on-surface font-sans focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all appearance-none"
             >
               <option value="">Sin especificar</option>
               <option v-for="c in CARRERAS" :key="c" :value="c">{{ c }}</option>
@@ -194,4 +195,5 @@ const handleSave = async () => {
       </div>
     </div>
   </div>
+  </Teleport>
 </template>
