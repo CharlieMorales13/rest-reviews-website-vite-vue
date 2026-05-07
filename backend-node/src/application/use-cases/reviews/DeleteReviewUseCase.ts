@@ -21,7 +21,10 @@ export class DeleteReviewUseCase {
     await this.reviewRepository.delete(reviewId);
 
     this.analyticsService.runSentimentAnalysis().catch((err) => {
-      logger.warn({ reviewId, err }, "Snapshot refresh after delete failed silently");
+      logger.warn(
+        { reviewId, err },
+        "Snapshot refresh after delete failed silently",
+      );
     });
   }
 }

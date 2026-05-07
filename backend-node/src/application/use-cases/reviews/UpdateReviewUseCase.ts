@@ -36,7 +36,10 @@ export class UpdateReviewUseCase {
     const updated = await this.reviewRepository.update(review);
 
     this.analyticsService.runSentimentAnalysis().catch((err) => {
-      logger.warn({ reviewId, err }, "Snapshot refresh after update failed silently");
+      logger.warn(
+        { reviewId, err },
+        "Snapshot refresh after update failed silently",
+      );
     });
 
     return updated;
