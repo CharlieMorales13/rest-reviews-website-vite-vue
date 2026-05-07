@@ -54,7 +54,8 @@ describe('QrCodeCard', () => {
     mount(QrCodeCard, {
       props: { slug: 'cuckoo-coffee', establishmentName: 'Cuckoo Coffee' },
     });
-    const callArg = vi.mocked(QRCodeStyling).mock.calls.at(-1)?.[0] as { data?: string } | undefined;
+    const calls = vi.mocked(QRCodeStyling).mock.calls;
+    const callArg = calls[calls.length - 1]?.[0] as { data?: string } | undefined;
     expect(callArg?.data).toMatch(/\/r\/cuckoo-coffee$/);
   });
 });
