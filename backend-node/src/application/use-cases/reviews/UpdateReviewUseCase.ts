@@ -1,13 +1,18 @@
 import { injectable, inject } from "tsyringe";
 import { IReviewRepository } from "../../../domain/repositories/IReviewRepository";
+import { IAnalyticsService } from "../../../domain/services/IAnalyticsService";
 import { UpdateReviewDTO } from "../../dtos/ReviewDTO";
 import { Review } from "../../../domain/entities/Review";
 import { AppError } from "../../../infrastructure/http/errors/AppError";
+import pino from "pino";
+
+const logger = pino({ name: "UpdateReviewUseCase" });
 
 @injectable()
 export class UpdateReviewUseCase {
   constructor(
     @inject("IReviewRepository") private reviewRepository: IReviewRepository,
+    @inject("IAnalyticsService") private analyticsService: IAnalyticsService,
   ) {}
 
   async execute(
@@ -28,6 +33,12 @@ export class UpdateReviewUseCase {
       comment: dto.comment,
     });
 
-    return this.reviewRepository.update(review);
+    const updated = await this.reviewRepository.update(review);
+
+    this.analyticsService.runSentimentAnalysis().catch((err) => {
+      logger.warn({ reviewId, err }, "Snapshot refresh after update failed silently");
+    });
+
+    return updated;
   }
 }

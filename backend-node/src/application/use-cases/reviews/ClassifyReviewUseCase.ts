@@ -41,6 +41,11 @@ export class ClassifyReviewUseCase {
         { reviewId, label: result.label, probability: result.probability },
         "Review classified successfully",
       );
+      // Refresh metrics snapshot so the manager dashboard reflects the new review
+      // immediately instead of waiting for the 2 AM cron.
+      this.analyticsService.runSentimentAnalysis().catch((err) => {
+        logger.warn({ reviewId, err }, "Snapshot refresh failed silently");
+      });
     } catch (err) {
       // Never propagate — the review is already saved; classification is best-effort
       logger.error({ reviewId, err }, "classifyReview failed silently");
