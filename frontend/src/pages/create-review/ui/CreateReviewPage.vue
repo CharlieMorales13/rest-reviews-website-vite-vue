@@ -167,7 +167,7 @@ const hoveredPrice = ref(0);
       <div class="p-8 md:p-12">
         <div class="flex items-center gap-4 mb-8">
           <button @click="router.back()" class="w-10 h-10 bg-black/5 hover:bg-black/10 rounded-full transition-colors flex items-center justify-center">
-             <span class="material-symbols-outlined text-[#0e0e10]">arrow_back</span>
+              <span class="material-symbols-outlined text-[#0e0e10]">arrow_back</span>
           </button>
           <div class="flex-1">
             <p class="text-xs text-orange-500 uppercase font-bold tracking-widest mb-1">Evaluación oficial</p>
@@ -206,7 +206,7 @@ const hoveredPrice = ref(0);
                   @click="serviceScore = star"
                   class="focus:outline-none transition-transform hover:scale-110"
                 >
-                   <span class="material-symbols-outlined text-3xl" :style="{ color: renderStars(serviceScore, hoveredService)[star-1] ? '#f97316' : '#d1d1d6', fontVariationSettings: `'FILL' ${renderStars(serviceScore, hoveredService)[star-1] ? 1 : 0}` }">star</span>
+                    <span class="material-symbols-outlined text-3xl" :style="{ color: renderStars(serviceScore, hoveredService)[star-1] ? '#f97316' : '#d1d1d6', fontVariationSettings: `'FILL' ${renderStars(serviceScore, hoveredService)[star-1] ? 1 : 0}` }">star</span>
                 </button>
               </div>
             </div>
@@ -222,7 +222,7 @@ const hoveredPrice = ref(0);
                   @click="priceScore = star"
                   class="focus:outline-none transition-transform hover:scale-110"
                 >
-                   <span class="material-symbols-outlined text-3xl" :style="{ color: renderStars(priceScore, hoveredPrice)[star-1] ? '#f97316' : '#d1d1d6', fontVariationSettings: `'FILL' ${renderStars(priceScore, hoveredPrice)[star-1] ? 1 : 0}` }">star</span>
+                    <span class="material-symbols-outlined text-3xl" :style="{ color: renderStars(priceScore, hoveredPrice)[star-1] ? '#f97316' : '#d1d1d6', fontVariationSettings: `'FILL' ${renderStars(priceScore, hoveredPrice)[star-1] ? 1 : 0}` }">star</span>
                 </button>
               </div>
             </div>
@@ -292,7 +292,7 @@ const hoveredPrice = ref(0);
               :maxlength="COMMENT_MAX"
             ></textarea>
             <div class="flex justify-between mt-1">
-              <span v-if="commentTooShort" class="text-xs text-red-500 font-bold">Mínimo {{ COMMENT_MIN }} caracteres ({{ COMMENT_MIN - commentLength }} restantes)</span>
+              <span v-if="commentTooShort" class="text-xs text-red-500 font-bold">Mínimo {{ COMMENT_MIN }} carácteres ({{ COMMENT_MIN - commentLength }} restantes)</span>
               <span v-else class="text-xs text-green-600 font-bold">✓ Listo</span>
               <span class="text-xs text-[#adaaad] font-bold">{{ commentLength }} / {{ COMMENT_MAX }} MAX</span>
             </div>
@@ -300,7 +300,7 @@ const hoveredPrice = ref(0);
 
           <!-- Upload de imagen real -->
           <div>
-            <label class="font-bold text-[#0e0e10] mb-2 block brand">Añadir Evidencia (Opcional)</label>
+            <label class="font-bold text-[#0e0e10] mb-2 block brand">Añadir Fotografías (Opcional)</label>
             <div
               v-if="uploadedImages.length === 0"
               class="border-2 border-dashed border-orange-500/30 rounded-2xl bg-orange-500/5 hover:bg-orange-500/10 transition-colors p-8 text-center cursor-pointer relative"

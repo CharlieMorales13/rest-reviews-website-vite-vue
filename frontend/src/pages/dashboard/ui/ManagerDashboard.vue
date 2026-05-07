@@ -109,7 +109,7 @@ function formatDate(iso: string): string {
 
 function goToReview(reviewId: string) {
   showCriticalModal.value = false;
-  router.push(`/manager/mi-establecimiento?highlight=${reviewId}`);
+  router.push({ path: '/manager/resenas', query: { highlight: reviewId } });
 }
 
 const criticalLabel = computed(() => {
@@ -545,15 +545,16 @@ onMounted(() => loadMetrics());
 
           <!-- Pills -->
           <div v-else class="flex flex-wrap gap-3 mt-4">
-            <span
+            <button
               v-for="term in sortedNegativeTerms"
               :key="term.term"
-              class="px-3 py-1.5 rounded-full inline-flex items-center"
+              class="px-3 py-1.5 rounded-full inline-flex items-center cursor-pointer transition-opacity hover:opacity-75"
               :class="tierClasses[termTier(term.mentions)]"
               :style="{ fontSize: `clamp(0.8rem, ${0.8 + (term.mentions / maxMentions) * 0.8}rem, 1.6rem)` }"
+              @click="router.push({ path: '/manager/resenas', query: { q: term.term } })"
             >
               {{ term.term.toLowerCase() }}<sup class="text-[10px] ml-0.5 opacity-60">{{ term.mentions }}</sup>
-            </span>
+            </button>
           </div>
         </div>
       </section>

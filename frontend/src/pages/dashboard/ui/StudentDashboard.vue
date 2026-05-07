@@ -64,7 +64,7 @@ const navigateToEstablishment = (slug: string) => {
                 <span class="text-orange-500">¿Tienes hambre?</span>
             </h1>
             <p class="text-[#525155] text-lg font-bold max-w-md mb-8 animate-appear delay-200">
-                Tu voz define el estándar. Evalúa los servicios del campus y exige la calidad que la comunidad Anáhuac merece.
+                Tu voz define el estándar. Califica a los establecimientos de comida de tu universidad y exige la calidad que la comunidad Anáhuac merece.
             </p>
             <div class="animate-appear delay-300">
                 <RouterLink
