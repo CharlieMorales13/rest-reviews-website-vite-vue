@@ -2,7 +2,12 @@ import { Router } from "express";
 import { container } from "../../config/container";
 import { ReviewController } from "../controllers/ReviewController";
 import { authenticateToken, requireRole } from "../middlewares/AuthMiddleware";
-import { reviewRateLimiter } from "../middlewares/RateLimitMiddleware";
+import {
+  reviewRateLimiter,
+  reviewMutationRateLimiter,
+  likeRateLimiter,
+  replyRateLimiter,
+} from "../middlewares/RateLimitMiddleware";
 
 const reviewRouter = Router();
 
@@ -49,30 +54,35 @@ reviewRouter.patch(
   "/:id",
   authenticateToken,
   requireRole(["student"]),
+  reviewMutationRateLimiter,
   reviewController.updateUserReview,
 );
 reviewRouter.delete(
   "/:id",
   authenticateToken,
   requireRole(["student"]),
+  reviewMutationRateLimiter,
   reviewController.deleteUserReview,
 );
 reviewRouter.patch(
   "/:id/reply",
   authenticateToken,
   requireRole(["admin", "manager"]),
+  replyRateLimiter,
   reviewController.reply,
 );
 reviewRouter.post(
   "/:id/like",
   authenticateToken,
   requireRole(["student"]),
+  likeRateLimiter,
   reviewController.likeReview,
 );
 reviewRouter.delete(
   "/:id/like",
   authenticateToken,
   requireRole(["student"]),
+  likeRateLimiter,
   reviewController.unlikeReview,
 );
 
