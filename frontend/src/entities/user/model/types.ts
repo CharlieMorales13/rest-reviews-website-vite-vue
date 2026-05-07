@@ -34,11 +34,7 @@ export interface RegisterResponse {
 
 export interface LoginResponse {
   success: boolean;
-  data: {
-    user: User;
-    token: string;
-    refreshToken: string;
-  };
+  data: { user: User };
 }
 
 export interface VerifyRequest {
@@ -48,9 +44,5 @@ export interface VerifyRequest {
 
 export interface VerifyResponse {
   success: boolean;
-  data: {
-    user: User;
-    token: string;
-    refreshToken: string;
-  };
+  data: { user: User };
 }

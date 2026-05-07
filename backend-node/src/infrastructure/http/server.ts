@@ -2,6 +2,7 @@ import "reflect-metadata"; // Must be imported before everything else for DI to 
 import express, { Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
+import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import swaggerUi from "swagger-ui-express";
 import cron from "node-cron";
@@ -36,6 +37,7 @@ const allowedOrigins =
         .filter(Boolean)
     : ["http://localhost:5173", "http://localhost:4173"];
 app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(cookieParser());
 app.use(express.json());
 
 // Replace Morgan with Pino for structured logging

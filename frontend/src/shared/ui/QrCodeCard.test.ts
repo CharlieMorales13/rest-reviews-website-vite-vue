@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import QrCodeCard from './QrCodeCard.vue';
+import QRCodeStyling from 'qr-code-styling';
 
 const mockQrInstance = {
   append: vi.fn(),
@@ -16,11 +17,11 @@ vi.mock('qr-code-styling', () => ({
 describe('QrCodeCard', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('displays the QR link URL containing the slug', () => {
+  it('renders the card header with QR title', () => {
     const wrapper = mount(QrCodeCard, {
       props: { slug: 'cuckoo-box', establishmentName: 'Cuckoo Box' },
     });
-    expect(wrapper.find('.font-mono').text()).toContain('/r/cuckoo-box');
+    expect(wrapper.text()).toContain('Tu QR de Reseñas');
   });
 
   it('shows the download PNG button', () => {
@@ -49,11 +50,11 @@ describe('QrCodeCard', () => {
     expect(mockQrInstance.append).toHaveBeenCalled();
   });
 
-  it('URL in chip uses window.location.origin as base', () => {
-    const wrapper = mount(QrCodeCard, {
+  it('passes the correct QR URL data including slug to qr-code-styling', () => {
+    mount(QrCodeCard, {
       props: { slug: 'cuckoo-coffee', establishmentName: 'Cuckoo Coffee' },
     });
-    const chipText = wrapper.find('.font-mono').text();
-    expect(chipText).toMatch(/^https?:\/\/.+\/r\/cuckoo-coffee$/);
+    const callArg = vi.mocked(QRCodeStyling).mock.calls.at(-1)?.[0] as { data?: string } | undefined;
+    expect(callArg?.data).toMatch(/\/r\/cuckoo-coffee$/);
   });
 });
