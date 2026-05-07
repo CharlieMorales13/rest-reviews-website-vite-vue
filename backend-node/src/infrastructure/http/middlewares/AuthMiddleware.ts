@@ -18,7 +18,9 @@ export const authenticateToken = (
   // Prefer HttpOnly cookie; fall back to Authorization header for API clients / Swagger
   const cookieToken = (req.cookies as Record<string, string>)?.access_token;
   const authHeader = req.headers["authorization"];
-  const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : undefined;
+  const bearerToken = authHeader?.startsWith("Bearer ")
+    ? authHeader.split(" ")[1]
+    : undefined;
   const token = cookieToken ?? bearerToken;
 
   if (!token) {
@@ -60,9 +62,14 @@ export const optionalAuth = (
 ): void => {
   const cookieToken = (req.cookies as Record<string, string>)?.access_token;
   const authHeader = req.headers["authorization"];
-  const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : undefined;
+  const bearerToken = authHeader?.startsWith("Bearer ")
+    ? authHeader.split(" ")[1]
+    : undefined;
   const token = cookieToken ?? bearerToken;
-  if (!token) { next(); return; }
+  if (!token) {
+    next();
+    return;
+  }
   try {
     const decoded = jwt.verify(token, env.JWT_SECRET) as AuthRequest["user"];
     req.user = decoded;

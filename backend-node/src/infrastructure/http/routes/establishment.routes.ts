@@ -27,7 +27,11 @@ establishmentRouter.get(
   optionalAuth,
   reviewController.getByEstablishment,
 );
-establishmentRouter.get("/:slug/posts", publicReadRateLimiter, postController.list);
+establishmentRouter.get(
+  "/:slug/posts",
+  publicReadRateLimiter,
+  postController.list,
+);
 
 // Protected Routes
 establishmentRouter.post(

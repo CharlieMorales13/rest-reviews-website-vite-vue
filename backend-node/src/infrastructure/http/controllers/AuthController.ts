@@ -16,7 +16,7 @@ import { injectable, inject } from "tsyringe";
 import { env } from "../../config/env.config";
 
 // ── Cookie helpers ────────────────────────────────────────────────────────────
-const ACCESS_TTL  = 60 * 60 * 1000;          // 1 hour
+const ACCESS_TTL = 60 * 60 * 1000; // 1 hour
 const REFRESH_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 function cookieBase(): CookieOptions {
@@ -29,13 +29,16 @@ function cookieBase(): CookieOptions {
 }
 
 function setAuthCookies(res: Response, token: string, refreshToken: string) {
-  res.cookie("access_token",  token,        { ...cookieBase(), maxAge: ACCESS_TTL });
-  res.cookie("refresh_token", refreshToken, { ...cookieBase(), maxAge: REFRESH_TTL });
+  res.cookie("access_token", token, { ...cookieBase(), maxAge: ACCESS_TTL });
+  res.cookie("refresh_token", refreshToken, {
+    ...cookieBase(),
+    maxAge: REFRESH_TTL,
+  });
 }
 
 function clearAuthCookies(res: Response) {
   const opts = cookieBase();
-  res.clearCookie("access_token",  opts);
+  res.clearCookie("access_token", opts);
   res.clearCookie("refresh_token", opts);
 }
 

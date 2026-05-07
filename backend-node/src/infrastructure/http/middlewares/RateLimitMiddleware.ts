@@ -7,7 +7,10 @@ import { AuthRequest } from "./AuthMiddleware";
 export const loginRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 30,
-  message: { success: false, error: "Too many login attempts. Try again in 15 minutes." },
+  message: {
+    success: false,
+    error: "Too many login attempts. Try again in 15 minutes.",
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -16,7 +19,10 @@ export const loginRateLimiter = rateLimit({
 export const registerRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 10,
-  message: { success: false, error: "Too many registration attempts. Try again later." },
+  message: {
+    success: false,
+    error: "Too many registration attempts. Try again later.",
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -26,7 +32,10 @@ export const verifyEmailRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
   keyGenerator: (req) => (req.body?.email as string) ?? req.ip ?? "unknown",
-  message: { success: false, error: "Too many verification attempts. Try again in 15 minutes." },
+  message: {
+    success: false,
+    error: "Too many verification attempts. Try again in 15 minutes.",
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -36,7 +45,10 @@ export const resendVerificationRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 3,
   keyGenerator: (req) => (req.body?.email as string) ?? req.ip ?? "unknown",
-  message: { success: false, error: "Too many resend requests. Try again in 1 hour." },
+  message: {
+    success: false,
+    error: "Too many resend requests. Try again in 1 hour.",
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -48,7 +60,11 @@ export const reviewRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 10,
   keyGenerator: (req) => (req as AuthRequest).user?.userId ?? "unauthenticated",
-  message: { success: false, message: "Has alcanzado el límite de reseñas por hora. Inténtalo más tarde." },
+  message: {
+    success: false,
+    message:
+      "Has alcanzado el límite de reseñas por hora. Inténtalo más tarde.",
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -78,7 +94,10 @@ export const replyRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 20,
   keyGenerator: (req) => (req as AuthRequest).user?.userId ?? "unauthenticated",
-  message: { success: false, error: "Too many reply attempts. Try again later." },
+  message: {
+    success: false,
+    error: "Too many reply attempts. Try again later.",
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -90,7 +109,11 @@ export const uploadRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 20,
   keyGenerator: (req) => (req as AuthRequest).user?.userId ?? "unauthenticated",
-  message: { success: false, message: "Has alcanzado el límite de subidas por hora. Inténtalo más tarde." },
+  message: {
+    success: false,
+    message:
+      "Has alcanzado el límite de subidas por hora. Inténtalo más tarde.",
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -101,7 +124,10 @@ export const uploadRateLimiter = rateLimit({
 export const publicReadRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: { success: false, error: "Too many requests. Try again in 15 minutes." },
+  message: {
+    success: false,
+    error: "Too many requests. Try again in 15 minutes.",
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -113,7 +139,10 @@ export const authenticatedReadRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
   keyGenerator: (req) => (req as AuthRequest).user?.userId ?? "unauthenticated",
-  message: { success: false, error: "Too many requests. Try again in 15 minutes." },
+  message: {
+    success: false,
+    error: "Too many requests. Try again in 15 minutes.",
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -125,7 +154,10 @@ export const managerWriteRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 20,
   keyGenerator: (req) => (req as AuthRequest).user?.userId ?? "unauthenticated",
-  message: { success: false, error: "Too many write operations. Try again later." },
+  message: {
+    success: false,
+    error: "Too many write operations. Try again later.",
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -137,7 +169,10 @@ export const pipelineRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 5,
   keyGenerator: (req) => (req as AuthRequest).user?.userId ?? "unauthenticated",
-  message: { success: false, error: "Pipeline trigger limit reached. Try again in 1 hour." },
+  message: {
+    success: false,
+    error: "Pipeline trigger limit reached. Try again in 1 hour.",
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });

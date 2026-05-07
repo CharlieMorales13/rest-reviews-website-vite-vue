@@ -7,7 +7,12 @@ import { authenticatedReadRateLimiter } from "../middlewares/RateLimitMiddleware
 const notificationRouter = Router();
 const notificationController = container.resolve(NotificationController);
 
-notificationRouter.get("/", authenticateToken, authenticatedReadRateLimiter, notificationController.getAll);
+notificationRouter.get(
+  "/",
+  authenticateToken,
+  authenticatedReadRateLimiter,
+  notificationController.getAll,
+);
 notificationRouter.patch(
   "/:id/read",
   authenticateToken,
