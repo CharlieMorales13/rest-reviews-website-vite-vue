@@ -51,9 +51,13 @@ const handleResend = async () => {
 };
 
 function maskEmail(e: string): string {
-  const [local, domain] = e.split('@');
-  if (!domain) return e;
-  const masked = local.length <= 2 ? local[0] + '*' : local[0] + '*'.repeat(local.length - 2) + local[local.length - 1];
+  const atIdx = e.indexOf('@');
+  if (atIdx <= 0) return e;
+  const local = e.slice(0, atIdx);
+  const domain = e.slice(atIdx + 1);
+  const first = local.charAt(0);
+  const last = local.charAt(local.length - 1);
+  const masked = local.length <= 2 ? first + '*' : first + '*'.repeat(local.length - 2) + last;
   return `${masked}@${domain}`;
 }
 </script>

@@ -35,8 +35,8 @@ async function fillFormAsNonStudent(wrapper: ReturnType<typeof mount>) {
   await nextTick();
 
   const textInputs = wrapper.findAll('input[type="text"]').filter(i => !i.attributes('disabled'));
-  await textInputs[0].setValue('Carlos Test');
-  await textInputs[1].setValue('carlos_test');
+  await textInputs[0]!.setValue('Carlos Test');
+  await textInputs[1]!.setValue('carlos_test');
 
   await wrapper.find('input[type="email"]').setValue('carlos@anahuac.mx');
   await wrapper.find('input[type="password"]').setValue('password123');

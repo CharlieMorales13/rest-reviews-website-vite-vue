@@ -63,7 +63,7 @@ describe('QrRedirectPage', () => {
     mockAuthStore.userRole = 'student';
     mount(QrRedirectPage);
     await new Promise(r => setTimeout(r, 10));
-    const call = mockReplace.mock.calls[0][0] as string;
+    const call = (mockReplace.mock.calls[0] as unknown[])[0] as string;
     expect(call).toContain('cuckoo-box');
   });
 });
