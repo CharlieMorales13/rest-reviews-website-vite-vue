@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { ReviewService } from '@/entities/review/api/ReviewService';
 import { useAuthStore } from '@/entities/user/model/authStore';
 import ReviewCard from '@/shared/ui/ReviewCard.vue';
@@ -8,12 +9,15 @@ import Pagination from '@/widgets/pagination/ui/Pagination.vue';
 import type { EstablishmentReview } from '@/entities/review/model/types';
 import type { Establishment } from '@/entities/review/model/types';
 
+const route = useRoute();
+const router = useRouter();
 const authStore = useAuthStore();
 
 const est = ref<Establishment | null>(null);
 const reviews = ref<EstablishmentReview[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+const highlightedId = ref<string | null>(null);
 
 const searchQuery = ref('');
 const sentimentFilter = ref<'all' | 'positive' | 'neutral' | 'negative'>('all');
@@ -62,7 +66,13 @@ const handleReplySent = (payload: { reviewId: string; reply: string }) => {
   selectedReview.value = null;
 };
 
-// ── Fetch ──────────────────────────────────────────────────────────────────────
+const clearFilters = () => {
+  searchQuery.value = '';
+  sentimentFilter.value = 'all';
+  router.replace({ query: {} });
+};
+
+// ── Fetch + apply query params ─────────────────────────────────────────────────
 onMounted(async () => {
   loading.value = true;
   error.value = null;
@@ -76,6 +86,24 @@ onMounted(async () => {
     est.value = mine;
     const result = await ReviewService.getEstablishmentReviews(mine.slug, 1, 500);
     reviews.value = result.data;
+
+    // Apply query params after data is loaded
+    const qParam = route.query.q as string | undefined;
+    const sentimentParam = route.query.sentiment as string | undefined;
+    const highlightParam = route.query.highlight as string | undefined;
+
+    if (qParam) searchQuery.value = qParam;
+    if (sentimentParam && ['positive', 'neutral', 'negative'].includes(sentimentParam)) {
+      sentimentFilter.value = sentimentParam as typeof sentimentFilter.value;
+    }
+    if (highlightParam) {
+      highlightedId.value = highlightParam;
+      const idx = reviews.value.findIndex(r => r.id === highlightParam);
+      if (idx > 0) {
+        const [highlighted] = reviews.value.splice(idx, 1);
+        if (highlighted) reviews.value.unshift(highlighted);
+      }
+    }
   } catch {
     error.value = 'Error al cargar las reseñas.';
   } finally {
@@ -115,6 +143,22 @@ onMounted(async () => {
     </div>
 
     <template v-else>
+      <!-- Active filter banner (when arriving from dashboard) -->
+      <div
+        v-if="searchQuery || sentimentFilter !== 'all'"
+        class="flex items-center justify-between gap-3 mb-4 px-4 py-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-sm"
+      >
+        <span class="text-orange-300 flex items-center gap-2">
+          <span class="material-symbols-outlined text-base">filter_alt</span>
+          Mostrando resultados para
+          <strong v-if="searchQuery" class="text-orange-400">"{{ searchQuery }}"</strong>
+          <strong v-if="sentimentFilter !== 'all'" class="text-orange-400 capitalize">{{ sentimentFilter }}</strong>
+        </span>
+        <button @click="clearFilters" class="text-xs text-orange-400 hover:text-orange-200 underline flex-shrink-0">
+          Limpiar
+        </button>
+      </div>
+
       <!-- Filters -->
       <div class="flex flex-col sm:flex-row gap-3 mb-6">
         <div class="relative flex-1">
@@ -148,14 +192,23 @@ onMounted(async () => {
         <p class="text-[#adaaad] text-sm">
           {{ reviews.length === 0 ? 'Tu establecimiento aún no tiene reseñas.' : 'No hay reseñas que coincidan con los filtros.' }}
         </p>
-        <button v-if="searchQuery || sentimentFilter !== 'all'" @click="searchQuery = ''; sentimentFilter = 'all'" class="mt-3 text-xs text-orange-400 hover:text-orange-300 underline">
+        <button
+          v-if="searchQuery || sentimentFilter !== 'all'"
+          @click="clearFilters"
+          class="mt-3 text-xs text-orange-400 hover:text-orange-300 underline"
+        >
           Limpiar filtros
         </button>
       </div>
 
       <!-- List -->
       <div v-else class="space-y-4">
-        <div v-for="review in paginatedReviews" :key="review.id" class="relative">
+        <div
+          v-for="review in paginatedReviews"
+          :key="review.id"
+          class="relative rounded-3xl transition-all duration-500"
+          :class="highlightedId === review.id ? 'ring-2 ring-orange-500/60 ring-offset-2 ring-offset-[#0e0e10]' : ''"
+        >
           <ReviewCard
             :review="review"
             :show-author="true"
