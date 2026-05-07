@@ -83,20 +83,9 @@ const downloadPng = async () => {
       </p>
     </div>
 
-    <!-- QR Canvas -->
-    <div class="flex justify-center">
-      <div
-        class="rounded-2xl overflow-hidden bg-white p-4 shadow-[0_8px_32px_rgba(0,0,0,0.4)] ring-1 ring-white/10"
-        style="display:inline-block;"
-      >
-        <div ref="containerRef" />
-      </div>
-    </div>
-
-    <!-- URL chip -->
-    <div class="flex items-center gap-2 bg-white/5 rounded-xl px-4 py-2.5 border border-white/10">
-      <span class="material-symbols-outlined text-orange-500 text-base flex-shrink-0">link</span>
-      <span class="text-xs text-[#adaaad] font-mono truncate">{{ qrUrl }}</span>
+    <!-- QR Canvas (oculto — necesario para que la descarga funcione) -->
+    <div class="hidden" aria-hidden="true">
+      <div ref="containerRef" />
     </div>
 
     <!-- Download button -->

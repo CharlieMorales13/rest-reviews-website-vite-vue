@@ -50,7 +50,7 @@ export class LoginUserUseCase {
     const token = jwt.sign(
       { userId: user.id, role: user.role, email: user.email },
       env.JWT_SECRET,
-      { expiresIn: "24h" },
+      { expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"] },
     );
 
     const refreshToken = jwt.sign(
