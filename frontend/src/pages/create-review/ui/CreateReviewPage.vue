@@ -3,7 +3,6 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { uploadImage } from '@/shared/api/uploadImage';
 import { ReviewService } from '@/entities/review/api/ReviewService';
-import { useToast } from '@/shared/lib/useToast';
 
 const route = useRoute();
 const router = useRouter();
@@ -34,7 +33,6 @@ const loading = ref(false);
 const success = ref(false);
 const error = ref<string | null>(null);
 const showTips = ref(false);
-const toast = useToast();
 
 const TITLE_MIN = 5;
 const TITLE_MAX = 100;
@@ -129,8 +127,7 @@ const submitReview = async () => {
       imageUrl,
     });
     success.value = true;
-    toast.success('¡Evaluación enviada con éxito!');
-    setTimeout(() => router.push(`/establishments/${establishmentSlug}`), 1800);
+    setTimeout(() => router.push(`/establishments/${establishmentSlug}`), 2000);
   } catch (e: unknown) {
     if (e && typeof e === 'object' && 'response' in e) {
       const axiosErr = e as { response?: { status?: number; data?: { message?: string } } };
@@ -365,15 +362,18 @@ const hoveredPrice = ref(0);
               :disabled="!formValid || uploadedImages.some(img => img.uploading) || loading || success"
               class="relative overflow-hidden font-bold text-white shadow-lg transition-all duration-500 flex items-center justify-center disabled:cursor-not-allowed"
               :class="success
-                ? 'w-16 h-16 rounded-full bg-green-500 shadow-green-500/40'
+                ? 'w-full py-5 rounded-2xl bg-green-500 shadow-green-500/40'
                 : loading
                   ? 'w-16 h-16 rounded-full bg-gradient-to-r from-orange-500 to-amber-500'
                   : 'w-full py-5 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:shadow-orange-500/30 hover:-translate-y-1 disabled:opacity-50 disabled:transform-none'"
             >
               <!-- Spinner -->
               <span v-if="loading && !success" class="w-6 h-6 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
-              <!-- Checkmark -->
-              <span v-else-if="success" class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1;">check</span>
+              <!-- Éxito -->
+              <span v-else-if="success" class="flex items-center gap-2">
+                <span class="material-symbols-outlined font-bold" style="font-variation-settings:'FILL' 1;">check_circle</span>
+                ¡RESEÑA PUBLICADA CON ÉXITO!
+              </span>
               <!-- Default -->
               <span v-else class="flex items-center gap-2">
                 <span class="material-symbols-outlined font-bold">send</span>
