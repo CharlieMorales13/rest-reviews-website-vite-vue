@@ -48,7 +48,7 @@ export class VerifyEmailUseCase {
     const token = jwt.sign(
       { userId: user.id, role: user.role, email: user.email },
       env.JWT_SECRET,
-      { expiresIn: env.JWT_EXPIRES_IN },
+      { expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"] },
     );
 
     const refreshToken = jwt.sign(
