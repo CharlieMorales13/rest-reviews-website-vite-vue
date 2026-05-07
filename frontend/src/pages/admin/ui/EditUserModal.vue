@@ -145,7 +145,6 @@ const submit = async () => {
             </div>
           </Transition>
 
-          <!-- Active status -->
           <div class="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
             <div>
               <p class="text-sm font-bold text-white">Estado de la cuenta</p>
@@ -161,8 +160,8 @@ const submit = async () => {
             >
               <span
                 :class="[
-                  'absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform',
-                  form.isActive ? 'translate-x-6' : 'translate-x-0.5'
+                  'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform',
+                  form.isActive ? 'translate-x-6' : 'translate-x-0'
                 ]"
               />
             </button>
