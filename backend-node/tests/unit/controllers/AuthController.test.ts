@@ -1,6 +1,15 @@
 import 'reflect-metadata';
 import { describe, it, expect, vi } from 'vitest';
 import { Request, Response } from 'express';
+
+vi.mock('@/infrastructure/config/env.config', () => ({
+  env: {
+    JWT_SECRET: 'test-secret-key-for-unit-tests',
+    RESEND_API_KEY: 'test-resend-key',
+    EMAIL_FROM: 'test@test.com',
+  },
+}));
+
 import { AuthController } from '@/infrastructure/http/controllers/AuthController';
 
 describe('AuthController', () => {

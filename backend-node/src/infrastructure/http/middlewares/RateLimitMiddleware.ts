@@ -53,6 +53,39 @@ export const reviewRateLimiter = rateLimit({
 });
 
 /**
+ * Rate limiter for email verification attempts.
+ * Keyed by email — limits to 5 attempts per 15 min per email.
+ * Campus shared IP requires per-email keying.
+ */
+export const verifyEmailRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  keyGenerator: (req) => (req.body?.email as string) ?? req.ip ?? "unknown",
+  message: {
+    success: false,
+    error: "Too many verification attempts. Try again in 15 minutes.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+/**
+ * Rate limiter for verification code resends.
+ * Keyed by email — limits to 3 resends per hour per email.
+ */
+export const resendVerificationRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  keyGenerator: (req) => (req.body?.email as string) ?? req.ip ?? "unknown",
+  message: {
+    success: false,
+    error: "Too many resend requests. Try again in 1 hour.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+/**
  * Rate limiter for file uploads.
  * Keyed by user ID — limits to 20 uploads per hour per user.
  * Must be placed AFTER authenticateToken middleware.

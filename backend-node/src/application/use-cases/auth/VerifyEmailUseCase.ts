@@ -1,13 +1,12 @@
 import { injectable, inject } from "tsyringe";
 import { IUserRepository } from "../../../domain/repositories/IUserRepository";
-import { LoginUserDTO } from "../../dtos/AuthDTO";
+import { VerifyEmailDTO } from "../../dtos/AuthDTO";
 import { AppError } from "../../../infrastructure/http/errors/AppError";
-import * as argon2 from "argon2";
 import * as jwt from "jsonwebtoken";
 import { env } from "../../../infrastructure/config/env.config";
 import prisma from "../../../infrastructure/database/prisma.service";
 
-interface LoginResponse {
+interface VerifyEmailResponse {
   user: {
     id: string;
     email: string;
@@ -20,32 +19,31 @@ interface LoginResponse {
 }
 
 @injectable()
-export class LoginUserUseCase {
+export class VerifyEmailUseCase {
   constructor(
     @inject("IUserRepository") private userRepository: IUserRepository,
   ) {}
 
-  async execute(dto: LoginUserDTO): Promise<LoginResponse> {
-    const byEmail = await this.userRepository.findByEmail(dto.email);
-    const user =
-      byEmail ?? (await this.userRepository.findByUsername(dto.email));
-
-    if (!user || !user.isActive || !user.id) {
-      throw new AppError("Invalid credentials or inactive account", 401);
+  async execute(dto: VerifyEmailDTO): Promise<VerifyEmailResponse> {
+    const user = await this.userRepository.findByEmail(dto.email);
+    if (!user || !user.id) {
+      throw new AppError("Invalid verification attempt", 400);
     }
 
-    if (!user.isVerified) {
-      throw new AppError("EMAIL_NOT_VERIFIED", 403);
+    if (user.isVerified) {
+      throw new AppError("Email already verified", 400);
     }
 
-    const isPasswordValid = await argon2.verify(
-      user.passwordHash,
-      dto.password,
-    );
-
-    if (!isPasswordValid) {
-      throw new AppError("Invalid credentials", 401);
+    if (!user.verificationCode || user.verificationCode !== dto.code) {
+      throw new AppError("Invalid verification code", 400);
     }
+
+    if (!user.verificationExpires || user.verificationExpires < new Date()) {
+      throw new AppError("Verification code has expired", 400);
+    }
+
+    user.verify();
+    await this.userRepository.update(user);
 
     const token = jwt.sign(
       { userId: user.id, role: user.role, email: user.email },
@@ -63,11 +61,7 @@ export class LoginUserUseCase {
     expiresAt.setDate(expiresAt.getDate() + 30);
 
     await prisma.userSession.create({
-      data: {
-        userId: user.id,
-        refreshToken,
-        expiresAt,
-      },
+      data: { userId: user.id, refreshToken, expiresAt },
     });
 
     return {
