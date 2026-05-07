@@ -33,8 +33,13 @@ const sentimentOptions = [
 
 const filteredReviews = computed(() => {
   let list = reviews.value;
-  const q = searchQuery.value.trim().toLowerCase();
-  if (q) list = list.filter(r => r.comment?.toLowerCase().includes(q) || r.author?.toLowerCase().includes(q));
+  const words = searchQuery.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (words.length) {
+    list = list.filter(r => {
+      const text = `${r.comment ?? ''} ${r.title ?? ''} ${r.author ?? ''}`.toLowerCase();
+      return words.every(w => text.includes(w));
+    });
+  }
   if (sentimentFilter.value !== 'all') list = list.filter(r => r.sentiment === sentimentFilter.value);
   return list;
 });
