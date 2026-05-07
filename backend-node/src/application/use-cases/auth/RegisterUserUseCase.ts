@@ -6,6 +6,7 @@ import { AppError } from "../../../infrastructure/http/errors/AppError";
 import * as argon2 from "argon2";
 import * as jwt from "jsonwebtoken";
 import { env } from "../../../infrastructure/config/env.config";
+import prisma from "../../../infrastructure/database/prisma.service";
 
 interface RegisterResponse {
   user: {
@@ -16,6 +17,7 @@ interface RegisterResponse {
     username: string;
   };
   token: string;
+  refreshToken: string;
 }
 
 @injectable()
@@ -61,6 +63,23 @@ export class RegisterUserUseCase {
       { expiresIn: "24h" },
     );
 
+    const refreshToken = jwt.sign(
+      { userId: savedUser.id, type: "refresh" },
+      env.JWT_SECRET,
+      { expiresIn: "30d" },
+    );
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+
+    await prisma.userSession.create({
+      data: {
+        userId: savedUser.id,
+        refreshToken,
+        expiresAt,
+      },
+    });
+
     return {
       user: {
         id: savedUser.id,
@@ -70,6 +89,7 @@ export class RegisterUserUseCase {
         role: savedUser.role,
       },
       token,
+      refreshToken,
     };
   }
 }

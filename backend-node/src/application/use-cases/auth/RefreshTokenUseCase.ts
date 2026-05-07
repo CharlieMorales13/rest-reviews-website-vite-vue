@@ -66,11 +66,11 @@ export class RefreshTokenUseCase {
     const newRefreshToken = jwt.sign(
       { userId: user.id, type: "refresh" },
       env.JWT_SECRET,
-      { expiresIn: "7d" },
+      { expiresIn: "30d" },
     );
 
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
+    expiresAt.setDate(expiresAt.getDate() + 30);
 
     await prisma.userSession.create({
       data: {

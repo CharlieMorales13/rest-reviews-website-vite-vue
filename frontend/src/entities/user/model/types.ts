@@ -29,6 +29,7 @@ export interface RegisterResponse {
   data: {
     user: User;
     token: string;
+    refreshToken: string;
   };
 }
 
@@ -37,6 +38,7 @@ export interface LoginResponse {
   data: {
     user: User;
     token: string;
+    refreshToken: string;
   };
 }
 
