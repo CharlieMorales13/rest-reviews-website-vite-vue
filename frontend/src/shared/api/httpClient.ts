@@ -4,18 +4,8 @@ import { useAuthStore } from '@/entities/user/model/authStore';
 
 export const httpClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// ── Request: inject JWT ─────────────────────────────────────────────────────
-httpClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+  withCredentials: true, // send HttpOnly cookies on every request
+  headers: { 'Content-Type': 'application/json' },
 });
 
 // Lazy singleton — avoids calling useAuthStore() before Pinia is installed
@@ -27,10 +17,10 @@ const getAuthStore = () => {
 
 // ── Response: silent token refresh on 401 ──────────────────────────────────
 let isRefreshing = false;
-let failedQueue: Array<{ resolve: (t: string) => void; reject: (e: unknown) => void }> = [];
+let failedQueue: Array<{ resolve: () => void; reject: (e: unknown) => void }> = [];
 
-const processQueue = (err: unknown, newToken: string | null = null) => {
-  failedQueue.forEach(p => err ? p.reject(err) : p.resolve(newToken!));
+const processQueue = (err: unknown) => {
+  failedQueue.forEach(p => (err ? p.reject(err) : p.resolve()));
   failedQueue = [];
 };
 
@@ -54,21 +44,17 @@ httpClient.interceptors.response.use(
 
     // If another refresh is already in flight, queue this request
     if (isRefreshing) {
-      return new Promise<string>((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         failedQueue.push({ resolve, reject });
-      }).then(newToken => {
-        original.headers.Authorization = `Bearer ${newToken}`;
-        return httpClient(original);
-      });
+      }).then(() => httpClient(original));
     }
 
     original._retry = true;
     isRefreshing = true;
 
     try {
-      const newToken = await getAuthStore().refreshSession();
-      processQueue(null, newToken);
-      original.headers.Authorization = `Bearer ${newToken}`;
+      await getAuthStore().refreshSession();
+      processQueue(null);
       return httpClient(original);
     } catch (refreshError) {
       processQueue(refreshError);

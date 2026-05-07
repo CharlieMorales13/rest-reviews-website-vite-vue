@@ -23,6 +23,7 @@ const envSchema = z.object({
     .string()
     .min(1, "RESEND_API_KEY is required for email verification"),
   EMAIL_FROM: z.string().default("Anáhuac EATS <noreply@anahuac-eats.com>"),
+  COOKIE_DOMAIN: z.string().optional(),
 });
 
 const parseEnv = () => {

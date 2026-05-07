@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, CookieOptions } from "express";
 import { RegisterUserUseCase } from "../../../application/use-cases/auth/RegisterUserUseCase";
 import { LoginUserUseCase } from "../../../application/use-cases/auth/LoginUserUseCase";
 import { RefreshTokenUseCase } from "../../../application/use-cases/auth/RefreshTokenUseCase";
@@ -8,12 +8,36 @@ import { ResendVerificationUseCase } from "../../../application/use-cases/auth/R
 import {
   RegisterUserSchema,
   LoginUserSchema,
-  RefreshTokenSchema,
   ChangePasswordSchema,
   VerifyEmailSchema,
   ResendVerificationSchema,
 } from "../../../application/dtos/AuthDTO";
 import { injectable, inject } from "tsyringe";
+import { env } from "../../config/env.config";
+
+// ── Cookie helpers ────────────────────────────────────────────────────────────
+const ACCESS_TTL  = 60 * 60 * 1000;          // 1 hour
+const REFRESH_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function cookieBase(): CookieOptions {
+  return {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: "strict",
+    ...(env.COOKIE_DOMAIN ? { domain: env.COOKIE_DOMAIN } : {}),
+  };
+}
+
+function setAuthCookies(res: Response, token: string, refreshToken: string) {
+  res.cookie("access_token",  token,        { ...cookieBase(), maxAge: ACCESS_TTL });
+  res.cookie("refresh_token", refreshToken, { ...cookieBase(), maxAge: REFRESH_TTL });
+}
+
+function clearAuthCookies(res: Response) {
+  const opts = cookieBase();
+  res.clearCookie("access_token",  opts);
+  res.clearCookie("refresh_token", opts);
+}
 
 import { AuthRequest } from "../middlewares/AuthMiddleware";
 import { GetUserUseCase } from "../../../application/use-cases/users/GetUserUseCase";
@@ -140,11 +164,8 @@ export class AuthController {
   ): Promise<void> => {
     const validatedData = LoginUserSchema.parse(req.body);
     const result = await this.loginUserUseCase.execute(validatedData);
-
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
+    setAuthCookies(res, result.token, result.refreshToken);
+    res.status(200).json({ success: true, data: { user: result.user } });
   };
 
   /**
@@ -193,13 +214,19 @@ export class AuthController {
     res: Response,
     _next: NextFunction,
   ): Promise<void> => {
-    const validatedData = RefreshTokenSchema.parse(req.body);
-    const result = await this.refreshTokenUseCase.execute(validatedData);
+    const refreshToken = (req.cookies as Record<string, string>)?.refresh_token;
+    if (!refreshToken) {
+      res.status(401).json({ success: false, error: "No refresh token" });
+      return;
+    }
+    const result = await this.refreshTokenUseCase.execute({ refreshToken });
+    setAuthCookies(res, result.token, result.refreshToken);
+    res.status(200).json({ success: true });
+  };
 
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
+  public logout = (_req: Request, res: Response): void => {
+    clearAuthCookies(res);
+    res.status(200).json({ success: true, message: "Logged out" });
   };
 
   public verifyEmail = async (
@@ -209,7 +236,8 @@ export class AuthController {
   ): Promise<void> => {
     const validatedData = VerifyEmailSchema.parse(req.body);
     const result = await this.verifyEmailUseCase.execute(validatedData);
-    res.status(200).json({ success: true, data: result });
+    setAuthCookies(res, result.token, result.refreshToken);
+    res.status(200).json({ success: true, data: { user: result.user } });
   };
 
   public resendVerification = async (

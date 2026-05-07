@@ -30,12 +30,12 @@ export class AuthService {
     await httpClient.post('/api/auth/resend-verification', { email });
   }
 
-  static async refresh(refreshToken: string): Promise<{ token: string; refreshToken: string }> {
-    const response = await httpClient.post<{ success: boolean; data: { token: string; refreshToken: string } }>(
-      '/api/auth/refresh',
-      { refreshToken },
-    );
-    return response.data.data;
+  static async refresh(): Promise<void> {
+    await httpClient.post('/api/auth/refresh');
+  }
+
+  static async logout(): Promise<void> {
+    await httpClient.post('/api/auth/logout');
   }
 
   static async getMe(): Promise<User> {
