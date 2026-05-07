@@ -66,13 +66,20 @@ const routes = [
       {
         path: 'profile',
         name: 'profile',
-        component: () => import('@/pages/profile/ui/ProfilePage.vue')
+        component: () => import('@/pages/profile/ui/ProfilePage.vue'),
+        meta: { roles: ['student'] }
       },
       {
         path: 'my-reviews',
         name: 'my-reviews',
         component: () => import('@/pages/profile/ui/MyReviewsPage.vue'),
         meta: { roles: ['student'] }
+      },
+      {
+        path: 'manager/resenas',
+        name: 'manager-reviews',
+        component: () => import('@/pages/manager-reviews/ui/ManagerReviewsPage.vue'),
+        meta: { roles: ['manager', 'admin'] }
       }
     ]
   }
