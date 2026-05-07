@@ -521,14 +521,25 @@ onMounted(() => loadMetrics());
             Términos negativos detectados por IA en las reseñas de tu establecimiento
           </p>
 
-          <!-- Empty state -->
+          <!-- Empty state: no reviews yet -->
           <div
-            v-if="sortedNegativeTerms.length === 0 || establishment.reviewCount === 0"
+            v-if="establishment.reviewCount === 0"
             class="flex flex-col items-center justify-center py-10 gap-3 text-center"
           >
             <span class="material-symbols-outlined text-4xl text-[#adaaad]/40" style="font-variation-settings: 'FILL' 1;">psychology</span>
             <p class="text-sm text-[#adaaad] max-w-xs">
-              El modelo aún no ha procesado reseñas. Ejecuta el pipeline desde el panel de administración.
+              Aún no tienes reseñas. Los tópicos aparecerán una vez que los estudiantes dejen sus opiniones.
+            </p>
+          </div>
+
+          <!-- Empty state: pipeline ran but not enough recurring negative terms -->
+          <div
+            v-else-if="sortedNegativeTerms.length === 0"
+            class="flex flex-col items-center justify-center py-10 gap-3 text-center"
+          >
+            <span class="material-symbols-outlined text-4xl text-[#adaaad]/40" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            <p class="text-sm text-[#adaaad] max-w-xs">
+              Sin patrones negativos recurrentes. Los términos aparecerán cuando el modelo detecte frases que se repitan en varias reseñas negativas.
             </p>
           </div>
 

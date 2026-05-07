@@ -39,7 +39,7 @@ _STOPWORDS: frozenset[str] = frozenset({
 
 _MIN_TERM_LENGTH = 4
 _TOP_N = 10
-_MIN_BIGRAMS_PER_COMMENT = 1
+_MIN_REVIEW_FREQUENCY = 2  # term must appear in at least this many distinct reviews
 
 
 class ExtractNegativeTermsUseCase:
@@ -51,42 +51,43 @@ class ExtractNegativeTermsUseCase:
         labels: List[str],
         top_n: int = _TOP_N,
     ) -> List[dict]:
-        """Return top-N most frequent bigrams found in negative reviews.
-
-        Falls back to unigrams for comments that yield no bigrams.
-
-        Returns
-        -------
-        List of dicts sorted by mentions descending:
-            [{"term": "comida fría", "mentions": 3}, ...]
+        """Return top-N bigrams that appear in at least _MIN_REVIEW_FREQUENCY distinct
+        negative reviews. Falls back to unigrams for comments with no bigrams.
+        Returns empty list when there are fewer negative reviews than the threshold.
         """
         negative_comments = [
             c for c, label in zip(comments, labels) if label == "negative"
         ]
 
-        if not negative_comments:
-            logger.debug("extract_negative_terms: no negative comments found")
+        if len(negative_comments) < _MIN_REVIEW_FREQUENCY:
+            logger.debug(
+                "extract_negative_terms: only %d negative comment(s) — "
+                "need at least %d to surface meaningful terms",
+                len(negative_comments),
+                _MIN_REVIEW_FREQUENCY,
+            )
             return []
 
-        counter: Counter = Counter()
+        # Count in how many distinct reviews each term appears
+        review_frequency: Counter = Counter()
         for comment in negative_comments:
             tokens = _tokenize(comment)
             bigrams = _extract_bigrams(tokens)
-            if bigrams:
-                counter.update(bigrams)
-            else:
-                # Fall back to unigrams for short or stopword-heavy comments
-                counter.update(tokens)
+            terms = bigrams if bigrams else tokens
+            # Use a set so a term repeated within one review counts only once
+            review_frequency.update(set(terms))
 
         top_terms = [
             {"term": term, "mentions": count}
-            for term, count in counter.most_common(top_n)
+            for term, count in review_frequency.most_common(top_n)
+            if count >= _MIN_REVIEW_FREQUENCY
         ]
 
         logger.info(
-            "extract_negative_terms: %d negative comments → top %d terms (bigrams)",
+            "extract_negative_terms: %d negative comments → top %d terms (min %d reviews)",
             len(negative_comments),
             len(top_terms),
+            _MIN_REVIEW_FREQUENCY,
         )
         return top_terms
 
