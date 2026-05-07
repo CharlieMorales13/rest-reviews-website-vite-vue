@@ -16,8 +16,8 @@ API REST construida con **TypeScript**, **Express** y **Clean Architecture**. Or
 | JWT + Argon2id | Autenticación + hashing |
 | Helmet + CORS | Seguridad HTTP |
 | Pino | Logging estructurado (JSON) |
+| node-cron | Tareas programadas (pipeline 2 AM) |
 | Swagger UI | Documentación (solo en desarrollo) |
-| node-cron | Tareas programadas |
 | Vitest | Tests unitarios |
 
 ---
@@ -75,14 +75,14 @@ npm install
 npm run dev       # ts-node-dev con hot reload
 npm run build     # compila a dist/
 npm run lint      # eslint
-npm test          # vitest (tests unitarios)
+npm test          # vitest
 ```
 
 ---
 
 ## Base de datos
 
-Schema en `prisma/schema.prisma`.
+Schema en `prisma/schema.prisma`. Referencia SQL en `database/sql/`.
 
 > **Importante:** `prisma db push` se cuelga con el pooler de Supabase. Flujo correcto:
 > 1. Aplicar DDL en **Supabase Dashboard → SQL Editor**
@@ -96,10 +96,16 @@ Schema en `prisma/schema.prisma`.
 |---|---|---|
 | `POST` | `/api/auth/register` | Público |
 | `POST` | `/api/auth/login` | Público |
+| `POST` | `/api/auth/refresh` | Público |
 | `GET` | `/api/establishments` | Autenticado |
 | `GET` | `/api/establishments/:slug` | Autenticado |
 | `GET` | `/api/establishments/:slug/reviews` | Autenticado |
 | `POST` | `/api/reviews` | `student` |
+| `PUT` | `/api/reviews/:id` | `student` (propias) |
+| `DELETE` | `/api/reviews/:id` | `student` (propias) |
+| `POST` | `/api/reviews/:id/reply` | `manager` |
+| `POST` | `/api/reviews/:id/like` | Autenticado |
+| `DELETE` | `/api/reviews/:id/like` | Autenticado |
 | `POST` | `/api/upload` | Autenticado |
 | `GET` | `/api/metrics/summary` | `manager`, `admin` |
 | `POST` | `/api/metrics/run` | `admin` |
@@ -115,9 +121,9 @@ Documentación completa en `/api/docs` (solo en desarrollo).
 - JWT sin fallback secret — `JWT_SECRET` es obligatorio
 - Argon2id para hashing de contraseñas
 - `userId` en reseñas forzado desde el JWT, nunca del body
-- Rate limiting: 5 intentos de login/15 min por IP, 10 reseñas/hora por usuario, 20 uploads/hora por usuario
+- Rate limiting: 30 req/15 min por IP en login, 10 reseñas/hora y 20 uploads/hora por `userId`
 - Moderación NSFW (Sightengine) antes de subir imágenes a Supabase Storage
-- Helmet con CSP y headers de seguridad
+- Helmet con headers de seguridad
 - CORS con orígenes explícitos en producción
 - Swagger deshabilitado en producción
 
@@ -125,14 +131,36 @@ Documentación completa en `/api/docs` (solo en desarrollo).
 
 ## Tareas programadas
 
-El pipeline de analytics corre automáticamente cada noche a las **2:00 AM** vía `node-cron`, sin intervención manual.
+El pipeline de analytics corre automáticamente cada noche a las **2:00 AM** vía `node-cron`. También puede ejecutarse manualmente desde el panel de admin (`POST /api/metrics/run`).
 
 ---
 
 ## Tests
 
 ```bash
-npm test                  # vitest — tests unitarios en tests/unit/
+npm test
 ```
 
-Cobertura actual: **>89%**. Los tests de integración requieren `.env` válido y se excluyen del CI.
+~90 tests unitarios + integración (vitest). Cobertura: domain entities, use cases, controllers, middlewares, DTOs.
+
+```typescript
+// Mockear env.config en tests de middleware para evitar process.exit(1)
+vi.mock('@/infrastructure/config/env.config', () => ({
+  env: { JWT_SECRET: 'test-secret-key-for-unit-tests' }
+}));
+```
+
+---
+
+## Git workflow
+
+Ver [flujo completo en el README raíz](../README.md#git-workflow). Resumen para este servicio:
+
+```bash
+git checkout -b feat/node-mi-feature
+# desarrollar + tests en el mismo commit
+git commit -m "feat(reviews): agregar endpoint de likes"
+git push origin feat/node-mi-feature
+```
+
+Scopes frecuentes en Node: `auth`, `reviews`, `establishments`, `metrics`, `notifications`, `admin`, `upload`.

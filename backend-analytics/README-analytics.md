@@ -70,7 +70,7 @@ Combina la confianza del transformer con las calificaciones de estrellas para co
 
 `weighted = food×0.5 + service×0.3 + price×0.2`
 
-Solo activa cuando los tres scores están presentes. Si falta alguno, retorna el output crudo del transformer.
+Solo activa cuando los tres scores están presentes.
 
 ---
 
@@ -108,8 +108,8 @@ Crea `backend-analytics/.env` desde `backend-analytics/.env.example`:
 
 ```bash
 python -m venv venv
-source venv/bin/activate     # Linux/Mac
 .\venv\Scripts\activate      # Windows
+source venv/bin/activate     # Linux/Mac
 
 pip install -r requirements.txt
 ```
@@ -127,6 +127,7 @@ uvicorn server:app --host 0.0.0.0 --port 8001 --reload
 ## API Endpoints
 
 ### `POST /predict`
+
 Protegido por `X-API-Key`. Llamado automáticamente por el backend Node en cada nueva reseña.
 
 ```json
@@ -144,7 +145,8 @@ Protegido por `X-API-Key`. Llamado automáticamente por el backend Node en cada 
 ```
 
 ### `POST /train`
-Protegido por `X-API-Key`. Pipeline completo: evalúa el modelo, clasifica todas las reseñas y genera snapshots IGE por establecimiento. Llamado por admin vía `POST /api/metrics/run` en el backend Node, y también automáticamente cada noche a las 2:00 AM.
+
+Protegido por `X-API-Key`. Pipeline completo: evalúa el modelo, clasifica todas las reseñas y genera snapshots IGE. Llamado por admin vía `POST /api/metrics/run` en el backend Node, y automáticamente cada noche a las 2:00 AM.
 
 ```json
 // Response
@@ -152,6 +154,7 @@ Protegido por `X-API-Key`. Pipeline completo: evalúa el modelo, clasifica todas
 ```
 
 ### `GET /health`
+
 ```json
 { "status": "ok", "model_loaded": true }
 ```
@@ -164,26 +167,20 @@ Protegido por `X-API-Key`. Pipeline completo: evalúa el modelo, clasifica todas
 
 ```bash
 # Linux/Mac
-python -m pytest tests/unit/ -v --cov
+python -m pytest tests/ -v
 
 # Windows
-venv\Scripts\python -m pytest tests/unit/ -v --cov
+venv\Scripts\python -m pytest tests/ -v
 ```
 
-**118 tests unitarios**, sin dependencias externas (DB y HuggingFace mockeados).
+~135 tests (unitarios + API). Sin dependencias externas — DB y HuggingFace mockeados.
 
-| Archivo | Qué cubre |
+| Directorio | Qué cubre |
 |---|---|
-| `test_transformer_pipeline.py` | `is_loaded`, `load_or_train`, `predict`, `evaluate` |
-| `test_predict_single_review.py` | `PredictSingleReviewUseCase` — modelo listo y no listo |
-| `test_sentiment_reconciler.py` | `SentimentReconciler` — todas las reglas y edge cases |
-| `test_use_cases.py` | `EvaluateModel`, `TrainModel`, `GenerateSnapshots`, `RunPipeline` |
-| `test_domain_services.py` | `IGECalculator` |
-| `test_entities.py` | Entidades de dominio |
-| `test_value_objects.py` | `IGEWeights`, `SentimentLabel` |
-| `test_training_data.py` | Integridad del dataset de evaluación |
+| `tests/unit/` | Dominio, use cases, ML pipeline |
+| `tests/api/` | Endpoints FastAPI |
 
-**Nota de patching:** HuggingFace `transformers` usa un lazy-loader (`_LazyModule`). Siempre parchear en el sitio de importación, no en el paquete fuente:
+**Nota de patching:** HuggingFace `transformers` usa un lazy-loader (`_LazyModule`). Siempre parchear en el sitio de importación:
 
 ```python
 # Correcto
@@ -192,3 +189,18 @@ venv\Scripts\python -m pytest tests/unit/ -v --cov
 # Incorrecto — no intercepta el lazy module
 @patch("transformers.pipeline")
 ```
+
+---
+
+## Git workflow
+
+Ver [flujo completo en el README raíz](../README.md#git-workflow). Resumen para este servicio:
+
+```bash
+git checkout -b feat/analytics-mi-feature
+# desarrollar + tests en el mismo commit
+git commit -m "feat(analytics): agregar endpoint de tendencias temporales"
+git push origin feat/analytics-mi-feature
+```
+
+Scopes frecuentes en analytics: `analytics`, `metrics`, `sentiment`.
