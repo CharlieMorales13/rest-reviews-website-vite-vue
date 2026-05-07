@@ -119,6 +119,14 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
           >
             Mi Establecimiento
           </router-link>
+          <router-link
+            v-if="authStore.user?.role === 'manager'"
+            to="/manager/resenas"
+            class="transition-colors border-b-2 pb-1 text-lg font-semibold"
+            :class="isActive('/manager/resenas') ? 'text-orange-500 font-bold border-orange-500' : 'text-[#adaaad] hover:text-white border-transparent'"
+          >
+            Reseñas
+          </router-link>
         </div>
 
         <!-- Desktop Right Actions -->
@@ -149,6 +157,7 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
                   <p class="text-xs text-[#adaaad] mt-0.5 capitalize">{{ authStore.user?.role || 'student' }}</p>
                 </div>
                 <router-link
+                  v-if="authStore.user?.role !== 'manager'"
                   to="/profile"
                   class="flex items-center gap-3 px-4 py-3 text-sm text-[#adaaad] hover:text-orange-400 hover:bg-white/5 transition-colors"
                   @click="showDropdown = false"
@@ -249,6 +258,16 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
               Mi Establecimiento
             </router-link>
             <router-link
+              v-if="authStore.user?.role === 'manager'"
+              to="/manager/resenas"
+              class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors"
+              :class="isActive('/manager/resenas') ? 'bg-orange-500/10 text-orange-400' : 'text-[#adaaad] hover:bg-white/5 hover:text-white'"
+            >
+              <span class="material-symbols-outlined text-base">rate_review</span>
+              Reseñas
+            </router-link>
+            <router-link
+              v-if="authStore.user?.role !== 'manager'"
               to="/profile"
               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors"
               :class="isActive('/profile') ? 'bg-orange-500/10 text-orange-400' : 'text-[#adaaad] hover:bg-white/5 hover:text-white'"
