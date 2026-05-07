@@ -35,29 +35,42 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  const register = async (request: RegisterRequest) => {
+  const register = async (request: RegisterRequest): Promise<{ email: string; maskedEmail: string }> => {
     loading.value = true;
     error.value = null;
     try {
       const response = await AuthService.register(request);
-      if (response.success && response.data) {
-        const newUser = response.data.user;
-        const newToken = response.data.token;
-        const newRefreshToken = response.data.refreshToken;
-
-        user.value = newUser;
-        token.value = newToken;
-
-        if (newToken) localStorage.setItem('token', newToken);
-        if (newRefreshToken) localStorage.setItem('refreshToken', newRefreshToken);
-        if (newUser) localStorage.setItem('user', JSON.stringify(newUser));
-      }
+      return response.data;
     } catch (err: unknown) {
       error.value = extractErrorMessage(err, 'Error occurred during registration');
       throw err;
     } finally {
       loading.value = false;
     }
+  };
+
+  const verifyEmail = async (email: string, code: string): Promise<void> => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await AuthService.verifyEmail({ email, code });
+      if (response.success && response.data) {
+        user.value = response.data.user;
+        token.value = response.data.token;
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('refreshToken', response.data.refreshToken);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+    } catch (err: unknown) {
+      error.value = extractErrorMessage(err, 'Error occurred during verification');
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const resendVerification = async (email: string): Promise<void> => {
+    await AuthService.resendVerification(email);
   };
 
   const logout = () => {
@@ -140,6 +153,8 @@ export const useAuthStore = defineStore('auth', () => {
     userRole,
     login,
     register,
+    verifyEmail,
+    resendVerification,
     logout,
     refreshSession,
     initAuth,

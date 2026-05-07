@@ -3,11 +3,15 @@ import { RegisterUserUseCase } from "../../../application/use-cases/auth/Registe
 import { LoginUserUseCase } from "../../../application/use-cases/auth/LoginUserUseCase";
 import { RefreshTokenUseCase } from "../../../application/use-cases/auth/RefreshTokenUseCase";
 import { ChangePasswordUseCase } from "../../../application/use-cases/auth/ChangePasswordUseCase";
+import { VerifyEmailUseCase } from "../../../application/use-cases/auth/VerifyEmailUseCase";
+import { ResendVerificationUseCase } from "../../../application/use-cases/auth/ResendVerificationUseCase";
 import {
   RegisterUserSchema,
   LoginUserSchema,
   RefreshTokenSchema,
   ChangePasswordSchema,
+  VerifyEmailSchema,
+  ResendVerificationSchema,
 } from "../../../application/dtos/AuthDTO";
 import { injectable, inject } from "tsyringe";
 
@@ -28,6 +32,9 @@ export class AuthController {
     @inject(UpdateUserUseCase) private updateUserUseCase: UpdateUserUseCase,
     @inject(ChangePasswordUseCase)
     private changePasswordUseCase: ChangePasswordUseCase,
+    @inject(VerifyEmailUseCase) private verifyEmailUseCase: VerifyEmailUseCase,
+    @inject(ResendVerificationUseCase)
+    private resendVerificationUseCase: ResendVerificationUseCase,
   ) {}
 
   /**
@@ -193,5 +200,25 @@ export class AuthController {
       success: true,
       data: result,
     });
+  };
+
+  public verifyEmail = async (
+    req: Request,
+    res: Response,
+    _next: NextFunction,
+  ): Promise<void> => {
+    const validatedData = VerifyEmailSchema.parse(req.body);
+    const result = await this.verifyEmailUseCase.execute(validatedData);
+    res.status(200).json({ success: true, data: result });
+  };
+
+  public resendVerification = async (
+    req: Request,
+    res: Response,
+    _next: NextFunction,
+  ): Promise<void> => {
+    const { email } = ResendVerificationSchema.parse(req.body);
+    await this.resendVerificationUseCase.execute(email);
+    res.status(200).json({ success: true, message: "Código reenviado" });
   };
 }

@@ -19,6 +19,8 @@ const envSchema = z.object({
   ANALYTICS_API_KEY: z.string().default(""),
   SIGHTENGINE_API_USER: z.string().optional(),
   SIGHTENGINE_API_SECRET: z.string().optional(),
+  RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required for email verification"),
+  EMAIL_FROM: z.string().default("Anáhuac EATS <noreply@anahuac-eats.com>"),
 });
 
 const parseEnv = () => {
