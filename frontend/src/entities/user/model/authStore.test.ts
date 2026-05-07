@@ -8,6 +8,7 @@ vi.mock('../api/AuthService', () => ({
   AuthService: {
     login: vi.fn(),
     register: vi.fn(),
+    refresh: vi.fn(),
     getMe: vi.fn(),
     updateMe: vi.fn(),
   },
@@ -49,6 +50,7 @@ function makeFakeToken(expOffsetSeconds = 3600): string {
   return `header.${payload}.signature`;
 }
 const fakeToken = makeFakeToken(); // valid for 1 hour
+const fakeRefreshToken = 'fake-refresh-token-xyz';
 
 describe('authStore', () => {
   beforeEach(() => {
@@ -90,7 +92,7 @@ describe('authStore', () => {
     beforeEach(() => {
       vi.mocked(AuthService.login).mockResolvedValue({
         success: true,
-        data: { user: fakeUser, token: fakeToken },
+        data: { user: fakeUser, token: fakeToken, refreshToken: fakeRefreshToken },
       });
     });
 
@@ -117,6 +119,12 @@ describe('authStore', () => {
       const store = useAuthStore();
       await store.login({ email: 'carlos@anahuac.mx', password: 'carloscarlos' });
       expect(localStorageMock.setItem).toHaveBeenCalledWith('token', fakeToken);
+    });
+
+    it('saves refreshToken to localStorage', async () => {
+      const store = useAuthStore();
+      await store.login({ email: 'carlos@anahuac.mx', password: 'carloscarlos' });
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('refreshToken', fakeRefreshToken);
     });
 
     it('saves user to localStorage', async () => {
@@ -168,7 +176,7 @@ describe('authStore', () => {
       vi.mocked(AuthService.register).mockResolvedValue({
         success: true,
         message: 'ok',
-        data: { user: fakeUser, token: fakeToken },
+        data: { user: fakeUser, token: fakeToken, refreshToken: fakeRefreshToken },
       });
     });
 
@@ -186,10 +194,11 @@ describe('authStore', () => {
       expect(store.token).toBe(fakeToken);
     });
 
-    it('saves to localStorage', async () => {
+    it('saves token and refreshToken to localStorage', async () => {
       const store = useAuthStore();
       await store.register({ name: 'Carlos', username: 'carlos_gomez', email: 'carlos@anahuac.mx', password: 'pw', carrera: 'ISC' });
       expect(localStorageMock.setItem).toHaveBeenCalledWith('token', fakeToken);
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('refreshToken', fakeRefreshToken);
       expect(localStorageMock.setItem).toHaveBeenCalledWith('user', JSON.stringify(fakeUser));
     });
   });
@@ -199,7 +208,7 @@ describe('authStore', () => {
     it('clears user to null', async () => {
       vi.mocked(AuthService.login).mockResolvedValue({
         success: true,
-        data: { user: fakeUser, token: fakeToken },
+        data: { user: fakeUser, token: fakeToken, refreshToken: fakeRefreshToken },
       });
       const store = useAuthStore();
       await store.login({ email: 'a@b.c', password: 'x' });
@@ -210,7 +219,7 @@ describe('authStore', () => {
     it('clears token to null', async () => {
       vi.mocked(AuthService.login).mockResolvedValue({
         success: true,
-        data: { user: fakeUser, token: fakeToken },
+        data: { user: fakeUser, token: fakeToken, refreshToken: fakeRefreshToken },
       });
       const store = useAuthStore();
       await store.login({ email: 'a@b.c', password: 'x' });
@@ -224,6 +233,12 @@ describe('authStore', () => {
       expect(localStorageMock.removeItem).toHaveBeenCalledWith('token');
     });
 
+    it('removes refreshToken from localStorage', () => {
+      const store = useAuthStore();
+      store.logout();
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('refreshToken');
+    });
+
     it('removes user from localStorage', () => {
       const store = useAuthStore();
       store.logout();
@@ -233,7 +248,7 @@ describe('authStore', () => {
     it('isAuthenticated is false after logout', async () => {
       vi.mocked(AuthService.login).mockResolvedValue({
         success: true,
-        data: { user: fakeUser, token: fakeToken },
+        data: { user: fakeUser, token: fakeToken, refreshToken: fakeRefreshToken },
       });
       const store = useAuthStore();
       await store.login({ email: 'a@b.c', password: 'x' });
@@ -242,62 +257,106 @@ describe('authStore', () => {
     });
   });
 
+  // ── refreshSession ──────────────────────────────────
+  describe('refreshSession', () => {
+    it('throws when there is no refresh token in localStorage', async () => {
+      const store = useAuthStore();
+      await expect(store.refreshSession()).rejects.toThrow('No refresh token available');
+    });
+
+    it('calls AuthService.refresh with the stored refresh token', async () => {
+      const newToken = makeFakeToken(3600);
+      const newRefresh = 'new-refresh-token';
+      vi.mocked(AuthService.refresh).mockResolvedValue({ token: newToken, refreshToken: newRefresh });
+
+      localStorageMock.setItem('refreshToken', fakeRefreshToken);
+      const store = useAuthStore();
+      await store.refreshSession();
+
+      expect(AuthService.refresh).toHaveBeenCalledWith(fakeRefreshToken);
+    });
+
+    it('updates token in store and localStorage', async () => {
+      const newToken = makeFakeToken(3600);
+      const newRefresh = 'new-refresh-token';
+      vi.mocked(AuthService.refresh).mockResolvedValue({ token: newToken, refreshToken: newRefresh });
+
+      localStorageMock.setItem('refreshToken', fakeRefreshToken);
+      const store = useAuthStore();
+      await store.refreshSession();
+
+      expect(store.token).toBe(newToken);
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('token', newToken);
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('refreshToken', newRefresh);
+    });
+
+    it('returns the new access token', async () => {
+      const newToken = makeFakeToken(3600);
+      vi.mocked(AuthService.refresh).mockResolvedValue({ token: newToken, refreshToken: 'new-rt' });
+
+      localStorageMock.setItem('refreshToken', fakeRefreshToken);
+      const store = useAuthStore();
+      const result = await store.refreshSession();
+
+      expect(result).toBe(newToken);
+    });
+  });
+
   // ── initAuth ────────────────────────────────────────
   describe('initAuth', () => {
-    it('loads token and user from localStorage when valid', () => {
+    it('loads token and user from localStorage when valid', async () => {
       localStorageMock.setItem('token', fakeToken);
       localStorageMock.setItem('user', JSON.stringify(fakeUser));
-      vi.clearAllMocks(); // clear setItem tracking from setup
+      vi.clearAllMocks();
 
       const store = useAuthStore();
-      store.initAuth();
+      await store.initAuth();
       expect(store.token).toBe(fakeToken);
       expect(store.user).toEqual(fakeUser);
     });
 
-    it('isAuthenticated is true after initAuth with valid token', () => {
+    it('isAuthenticated is true after initAuth with valid token', async () => {
       localStorageMock.setItem('token', fakeToken);
       localStorageMock.setItem('user', JSON.stringify(fakeUser));
 
       const store = useAuthStore();
-      store.initAuth();
+      await store.initAuth();
       expect(store.isAuthenticated).toBe(true);
     });
 
-    it('leaves token as null when localStorage has "undefined"', () => {
+    it('leaves token as null when localStorage has "undefined"', async () => {
       localStorageMock.setItem('token', 'undefined');
 
       const store = useAuthStore();
-      store.initAuth();
+      await store.initAuth();
       expect(store.token).toBeNull();
     });
 
-    it('leaves token as null when localStorage has "null"', () => {
+    it('leaves token as null when localStorage has "null"', async () => {
       localStorageMock.setItem('token', 'null');
 
       const store = useAuthStore();
-      store.initAuth();
+      await store.initAuth();
       expect(store.token).toBeNull();
     });
 
-    it('calls logout (cleans state) when user JSON is invalid', () => {
+    it('calls logout (cleans state) when user JSON is invalid', async () => {
       localStorageMock.setItem('token', fakeToken);
       localStorageMock.setItem('user', '{invalid json');
 
       const store = useAuthStore();
-      store.initAuth();
-      // After catch → logout → state is clean
+      await store.initAuth();
       expect(store.user).toBeNull();
       expect(store.token).toBeNull();
     });
 
-    it('clears token and user when token is expired', () => {
-      const expiredToken = makeFakeToken(-3600); // expired 1 hour ago
+    it('clears token and user when token is expired and no refresh token exists', async () => {
+      const expiredToken = makeFakeToken(-3600);
       localStorageMock.setItem('token', expiredToken);
       localStorageMock.setItem('user', JSON.stringify(fakeUser));
 
       const store = useAuthStore();
-      store.initAuth();
+      await store.initAuth();
 
       expect(store.token).toBeNull();
       expect(store.user).toBeNull();
@@ -305,12 +364,47 @@ describe('authStore', () => {
       expect(localStorageMock.removeItem).toHaveBeenCalledWith('user');
     });
 
-    it('clears token and user when stored token is malformed', () => {
+    it('silently refreshes when access token is expired but refresh token exists', async () => {
+      const expiredToken = makeFakeToken(-3600);
+      const newToken = makeFakeToken(3600);
+      const newRefresh = 'rotated-refresh-token';
+
+      localStorageMock.setItem('token', expiredToken);
+      localStorageMock.setItem('refreshToken', fakeRefreshToken);
+      localStorageMock.setItem('user', JSON.stringify(fakeUser));
+
+      vi.mocked(AuthService.refresh).mockResolvedValue({ token: newToken, refreshToken: newRefresh });
+
+      const store = useAuthStore();
+      await store.initAuth();
+
+      expect(AuthService.refresh).toHaveBeenCalledWith(fakeRefreshToken);
+      expect(store.token).toBe(newToken);
+      expect(store.isAuthenticated).toBe(true);
+    });
+
+    it('logs out when both access token and refresh token are expired', async () => {
+      const expiredToken = makeFakeToken(-3600);
+
+      localStorageMock.setItem('token', expiredToken);
+      localStorageMock.setItem('refreshToken', fakeRefreshToken);
+      localStorageMock.setItem('user', JSON.stringify(fakeUser));
+
+      vi.mocked(AuthService.refresh).mockRejectedValue(new Error('Refresh token expired'));
+
+      const store = useAuthStore();
+      await store.initAuth();
+
+      expect(store.token).toBeNull();
+      expect(store.user).toBeNull();
+    });
+
+    it('clears token and user when stored token is malformed', async () => {
       localStorageMock.setItem('token', 'malformed-not-a-jwt');
       localStorageMock.setItem('user', JSON.stringify(fakeUser));
 
       const store = useAuthStore();
-      store.initAuth();
+      await store.initAuth();
 
       expect(store.token).toBeNull();
       expect(store.user).toBeNull();
@@ -333,7 +427,7 @@ describe('authStore', () => {
 
       localStorageMock.setItem('token', fakeToken);
       const store = useAuthStore();
-      store.initAuth();
+      await store.initAuth();
       await store.fetchProfile();
 
       expect(AuthService.getMe).toHaveBeenCalled();
@@ -346,7 +440,7 @@ describe('authStore', () => {
       localStorageMock.setItem('token', fakeToken);
       localStorageMock.setItem('user', JSON.stringify(fakeUser));
       const store = useAuthStore();
-      store.initAuth();
+      await store.initAuth();
 
       await store.fetchProfile();
 
@@ -392,7 +486,7 @@ describe('authStore', () => {
     it('returns the role when user is logged in', async () => {
       vi.mocked(AuthService.login).mockResolvedValue({
         success: true,
-        data: { user: { ...fakeUser, role: 'admin' }, token: fakeToken },
+        data: { user: { ...fakeUser, role: 'admin' }, token: fakeToken, refreshToken: fakeRefreshToken },
       });
       const store = useAuthStore();
       await store.login({ email: 'admin@anahuac.mx', password: 'Admin2026!' });

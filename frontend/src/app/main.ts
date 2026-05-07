@@ -11,8 +11,8 @@ const pinia = createPinia();
 app.use(pinia);
 app.use(router);
 
-// Verify token before the router's first beforeEach runs
+// Verify token (and silently refresh if needed) before router guards run
 const authStore = useAuthStore();
-authStore.initAuth();
+await authStore.initAuth();
 
 app.mount('#app');

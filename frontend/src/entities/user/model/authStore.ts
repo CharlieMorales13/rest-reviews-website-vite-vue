@@ -24,6 +24,7 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = response.data.user;
         token.value = response.data.token;
         localStorage.setItem('token', response.data.token);
+        localStorage.setItem('refreshToken', response.data.refreshToken);
         localStorage.setItem('user', JSON.stringify(response.data.user));
       }
     } catch (err: unknown) {
@@ -42,17 +43,14 @@ export const useAuthStore = defineStore('auth', () => {
       if (response.success && response.data) {
         const newUser = response.data.user;
         const newToken = response.data.token;
-        
+        const newRefreshToken = response.data.refreshToken;
+
         user.value = newUser;
         token.value = newToken;
-        
-        if (newToken) {
-          localStorage.setItem('token', newToken);
-        }
-        
-        if (newUser) {
-          localStorage.setItem('user', JSON.stringify(newUser));
-        }
+
+        if (newToken) localStorage.setItem('token', newToken);
+        if (newRefreshToken) localStorage.setItem('refreshToken', newRefreshToken);
+        if (newUser) localStorage.setItem('user', JSON.stringify(newUser));
       }
     } catch (err: unknown) {
       error.value = extractErrorMessage(err, 'Error occurred during registration');
@@ -66,7 +64,18 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null;
     token.value = null;
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+  };
+
+  const refreshSession = async (): Promise<string> => {
+    const storedRefreshToken = localStorage.getItem('refreshToken');
+    if (!storedRefreshToken) throw new Error('No refresh token available');
+    const result = await AuthService.refresh(storedRefreshToken);
+    token.value = result.token;
+    localStorage.setItem('token', result.token);
+    localStorage.setItem('refreshToken', result.refreshToken);
+    return result.token;
   };
 
   const fetchProfile = async () => {
@@ -86,17 +95,28 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('user', JSON.stringify(updated));
   };
 
-  const initAuth = () => {
+  const initAuth = async () => {
     try {
       const storedToken = localStorage.getItem('token');
+      const storedRefreshToken = localStorage.getItem('refreshToken');
       const storedUser = localStorage.getItem('user');
 
       if (storedToken && storedToken !== 'undefined' && storedToken !== 'null') {
         if (isTokenExpired(storedToken)) {
-          logout();
-          return;
+          if (storedRefreshToken) {
+            try {
+              await refreshSession();
+            } catch {
+              logout();
+              return;
+            }
+          } else {
+            logout();
+            return;
+          }
+        } else {
+          token.value = storedToken;
         }
-        token.value = storedToken;
       } else {
         token.value = null;
       }
@@ -121,6 +141,7 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     register,
     logout,
+    refreshSession,
     initAuth,
     fetchProfile,
     updateProfile,
