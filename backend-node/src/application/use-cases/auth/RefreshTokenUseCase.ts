@@ -59,7 +59,7 @@ export class RefreshTokenUseCase {
     const token = jwt.sign(
       { userId: user.id, role: user.role, email: user.email },
       env.JWT_SECRET,
-      { expiresIn: "24h" },
+      { expiresIn: env.JWT_EXPIRES_IN },
     );
 
     // Issue a new rotated refresh token
