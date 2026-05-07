@@ -27,9 +27,8 @@ export interface RegisterResponse {
   success: boolean;
   message: string;
   data: {
-    user: User;
-    token: string;
-    refreshToken: string;
+    email: string;
+    maskedEmail: string;
   };
 }
 
@@ -52,5 +51,6 @@ export interface VerifyResponse {
   data: {
     user: User;
     token: string;
+    refreshToken: string;
   };
 }

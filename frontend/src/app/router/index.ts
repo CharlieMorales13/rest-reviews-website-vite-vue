@@ -15,6 +15,12 @@ const routes = [
     meta: { guest: true },
   },
   {
+    path: '/verify-email',
+    name: 'verify-email',
+    component: () => import('@/pages/verify-email/ui/VerifyEmailPage.vue'),
+    meta: { guest: true },
+  },
+  {
     path: '/r/:slug',
     name: 'qr-redirect',
     component: () => import('@/pages/qr-redirect/ui/QrRedirectPage.vue'),

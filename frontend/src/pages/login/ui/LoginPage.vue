@@ -30,8 +30,13 @@ const handleLogin = async () => {
       const role = authStore.userRole ?? 'student';
       router.push(roleRedirect[role] ?? '/dashboard');
     }
-  } catch (e) {
-    // Error is handled by store
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes('EMAIL_NOT_VERIFIED')) {
+      const redirect = route.query.redirect as string | undefined;
+      const verifyUrl = `/verify-email?email=${encodeURIComponent(email.value)}${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ''}`;
+      router.push(verifyUrl);
+    }
   } finally {
     loading.value = false;
   }

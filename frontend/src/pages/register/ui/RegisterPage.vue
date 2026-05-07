@@ -59,7 +59,7 @@ const handleRegister = async () => {
   if (!canSubmit.value || loading.value) return;
   loading.value = true;
   try {
-    await authStore.register({
+    const { email: registeredEmail } = await authStore.register({
       name: name.value,
       username: username.value,
       email: email.value,
@@ -67,7 +67,8 @@ const handleRegister = async () => {
       carrera: resolvedCarrera.value,
     });
     const redirect = route.query.redirect as string | undefined;
-    await router.push(redirect || '/dashboard');
+    const verifyUrl = `/verify-email?email=${encodeURIComponent(registeredEmail)}${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ''}`;
+    await router.push(verifyUrl);
   } catch {
     // Error handled by store
   } finally {

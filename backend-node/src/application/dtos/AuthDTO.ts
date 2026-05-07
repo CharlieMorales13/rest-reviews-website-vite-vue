@@ -33,6 +33,12 @@ export const VerifyEmailSchema = z.object({
 
 export type VerifyEmailDTO = z.infer<typeof VerifyEmailSchema>;
 
+export const ResendVerificationSchema = z.object({
+  email: z.string().email("Invalid email address"),
+});
+
+export type ResendVerificationDTO = z.infer<typeof ResendVerificationSchema>;
+
 export const ChangePasswordSchema = z.object({
   currentPassword: z.string().min(1, "La contraseña actual es requerida"),
   newPassword: z

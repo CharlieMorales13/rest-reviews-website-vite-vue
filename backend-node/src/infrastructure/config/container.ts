@@ -7,6 +7,7 @@ import { PrismaMetricsRepository } from "../repositories/PrismaMetricsRepository
 import { PrismaNotificationRepository } from "../repositories/PrismaNotificationRepository";
 import { SupabaseStorageService } from "../services/SupabaseStorageService";
 import { AnalyticsService } from "../services/AnalyticsService";
+import { ResendEmailService } from "../services/ResendEmailService";
 
 // Register Repositories
 container.register("IUserRepository", { useClass: PrismaUserRepository });
@@ -23,5 +24,6 @@ container.register("INotificationRepository", {
 });
 container.register("IStorageService", { useClass: SupabaseStorageService });
 container.register("IAnalyticsService", { useClass: AnalyticsService });
+container.register("IEmailService", { useClass: ResendEmailService });
 
 export { container };

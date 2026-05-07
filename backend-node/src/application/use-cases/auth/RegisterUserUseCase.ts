@@ -1,29 +1,31 @@
 import { injectable, inject } from "tsyringe";
 import { User, UserRole } from "../../../domain/entities/User";
 import { IUserRepository } from "../../../domain/repositories/IUserRepository";
+import { IEmailService } from "../../../domain/services/IEmailService";
 import { RegisterUserDTO } from "../../dtos/AuthDTO";
 import { AppError } from "../../../infrastructure/http/errors/AppError";
 import * as argon2 from "argon2";
-import * as jwt from "jsonwebtoken";
-import { env } from "../../../infrastructure/config/env.config";
-import prisma from "../../../infrastructure/database/prisma.service";
+import * as crypto from "crypto";
 
 interface RegisterResponse {
-  user: {
-    id: string;
-    email: string;
-    role: string;
-    name: string;
-    username: string;
-  };
-  token: string;
-  refreshToken: string;
+  email: string;
+  maskedEmail: string;
+}
+
+function maskEmail(email: string): string {
+  const [local, domain] = email.split("@");
+  const masked =
+    local.length <= 2
+      ? local[0] + "*"
+      : local[0] + "*".repeat(local.length - 2) + local[local.length - 1];
+  return `${masked}@${domain}`;
 }
 
 @injectable()
 export class RegisterUserUseCase {
   constructor(
     @inject("IUserRepository") private userRepository: IUserRepository,
+    @inject("IEmailService") private emailService: IEmailService,
   ) {}
 
   async execute(dto: RegisterUserDTO): Promise<RegisterResponse> {
@@ -41,55 +43,26 @@ export class RegisterUserUseCase {
 
     const hashedPassword = await argon2.hash(dto.password);
 
+    const code = String(crypto.randomInt(100000, 999999));
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+
     const newUser = User.create({
       name: dto.name,
       username: dto.username,
       email: dto.email,
       passwordHash: hashedPassword,
       role: UserRole.STUDENT,
-      isVerified: true,
+      isVerified: false,
       carrera: dto.carrera,
+      verificationCode: code,
+      verificationExpires: expiresAt,
     });
 
-    const savedUser = await this.userRepository.save(newUser);
+    await this.userRepository.save(newUser);
 
-    if (!savedUser.id) {
-      throw new AppError("Error creating user", 500);
-    }
+    await this.emailService.sendVerificationCode(dto.email, dto.name, code);
 
-    const token = jwt.sign(
-      { userId: savedUser.id, role: savedUser.role, email: savedUser.email },
-      env.JWT_SECRET,
-      { expiresIn: "24h" },
-    );
-
-    const refreshToken = jwt.sign(
-      { userId: savedUser.id, type: "refresh" },
-      env.JWT_SECRET,
-      { expiresIn: "30d" },
-    );
-
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30);
-
-    await prisma.userSession.create({
-      data: {
-        userId: savedUser.id,
-        refreshToken,
-        expiresAt,
-      },
-    });
-
-    return {
-      user: {
-        id: savedUser.id,
-        email: savedUser.email,
-        name: savedUser.name,
-        username: savedUser.username,
-        role: savedUser.role,
-      },
-      token,
-      refreshToken,
-    };
+    return { email: dto.email, maskedEmail: maskEmail(dto.email) };
   }
 }

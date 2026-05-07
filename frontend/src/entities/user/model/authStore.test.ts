@@ -8,6 +8,8 @@ vi.mock('../api/AuthService', () => ({
   AuthService: {
     login: vi.fn(),
     register: vi.fn(),
+    verifyEmail: vi.fn(),
+    resendVerification: vi.fn(),
     refresh: vi.fn(),
     getMe: vi.fn(),
     updateMe: vi.fn(),
@@ -170,36 +172,88 @@ describe('authStore', () => {
     });
   });
 
-  // ── register — happy path ───────────────────────────
-  describe('register — happy path', () => {
+  // ── register — OTP flow ─────────────────────────────
+  describe('register — OTP flow', () => {
+    const fakeRegisterData = { email: 'carlos@anahuac.mx', maskedEmail: 'c*****s@anahuac.mx' };
+
     beforeEach(() => {
       vi.mocked(AuthService.register).mockResolvedValue({
         success: true,
         message: 'ok',
-        data: { user: fakeUser, token: fakeToken, refreshToken: fakeRefreshToken },
+        data: fakeRegisterData,
       });
     });
 
-    it('calls AuthService.register', async () => {
+    it('calls AuthService.register with the request', async () => {
       const store = useAuthStore();
       const req = { name: 'Carlos', username: 'carlos_gomez', email: 'carlos@anahuac.mx', password: 'pw', carrera: 'ISC' };
       await store.register(req);
       expect(AuthService.register).toHaveBeenCalledWith(req);
     });
 
-    it('sets user and token', async () => {
+    it('returns email and maskedEmail', async () => {
+      const store = useAuthStore();
+      const result = await store.register({ name: 'Carlos', username: 'carlos_gomez', email: 'carlos@anahuac.mx', password: 'pw', carrera: 'ISC' });
+      expect(result.email).toBe('carlos@anahuac.mx');
+      expect(result.maskedEmail).toBe('c*****s@anahuac.mx');
+    });
+
+    it('does NOT set token or user (pending verification)', async () => {
       const store = useAuthStore();
       await store.register({ name: 'Carlos', username: 'carlos_gomez', email: 'carlos@anahuac.mx', password: 'pw', carrera: 'ISC' });
+      expect(store.user).toBeNull();
+      expect(store.token).toBeNull();
+    });
+
+    it('does NOT save token to localStorage', async () => {
+      const store = useAuthStore();
+      await store.register({ name: 'Carlos', username: 'carlos_gomez', email: 'carlos@anahuac.mx', password: 'pw', carrera: 'ISC' });
+      const setItemCalls = vi.mocked(localStorageMock.setItem).mock.calls;
+      expect(setItemCalls.some(([k]) => k === 'token')).toBe(false);
+    });
+  });
+
+  // ── verifyEmail ──────────────────────────────────────
+  describe('verifyEmail', () => {
+    beforeEach(() => {
+      vi.mocked(AuthService.verifyEmail).mockResolvedValue({
+        success: true,
+        data: { user: fakeUser, token: fakeToken, refreshToken: fakeRefreshToken },
+      });
+    });
+
+    it('calls AuthService.verifyEmail with email and code', async () => {
+      const store = useAuthStore();
+      await store.verifyEmail('carlos@anahuac.mx', '123456');
+      expect(AuthService.verifyEmail).toHaveBeenCalledWith({ email: 'carlos@anahuac.mx', code: '123456' });
+    });
+
+    it('sets user and token after verification', async () => {
+      const store = useAuthStore();
+      await store.verifyEmail('carlos@anahuac.mx', '123456');
       expect(store.user).toEqual(fakeUser);
       expect(store.token).toBe(fakeToken);
     });
 
     it('saves token and refreshToken to localStorage', async () => {
       const store = useAuthStore();
-      await store.register({ name: 'Carlos', username: 'carlos_gomez', email: 'carlos@anahuac.mx', password: 'pw', carrera: 'ISC' });
+      await store.verifyEmail('carlos@anahuac.mx', '123456');
       expect(localStorageMock.setItem).toHaveBeenCalledWith('token', fakeToken);
       expect(localStorageMock.setItem).toHaveBeenCalledWith('refreshToken', fakeRefreshToken);
       expect(localStorageMock.setItem).toHaveBeenCalledWith('user', JSON.stringify(fakeUser));
+    });
+
+    it('isAuthenticated is true after verification', async () => {
+      const store = useAuthStore();
+      await store.verifyEmail('carlos@anahuac.mx', '123456');
+      expect(store.isAuthenticated).toBe(true);
+    });
+
+    it('sets error and re-throws when verification fails', async () => {
+      vi.mocked(AuthService.verifyEmail).mockRejectedValue(new Error('Invalid verification code'));
+      const store = useAuthStore();
+      await expect(store.verifyEmail('carlos@anahuac.mx', '999999')).rejects.toThrow('Invalid verification code');
+      expect(store.error).toBe('Invalid verification code');
     });
   });
 
