@@ -15,6 +15,11 @@ const routes = [
     meta: { guest: true },
   },
   {
+    path: '/r/:slug',
+    name: 'qr-redirect',
+    component: () => import('@/pages/qr-redirect/ui/QrRedirectPage.vue'),
+  },
+  {
     path: '/',
     component: () => import('@/widgets/Layout/ui/AppLayout.vue'),
     meta: { requiresAuth: true },
@@ -56,7 +61,8 @@ const routes = [
         path: 'establishments/:slug',
         name: 'establishment-details',
         component: () => import('@/pages/establishments/ui/EstablishmentDetailsPage.vue')
-      },      {
+      },
+      {
         path: 'review/create/:slug',
         name: 'create-review',
         component: () => import('@/pages/create-review/ui/CreateReviewPage.vue'),
@@ -94,27 +100,26 @@ export const router = createRouter({
 router.beforeEach(async (to) => {
   const authStore = useAuthStore();
 
-  // If user is already authenticated and visits a guest page (login/register),
-  // redirect them to their role-specific dashboard.
+  // Authenticated user visiting a guest page → role dashboard
+  // Preserve ?redirect= so login/register can bounce them to the right place after auth
   const isGuestPage = to.matched.some(r => r.meta.guest);
   if (isGuestPage && authStore.isAuthenticated) {
+    const redirect = to.query.redirect as string | undefined;
+    if (redirect) return redirect;
     const role = authStore.userRole;
     if (role === 'admin') return '/admin';
     if (role === 'manager') return '/manager';
     return '/dashboard';
   }
 
-  // Check requiresAuth from matched routes (parent meta inheritance)
   const requiresAuth = to.matched.some(r => r.meta.requiresAuth);
-  // Use the most-specific (deepest) route's roles list
   const allowedRoles = to.meta.roles as string[] | undefined;
 
   if (requiresAuth && !authStore.isAuthenticated) {
-    return '/login';
+    return `/login?redirect=${encodeURIComponent(to.fullPath)}`;
   }
 
   if (requiresAuth && allowedRoles && authStore.userRole && !allowedRoles.includes(authStore.userRole)) {
-    // Redirect to the user's home instead of a generic /dashboard
     const role = authStore.userRole;
     if (role === 'admin') return '/admin';
     if (role === 'manager') return '/manager';

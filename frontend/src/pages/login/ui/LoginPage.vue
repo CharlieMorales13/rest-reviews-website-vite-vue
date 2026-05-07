@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useAuthStore } from '@/entities/user/model/authStore';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 
 const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
 
 const email = ref('');
 const password = ref('');
@@ -22,8 +23,13 @@ const handleLogin = async () => {
   loading.value = true;
   try {
     await authStore.login({ email: email.value, password: password.value });
-    const role = authStore.userRole ?? 'student';
-    router.push(roleRedirect[role] ?? '/dashboard');
+    const redirect = route.query.redirect as string | undefined;
+    if (redirect) {
+      router.push(redirect);
+    } else {
+      const role = authStore.userRole ?? 'student';
+      router.push(roleRedirect[role] ?? '/dashboard');
+    }
   } catch (e) {
     // Error is handled by store
   } finally {

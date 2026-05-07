@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useAuthStore } from '@/entities/user/model/authStore';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { CARRERAS } from '@/shared/lib/constants';
 
 const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
 
 const NON_STUDENT_TYPES = [
   { value: 'Colaborador UAO',  label: 'Colaborador', icon: 'badge' },
@@ -65,7 +66,8 @@ const handleRegister = async () => {
       password: password.value,
       carrera: resolvedCarrera.value,
     });
-    await router.push('/dashboard');
+    const redirect = route.query.redirect as string | undefined;
+    await router.push(redirect || '/dashboard');
   } catch {
     // Error handled by store
   } finally {

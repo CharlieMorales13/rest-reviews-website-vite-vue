@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { httpClient } from '@/shared/api/httpClient';
 import { extractErrorMessage } from '@/shared/lib/extractError';
+import QrCodeCard from '@/shared/ui/QrCodeCard.vue';
 
 const router = useRouter();
 
@@ -556,6 +557,16 @@ onMounted(() => loadMetrics());
               {{ term.term.toLowerCase() }}<sup class="text-[10px] ml-0.5 opacity-60">{{ term.mentions }}</sup>
             </button>
           </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+           SECCIÓN 4 — QR de Reseñas
+      ══════════════════════════════════════════════════════════════════════════ -->
+      <section class="mb-16" v-if="establishment.slug">
+        <h2 class="text-2xl font-bold tracking-tight text-white mb-6 brand">Código QR</h2>
+        <div class="max-w-sm">
+          <QrCodeCard :slug="establishment.slug" :establishment-name="establishment.name" />
         </div>
       </section>
 
