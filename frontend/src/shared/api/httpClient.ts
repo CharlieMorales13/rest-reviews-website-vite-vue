@@ -36,7 +36,7 @@ httpClient.interceptors.response.use(
       original.url?.includes('/auth/refresh')
     ) {
       if (error.response?.status === 401) {
-        getAuthStore().logout();
+        await getAuthStore().logout();
         if (router.currentRoute.value.path !== '/login') router.push('/login');
       }
       return Promise.reject(error);
@@ -58,7 +58,7 @@ httpClient.interceptors.response.use(
       return httpClient(original);
     } catch (refreshError) {
       processQueue(refreshError);
-      getAuthStore().logout();
+      await getAuthStore().logout();
       if (router.currentRoute.value.path !== '/login') router.push('/login');
       return Promise.reject(refreshError);
     } finally {
