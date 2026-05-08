@@ -56,8 +56,8 @@ const handleLogin = async () => {
     <div class="relative z-10 w-full max-w-md p-6 animate-fade-in">
       <div class="bg-white/5 backdrop-blur-2xl border border-white/20 rounded-[32px] p-8 md:p-12 shadow-2xl">
         <div class="text-center mb-10">
-          <div class="inline-flex items-center gap-2 px-4 py-2 bg-anahuac-orange/20 border border-anahuac-orange/30 rounded-full mb-6">
-            <span class="text-anahuac-orange font-extrabold text-lg tracking-tight brand">Anáhuac EATS</span>
+          <div class="flex justify-center mb-6">
+            <img src="/assets/images/logo.png" alt="Anáhuac EATS" class="h-20 w-auto" />
           </div>
           <h1 class="text-3xl font-bold tracking-tight text-white mb-2">Bienvenido de vuelta</h1>
           <p class="text-white/60 text-sm">Haz que tus opiniones cuenten</p>

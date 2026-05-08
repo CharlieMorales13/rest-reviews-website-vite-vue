@@ -9,21 +9,14 @@ const props = defineProps<{
 
 const containerRef = ref<HTMLElement | null>(null);
 const qrUrl = `${window.location.origin}/r/${props.slug}`;
-
-// SVG logo: orange circle with "AE" text, encoded as data URL
-const logoDataUrl = `data:image/svg+xml;base64,${btoa(`
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <circle cx="50" cy="50" r="50" fill="#f97316"/>
-  <text x="50" y="67" text-anchor="middle" font-family="Arial Black, Arial" font-weight="900" font-size="40" fill="white">AE</text>
-</svg>
-`)}`;
+const logoUrl = `${window.location.origin}/assets/images/logo.png`;
 
 const qrCode = new QRCodeStyling({
   width: 420,
   height: 420,
   type: 'canvas',
   data: qrUrl,
-  image: logoDataUrl,
+  image: logoUrl,
   dotsOptions: {
     color: '#000000',
     type: 'rounded',

@@ -73,8 +73,8 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
       <div class="flex justify-between items-center h-20 md:h-28 px-4 md:px-10">
 
         <!-- Brand -->
-        <router-link to="/dashboard" class="text-2xl md:text-3xl font-black tracking-tighter text-orange-500 brand hover:opacity-80 transition-opacity">
-          Anáhuac EATS
+        <router-link to="/dashboard" class="hover:opacity-80 transition-opacity flex-shrink-0">
+          <img src="/assets/images/logo.png" alt="Anáhuac EATS" class="h-12 md:h-16 w-auto" />
         </router-link>
 
         <!-- Desktop Nav Links -->
@@ -306,7 +306,7 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
     <footer class="bg-[#0e0e10] w-full py-10 px-6 md:px-8 text-sm mt-auto border-t border-white/5">
       <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
         <div class="flex flex-col items-center md:items-start gap-1">
-          <div class="text-orange-500 font-bold text-lg brand">Anáhuac EATS</div>
+          <img src="/assets/images/logo.png" alt="Anáhuac EATS" class="h-8 w-auto" />
           <p class="text-[#adaaad] text-xs text-center md:text-left">© 2026 Universidad Anáhuac Oaxaca</p>
         </div>
 
