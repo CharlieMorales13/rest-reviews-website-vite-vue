@@ -7,6 +7,7 @@ import {
   registerRateLimiter,
   verifyEmailRateLimiter,
   resendVerificationRateLimiter,
+  forgotPasswordRateLimiter,
 } from "../middlewares/RateLimitMiddleware";
 
 const authRouter = Router();
@@ -22,6 +23,12 @@ authRouter.post(
   resendVerificationRateLimiter,
   authController.resendVerification,
 );
+authRouter.post(
+  "/forgot-password",
+  forgotPasswordRateLimiter,
+  authController.forgotPassword,
+);
+authRouter.post("/reset-password", authController.resetPassword);
 
 /**
  * @swagger
