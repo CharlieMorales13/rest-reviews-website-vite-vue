@@ -269,19 +269,18 @@ export class AuthController {
     await this.forgotPasswordUseCase.execute(email);
     res.status(200).json({
       success: true,
-      message: "Si el correo existe, recibirás un enlace para restablecer tu contraseña.",
+      message:
+        "Si el correo existe, recibirás un enlace para restablecer tu contraseña.",
     });
   };
 
-  public resetPassword = async (
-    req: Request,
-    res: Response,
-  ): Promise<void> => {
+  public resetPassword = async (req: Request, res: Response): Promise<void> => {
     const dto = ResetPasswordSchema.parse(req.body);
     await this.resetPasswordUseCase.execute(dto);
     res.status(200).json({
       success: true,
-      message: "Contraseña actualizada correctamente. Inicia sesión con tu nueva contraseña.",
+      message:
+        "Contraseña actualizada correctamente. Inicia sesión con tu nueva contraseña.",
     });
   };
 }

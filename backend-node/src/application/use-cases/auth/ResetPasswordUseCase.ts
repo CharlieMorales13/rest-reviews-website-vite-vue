@@ -18,7 +18,10 @@ export class ResetPasswordUseCase {
     try {
       payload = jwt.verify(dto.token, env.JWT_SECRET) as jwt.JwtPayload;
     } catch {
-      throw new AppError("El enlace de restablecimiento ha expirado o es inválido", 400);
+      throw new AppError(
+        "El enlace de restablecimiento ha expirado o es inválido",
+        400,
+      );
     }
 
     if (payload.purpose !== "password-reset" || !payload.userId) {

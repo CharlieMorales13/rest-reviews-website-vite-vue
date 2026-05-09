@@ -1,21 +1,23 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useAuthStore } from '@/entities/user/model/authStore';
-import { useRouter, useRoute } from 'vue-router';
+import { ref, computed } from "vue";
+import { useAuthStore } from "@/entities/user/model/authStore";
+import { useRouter, useRoute } from "vue-router";
 
 const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
 
-const email = ref('');
-const password = ref('');
+const email = ref("");
+const password = ref("");
 const loading = ref(false);
 const showPassword = ref(false);
 
+const resetSuccess = computed(() => route.query.reset === "1");
+
 const roleRedirect: Record<string, string> = {
-  admin: '/admin',
-  manager: '/manager',
-  student: '/dashboard',
+  admin: "/admin",
+  manager: "/manager",
+  student: "/dashboard",
 };
 
 const handleLogin = async () => {
@@ -27,14 +29,14 @@ const handleLogin = async () => {
     if (redirect) {
       router.push(redirect);
     } else {
-      const role = authStore.userRole ?? 'student';
-      router.push(roleRedirect[role] ?? '/dashboard');
+      const role = authStore.userRole ?? "student";
+      router.push(roleRedirect[role] ?? "/dashboard");
     }
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes('EMAIL_NOT_VERIFIED')) {
+    if (msg.includes("EMAIL_NOT_VERIFIED")) {
       const redirect = route.query.redirect as string | undefined;
-      const verifyUrl = `/verify-email?email=${encodeURIComponent(email.value)}${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ''}`;
+      const verifyUrl = `/verify-email?email=${encodeURIComponent(email.value)}${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ""}`;
       router.push(verifyUrl);
     }
   } finally {
@@ -44,92 +46,177 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-black">
+  <div
+    class="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-black"
+  >
     <!-- Background Image with Overlay -->
-    <div 
+    <div
       class="absolute inset-0 bg-cover bg-center blur-[1px] scale-105 transition-transform duration-1000"
-      style="background-image: url('/assets/images/university-bg.png');"
+      style="
+        background-image: url(&quot;/assets/images/university-bg.png&quot;);
+      "
     ></div>
-    <div class="absolute inset-0 bg-black/60 md:bg-black/50 lg:bg-gradient-to-r lg:from-black/80 lg:to-black/30"></div>
+    <div
+      class="absolute inset-0 bg-black/60 md:bg-black/50 lg:bg-gradient-to-r lg:from-black/80 lg:to-black/30"
+    ></div>
 
     <!-- Content -->
     <div class="relative z-10 w-full max-w-md p-6 animate-fade-in">
-      <div class="bg-white/5 backdrop-blur-2xl border border-white/20 rounded-[32px] p-8 md:p-12 shadow-2xl">
+      <div
+        class="bg-white/5 backdrop-blur-2xl border border-white/20 rounded-[32px] p-8 md:p-12 shadow-2xl"
+      >
         <div class="text-center mb-10">
           <div class="flex justify-center mb-6">
-            <img src="/assets/images/logo.png" alt="Anáhuac EATS" class="h-20 w-auto" />
+            <img
+              src="/assets/images/logo.png"
+              alt="Anáhuac EATS"
+              class="h-20 w-auto"
+            />
           </div>
-          <h1 class="text-3xl font-bold tracking-tight text-white mb-2">Bienvenido de vuelta</h1>
+          <h1 class="text-3xl font-bold tracking-tight text-white mb-2">
+            Bienvenido de vuelta
+          </h1>
           <p class="text-white/60 text-sm">Haz que tus opiniones cuenten</p>
         </div>
 
         <!-- Auth Tabs -->
         <div class="flex bg-white/5 p-1 rounded-2xl mb-8">
-          <button class="flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 bg-white/10 text-white shadow-lg">
+          <button
+            class="flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 bg-white/10 text-white shadow-lg"
+          >
             Iniciar Sesión
           </button>
-          <router-link to="/register" class="flex-1 py-2.5 text-sm font-semibold rounded-xl text-white/50 hover:text-white transition-all text-center">
+          <router-link
+            to="/register"
+            class="flex-1 py-2.5 text-sm font-semibold rounded-xl text-white/50 hover:text-white transition-all text-center"
+          >
             Registrarse
           </router-link>
         </div>
-        
+
         <form @submit.prevent="handleLogin" class="space-y-6">
           <div class="space-y-2">
-            <label class="block text-xs font-medium text-white/50 ml-1 uppercase tracking-wider">Nombre de usuario</label>
+            <label
+              class="block text-xs font-medium text-white/50 ml-1 uppercase tracking-wider"
+              >Correo electrónico</label
+            >
             <div class="relative group">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold opacity-40 group-focus-within:opacity-100 transition-opacity text-white">@</span>
+              <span
+                class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold opacity-40 group-focus-within:opacity-100 transition-opacity text-white"
+                >@</span
+              >
               <input
                 type="text"
                 v-model="email"
                 required
-                placeholder="tu_username o correo@anahuac.mx"
+                placeholder="Ingresa tu correo electrónico"
                 class="glass-input pl-10"
               />
             </div>
-            <p class="text-xs text-white/35 ml-1">aparecerán tus reviews</p>
           </div>
-          
+
           <div class="space-y-2">
-            <label class="block text-xs font-medium text-white/60 ml-1 uppercase tracking-wider">Contraseña</label>
+            <label
+              class="block text-xs font-medium text-white/60 ml-1 uppercase tracking-wider"
+              >Contraseña</label
+            >
             <div class="relative group">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-40 group-focus-within:opacity-100 transition-opacity">🔒</span>
+              <span
+                class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-40 group-focus-within:opacity-100 transition-opacity"
+                >🔒</span
+              >
               <input
                 :type="showPassword ? 'text' : 'password'"
                 v-model="password"
                 required
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Ingresa tu contraseña"
                 class="glass-input pl-12 pr-12"
               />
               <button
                 type="button"
                 @click="showPassword = !showPassword"
                 class="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors focus:outline-none"
-                :aria-label="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                :aria-label="
+                  showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
+                "
               >
-                <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg
+                  v-if="showPassword"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"
+                  />
+                  <path
+                    d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"
+                  />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+                <svg
+                  v-else
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
               </button>
             </div>
           </div>
 
-          <div v-if="authStore.error" class="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm animate-fade-in">
+          <div
+            v-if="authStore.error"
+            class="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm animate-fade-in"
+          >
             {{ authStore.error }}
           </div>
 
-          <button type="submit" class="btn-premium w-full mt-2" :disabled="loading">
+          <div
+            v-if="resetSuccess"
+            class="p-4 bg-green-500/10 border border-green-500/20 text-green-400 rounded-xl text-sm animate-fade-in"
+          >
+            Contraseña actualizada correctamente. Inicia sesión con tu nueva
+            contraseña.
+          </div>
+
+          <button
+            type="submit"
+            class="btn-premium w-full mt-2"
+            :disabled="loading"
+          >
             <span v-if="loading" class="flex items-center justify-center gap-2">
-              <div class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+              <div
+                class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"
+              ></div>
               Verificando...
             </span>
             <span v-else>Iniciar Sesión</span>
           </button>
         </form>
-        
+
         <div class="mt-10 pt-8 border-t border-white/10 text-center">
           <p class="text-white/40 text-xs mb-4">© 2026 Universidad Anáhuac</p>
-          <a href="#" class="text-anahuac-orange text-sm font-medium hover:underline transition-all">
+          <router-link
+            to="/forgot-password"
+            class="text-anahuac-orange text-sm font-medium hover:underline transition-all"
+          >
             ¿Olvidaste tu contraseña?
-          </a>
+          </router-link>
         </div>
       </div>
     </div>
