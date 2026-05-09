@@ -53,6 +53,18 @@ export const resendVerificationRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+/** Forgot password: 5 req / 15 min per IP. */
+export const forgotPasswordRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: {
+    success: false,
+    error: "Too many password reset requests. Try again in 15 minutes.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // ── Reviews ───────────────────────────────────────────────────────────────────
 
 /** Create review: 10 / hour per user. */

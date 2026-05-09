@@ -1,43 +1,48 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { useAuthStore } from "@/entities/user/model/authStore";
-import { useRouter, useRoute } from "vue-router";
+import { ref, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { AuthService } from "@/entities/user/api/AuthService";
 
-const authStore = useAuthStore();
-const router = useRouter();
 const route = useRoute();
+const router = useRouter();
 
-const email = ref("");
-const password = ref("");
-const loading = ref(false);
+const token = ref("");
+const newPassword = ref("");
+const confirmPassword = ref("");
 const showPassword = ref(false);
+const loading = ref(false);
+const error = ref("");
+const tokenMissing = ref(false);
 
-const resetSuccess = computed(() => route.query.reset === "1");
+onMounted(() => {
+  const t = route.query.token as string | undefined;
+  if (!t) {
+    tokenMissing.value = true;
+    return;
+  }
+  token.value = t;
+});
 
-const roleRedirect: Record<string, string> = {
-  admin: "/admin",
-  manager: "/manager",
-  student: "/dashboard",
-};
-
-const handleLogin = async () => {
-  if (!email.value || !password.value) return;
+const handleSubmit = async () => {
+  error.value = "";
+  if (newPassword.value !== confirmPassword.value) {
+    error.value = "Las contraseñas no coinciden.";
+    return;
+  }
+  if (newPassword.value.length < 6) {
+    error.value = "La contraseña debe tener al menos 6 caracteres.";
+    return;
+  }
   loading.value = true;
   try {
-    await authStore.login({ email: email.value, password: password.value });
-    const redirect = route.query.redirect as string | undefined;
-    if (redirect) {
-      router.push(redirect);
-    } else {
-      const role = authStore.userRole ?? "student";
-      router.push(roleRedirect[role] ?? "/dashboard");
-    }
+    await AuthService.resetPassword(token.value, newPassword.value);
+    router.push("/login?reset=1");
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes("EMAIL_NOT_VERIFIED")) {
-      const redirect = route.query.redirect as string | undefined;
-      const verifyUrl = `/verify-email?email=${encodeURIComponent(email.value)}${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ""}`;
-      router.push(verifyUrl);
+    if (msg.includes("expired") || msg.includes("inválido")) {
+      error.value = "El enlace ha expirado o es inválido. Solicita uno nuevo.";
+    } else {
+      error.value = "Ocurrió un error. Intenta de nuevo.";
     }
   } finally {
     loading.value = false;
@@ -49,9 +54,8 @@ const handleLogin = async () => {
   <div
     class="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-black"
   >
-    <!-- Background Image with Overlay -->
     <div
-      class="absolute inset-0 bg-cover bg-center blur-[1px] scale-105 transition-transform duration-1000"
+      class="absolute inset-0 bg-cover bg-center blur-[1px] scale-105"
       style="
         background-image: url(&quot;/assets/images/university-bg.png&quot;);
       "
@@ -60,7 +64,6 @@ const handleLogin = async () => {
       class="absolute inset-0 bg-black/60 md:bg-black/50 lg:bg-gradient-to-r lg:from-black/80 lg:to-black/30"
     ></div>
 
-    <!-- Content -->
     <div class="relative z-10 w-full max-w-md p-6 animate-fade-in">
       <div
         class="bg-white/5 backdrop-blur-2xl border border-white/20 rounded-[32px] p-8 md:p-12 shadow-2xl"
@@ -74,51 +77,32 @@ const handleLogin = async () => {
             />
           </div>
           <h1 class="text-3xl font-bold tracking-tight text-white mb-2">
-            Bienvenido de vuelta
+            Nueva contraseña
           </h1>
-          <p class="text-white/60 text-sm">Haz que tus opiniones cuenten</p>
+          <p class="text-white/60 text-sm">
+            Elige una contraseña segura para tu cuenta
+          </p>
         </div>
 
-        <!-- Auth Tabs -->
-        <div class="flex bg-white/5 p-1 rounded-2xl mb-8">
-          <button
-            class="flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 bg-white/10 text-white shadow-lg"
+        <div v-if="tokenMissing" class="text-center space-y-4">
+          <div
+            class="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm"
           >
-            Iniciar Sesión
-          </button>
+            El enlace de restablecimiento no es válido.
+          </div>
           <router-link
-            to="/register"
-            class="flex-1 py-2.5 text-sm font-semibold rounded-xl text-white/50 hover:text-white transition-all text-center"
+            to="/forgot-password"
+            class="block text-anahuac-orange text-sm font-medium hover:underline"
           >
-            Registrarse
+            Solicitar nuevo enlace
           </router-link>
         </div>
 
-        <form @submit.prevent="handleLogin" class="space-y-6">
+        <form v-else @submit.prevent="handleSubmit" class="space-y-6">
           <div class="space-y-2">
             <label
               class="block text-xs font-medium text-white/50 ml-1 uppercase tracking-wider"
-              >Correo electrónico</label
-            >
-            <div class="relative group">
-              <span
-                class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold opacity-40 group-focus-within:opacity-100 transition-opacity text-white"
-                >@</span
-              >
-              <input
-                type="text"
-                v-model="email"
-                required
-                placeholder="Ingresa tu correo electrónico"
-                class="glass-input pl-10"
-              />
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <label
-              class="block text-xs font-medium text-white/60 ml-1 uppercase tracking-wider"
-              >Contraseña</label
+              >Nueva contraseña</label
             >
             <div class="relative group">
               <span
@@ -127,9 +111,9 @@ const handleLogin = async () => {
               >
               <input
                 :type="showPassword ? 'text' : 'password'"
-                v-model="password"
+                v-model="newPassword"
                 required
-                placeholder="Ingresa tu contraseña"
+                placeholder="Mínimo 6 caracteres"
                 class="glass-input pl-12 pr-12"
               />
               <button
@@ -179,19 +163,38 @@ const handleLogin = async () => {
             </div>
           </div>
 
-          <div
-            v-if="authStore.error"
-            class="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm animate-fade-in"
-          >
-            {{ authStore.error }}
+          <div class="space-y-2">
+            <label
+              class="block text-xs font-medium text-white/50 ml-1 uppercase tracking-wider"
+              >Confirmar contraseña</label
+            >
+            <div class="relative group">
+              <span
+                class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-40 group-focus-within:opacity-100 transition-opacity"
+                >🔒</span
+              >
+              <input
+                :type="showPassword ? 'text' : 'password'"
+                v-model="confirmPassword"
+                required
+                placeholder="Repite tu nueva contraseña"
+                class="glass-input pl-12"
+              />
+            </div>
           </div>
 
           <div
-            v-if="resetSuccess"
-            class="p-4 bg-green-500/10 border border-green-500/20 text-green-400 rounded-xl text-sm animate-fade-in"
+            v-if="error"
+            class="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm"
           >
-            Contraseña actualizada correctamente. Inicia sesión con tu nueva
-            contraseña.
+            {{ error }}
+            <router-link
+              v-if="error.includes('expirado')"
+              to="/forgot-password"
+              class="block mt-2 text-anahuac-orange hover:underline"
+            >
+              Solicitar nuevo enlace
+            </router-link>
           </div>
 
           <button
@@ -203,20 +206,14 @@ const handleLogin = async () => {
               <div
                 class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"
               ></div>
-              Verificando...
+              Guardando...
             </span>
-            <span v-else>Iniciar Sesión</span>
+            <span v-else>Guardar nueva contraseña</span>
           </button>
         </form>
 
-        <div class="mt-10 pt-8 border-t border-white/10 text-center">
-          <p class="text-white/40 text-xs mb-4">© 2026 Universidad Anáhuac</p>
-          <router-link
-            to="/forgot-password"
-            class="text-anahuac-orange text-sm font-medium hover:underline transition-all"
-          >
-            ¿Olvidaste tu contraseña?
-          </router-link>
+        <div class="mt-8 pt-6 border-t border-white/10 text-center">
+          <p class="text-white/40 text-xs">© 2026 Universidad Anáhuac</p>
         </div>
       </div>
     </div>

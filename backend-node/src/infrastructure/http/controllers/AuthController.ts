@@ -5,12 +5,16 @@ import { RefreshTokenUseCase } from "../../../application/use-cases/auth/Refresh
 import { ChangePasswordUseCase } from "../../../application/use-cases/auth/ChangePasswordUseCase";
 import { VerifyEmailUseCase } from "../../../application/use-cases/auth/VerifyEmailUseCase";
 import { ResendVerificationUseCase } from "../../../application/use-cases/auth/ResendVerificationUseCase";
+import { ForgotPasswordUseCase } from "../../../application/use-cases/auth/ForgotPasswordUseCase";
+import { ResetPasswordUseCase } from "../../../application/use-cases/auth/ResetPasswordUseCase";
 import {
   RegisterUserSchema,
   LoginUserSchema,
   ChangePasswordSchema,
   VerifyEmailSchema,
   ResendVerificationSchema,
+  ForgotPasswordSchema,
+  ResetPasswordSchema,
 } from "../../../application/dtos/AuthDTO";
 import { injectable, inject } from "tsyringe";
 import { env } from "../../config/env.config";
@@ -62,6 +66,10 @@ export class AuthController {
     @inject(VerifyEmailUseCase) private verifyEmailUseCase: VerifyEmailUseCase,
     @inject(ResendVerificationUseCase)
     private resendVerificationUseCase: ResendVerificationUseCase,
+    @inject(ForgotPasswordUseCase)
+    private forgotPasswordUseCase: ForgotPasswordUseCase,
+    @inject(ResetPasswordUseCase)
+    private resetPasswordUseCase: ResetPasswordUseCase,
   ) {}
 
   /**
@@ -251,5 +259,28 @@ export class AuthController {
     const { email } = ResendVerificationSchema.parse(req.body);
     await this.resendVerificationUseCase.execute(email);
     res.status(200).json({ success: true, message: "Código reenviado" });
+  };
+
+  public forgotPassword = async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+    const { email } = ForgotPasswordSchema.parse(req.body);
+    await this.forgotPasswordUseCase.execute(email);
+    res.status(200).json({
+      success: true,
+      message:
+        "Si el correo existe, recibirás un enlace para restablecer tu contraseña.",
+    });
+  };
+
+  public resetPassword = async (req: Request, res: Response): Promise<void> => {
+    const dto = ResetPasswordSchema.parse(req.body);
+    await this.resetPasswordUseCase.execute(dto);
+    res.status(200).json({
+      success: true,
+      message:
+        "Contraseña actualizada correctamente. Inicia sesión con tu nueva contraseña.",
+    });
   };
 }
