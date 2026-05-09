@@ -21,6 +21,18 @@ const routes = [
     meta: { guest: true },
   },
   {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: () => import('@/pages/forgot-password/ui/ForgotPasswordPage.vue'),
+    meta: { guest: true },
+  },
+  {
+    path: '/reset-password',
+    name: 'reset-password',
+    component: () => import('@/pages/reset-password/ui/ResetPasswordPage.vue'),
+    meta: { guest: true },
+  },
+  {
     path: '/r/:slug',
     name: 'qr-redirect',
     component: () => import('@/pages/qr-redirect/ui/QrRedirectPage.vue'),

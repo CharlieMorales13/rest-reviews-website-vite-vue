@@ -47,4 +47,12 @@ export class AuthService {
     const response = await httpClient.patch<{ success: boolean; data: User }>('/api/auth/me', payload);
     return response.data.data;
   }
+
+  static async forgotPassword(email: string): Promise<void> {
+    await httpClient.post('/api/auth/forgot-password', { email });
+  }
+
+  static async resetPassword(token: string, newPassword: string): Promise<void> {
+    await httpClient.post('/api/auth/reset-password', { token, newPassword });
+  }
 }
