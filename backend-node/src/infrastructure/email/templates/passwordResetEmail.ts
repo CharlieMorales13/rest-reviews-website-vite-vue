@@ -12,10 +12,8 @@ export function passwordResetEmailHtml(name: string, link: string): string {
       <td align="center">
         <table width="520" cellpadding="0" cellspacing="0" style="background:#18181b;border-radius:20px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);">
           <tr>
-            <td style="background:#f97316;padding:28px 40px;text-align:center;">
-              <span style="font-size:28px;font-weight:900;color:#ffffff;letter-spacing:-1px;font-family:'Helvetica Neue',Arial,sans-serif;">
-                Anáhuac EATS
-              </span>
+            <td style="background:#0e0e10;padding:28px 40px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.08);">
+              <img src="https://anahuac-eats.com/assets/images/imagotipo.png" alt="Anáhuac EATS" width="120" style="height:auto;display:block;margin:0 auto;" />
             </td>
           </tr>
           <tr>
