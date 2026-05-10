@@ -3,7 +3,7 @@
  * Inserta 100 usuarios estudiantes y 100 reseñas por establecimiento (400 total)
  * directamente en la BD via Prisma — sin pasar por la API HTTP.
  *
- * Uso: node scripts/seed-reviews.mjs
+ * Uso: node db/seed-reviews.mjs
  */
 
 import { createRequire } from 'module';
