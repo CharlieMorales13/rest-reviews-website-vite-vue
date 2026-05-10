@@ -11,9 +11,9 @@ Servicio de análisis de sentimiento en español y cálculo de métricas gastron
 | Python 3.10+ | Runtime |
 | FastAPI + Uvicorn | Framework HTTP async |
 | PyTorch + Transformers | Inferencia del modelo NLP |
-| SQLAlchemy 2.0 | Acceso a base de datos |
-| Pydantic | Validación de esquemas |
-| pytest + pytest-cov | Tests y cobertura |
+| SQLAlchemy 2.0 | Acceso a base de datos (async) |
+| Pydantic | Validación de schemas de request/response |
+| pytest + pytest-cov | Tests y cobertura (mínimo 80%) |
 | ruff | Linter |
 
 ---
@@ -23,18 +23,20 @@ Servicio de análisis de sentimiento en español y cálculo de métricas gastron
 ```
 backend-analytics/
 ├── domain/
-│   ├── entities/            # Review, MetricsSnapshot, ModelVersion
-│   ├── repositories/        # Interfaces (IReviewRepository, etc.)
+│   ├── entities/            # Review, MetricsSnapshot, ModelVersion, SentimentPrediction
+│   ├── repositories/        # Interfaces (IReviewRepository, IModelRepository, IMetricsRepository)
 │   └── services/            # IGECalculator, SentimentReconciler, IGEWeights
 ├── application/
-│   └── use_cases/           # PredictSingleReview, EvaluateModel, TrainModel,
-│                            # GenerateSnapshots, RunPipeline
+│   └── use_cases/           # PredictSingleReview, EvaluateModel, GenerateSnapshots,
+│                            # RunPipeline, ExtractNegativeTerms
 ├── infrastructure/
 │   ├── database/            # SQLAlchemy repositories
 │   └── ml/                  # TransformerSentimentPipeline, training_data.py
 ├── server.py                # FastAPI entry point
 └── config.py                # Variables de entorno
 ```
+
+**SOLID:** cada use case y repositorio tiene una única responsabilidad. Todas las capas dependen de interfaces del dominio, no de implementaciones concretas. El modelo ML es inyectable a través de `ISentimentModel`.
 
 ---
 
@@ -47,6 +49,7 @@ backend-analytics/
 - Solo inferencia — pesos congelados, sin reentrenamiento
 - Labels: `POS → positive`, `NEG → negative`, `NEU → neutral`
 - Entrada truncada a 512 tokens
+- Carga lazy en el primer request y cacheada en memoria
 - Descargado de HuggingFace Hub en el primer inicio y cacheado localmente
 
 ---
@@ -146,7 +149,7 @@ Protegido por `X-API-Key`. Llamado automáticamente por el backend Node en cada 
 
 ### `POST /train`
 
-Protegido por `X-API-Key`. Pipeline completo: evalúa el modelo, clasifica todas las reseñas y genera snapshots IGE. Llamado por admin vía `POST /api/metrics/run` en el backend Node, y automáticamente cada noche a las 2:00 AM.
+Protegido por `X-API-Key`. Pipeline completo: evalúa el modelo, clasifica todas las reseñas, extrae términos negativos y genera snapshots IGE. Llamado por admin vía `POST /api/metrics/run` en el backend Node, y automáticamente cada noche a las 2:00 AM.
 
 ```json
 // Response
@@ -171,14 +174,17 @@ python -m pytest tests/ -v
 
 # Windows
 venv\Scripts\python -m pytest tests/ -v
+
+# Con cobertura
+python -m pytest tests/ --cov --cov-report=term-missing
 ```
 
-~135 tests (unitarios + API). Sin dependencias externas — DB y HuggingFace mockeados.
+**~135 tests** (unitarios + API). Cobertura mínima: **80%** (enforced en `pyproject.toml`). Sin dependencias externas — DB y HuggingFace completamente mockeados.
 
 | Directorio | Qué cubre |
 |---|---|
-| `tests/unit/` | Dominio, use cases, ML pipeline |
-| `tests/api/` | Endpoints FastAPI |
+| `tests/unit/` | Entidades de dominio, value objects, SentimentReconciler, IGECalculator, TransformerPipeline, use cases |
+| `tests/api/` | Endpoints FastAPI (/predict, /train, /health) |
 
 **Nota de patching:** HuggingFace `transformers` usa un lazy-loader (`_LazyModule`). Siempre parchear en el sitio de importación:
 
@@ -190,17 +196,14 @@ venv\Scripts\python -m pytest tests/ -v
 @patch("transformers.pipeline")
 ```
 
+```python
+# Simular modelo no cargado
+model.is_loaded.return_value = False   # correcto
+# model._pipeline = None              # incorrecto — el use case usa is_loaded()
+```
+
 ---
 
 ## Git workflow
 
-Ver [flujo completo en el README raíz](../README.md#git-workflow). Resumen para este servicio:
-
-```bash
-git checkout -b feat/analytics-mi-feature
-# desarrollar + tests en el mismo commit
-git commit -m "feat(analytics): agregar endpoint de tendencias temporales"
-git push origin feat/analytics-mi-feature
-```
-
-Scopes frecuentes en analytics: `analytics`, `metrics`, `sentiment`.
+Ver [flujo completo en el README raíz](../README.md#git-workflow). Scopes frecuentes en analytics: `analytics`, `metrics`, `sentiment`.
