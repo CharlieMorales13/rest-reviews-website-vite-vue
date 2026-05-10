@@ -35,8 +35,8 @@ function trapFocus(event: KeyboardEvent) {
     'button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
   )
   if (!focusable?.length) return
-  const first = focusable[0]
-  const last = focusable[focusable.length - 1]
+  const first = focusable[0]!
+  const last = focusable[focusable.length - 1]!
   if (event.shiftKey) {
     if (document.activeElement === first) { last.focus(); event.preventDefault() }
   } else {
