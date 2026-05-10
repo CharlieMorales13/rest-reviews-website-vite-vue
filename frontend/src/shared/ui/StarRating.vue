@@ -12,10 +12,15 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <div class="flex gap-px">
+  <div
+    class="flex gap-px"
+    role="img"
+    :aria-label="`${value} de ${max} estrellas`"
+  >
     <span
       v-for="n in max"
       :key="n"
+      aria-hidden="true"
       class="material-symbols-outlined"
       :style="{
         fontSize: `${size}px`,
