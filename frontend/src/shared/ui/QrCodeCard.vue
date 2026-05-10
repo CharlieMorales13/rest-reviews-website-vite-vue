@@ -9,7 +9,7 @@ const props = defineProps<{
 
 const containerRef = ref<HTMLElement | null>(null);
 const qrUrl = `${window.location.origin}/r/${props.slug}`;
-const logoUrl = `${window.location.origin}/assets/images/logo.png`;
+const logoUrl = `${window.location.origin}/assets/images/isotipo.png`;
 
 const qrCode = new QRCodeStyling({
   width: 420,

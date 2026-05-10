@@ -68,9 +68,9 @@ const handleLogin = async () => {
         <div class="text-center mb-10">
           <div class="flex justify-center mb-6">
             <img
-              src="/assets/images/logo.png"
+              src="/assets/images/imagotipo.png"
               alt="Anáhuac EATS"
-              class="h-20 w-auto"
+              class="h-24 w-auto"
             />
           </div>
           <h1 class="text-3xl font-bold tracking-tight text-white mb-2">

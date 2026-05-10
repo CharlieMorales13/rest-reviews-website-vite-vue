@@ -73,7 +73,7 @@ function maskEmail(e: string): string {
     <div class="relative z-10 w-full max-w-md p-6 animate-fade-in">
       <div class="bg-white/5 backdrop-blur-2xl border border-white/20 rounded-[32px] p-8 md:p-12 shadow-2xl text-center">
         <div class="flex justify-center mb-6">
-          <img src="/assets/images/logo.png" alt="Anáhuac EATS" class="h-20 w-auto" />
+          <img src="/assets/images/imagotipo.png" alt="Anáhuac EATS" class="h-24 w-auto" />
         </div>
 
         <h1 class="text-2xl font-bold text-white mb-2">Verifica tu correo</h1>
