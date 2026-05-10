@@ -40,7 +40,7 @@ export function passwordResetEmailHtml(name: string, link: string): string {
           <tr>
             <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
               <p style="margin:0;font-size:12px;color:#525155;">
-                © 2026 Universidad Anáhuac Oaxaca · Este es un correo automático, no respondas a este mensaje.
+                © 2026 Antequera Tech · Este es un correo automático, no respondas a este mensaje.
               </p>
             </td>
           </tr>
@@ -53,5 +53,5 @@ export function passwordResetEmailHtml(name: string, link: string): string {
 }
 
 export function passwordResetEmailText(name: string, link: string): string {
-  return `Hola ${name},\n\nRecibimos una solicitud para restablecer tu contraseña en Anáhuac EATS.\n\nHaz clic en el siguiente enlace (expira en 1 hora):\n${link}\n\nSi no solicitaste esto, ignora este correo.\n\n© 2026 Universidad Anáhuac Oaxaca`;
+  return `Hola ${name},\n\nRecibimos una solicitud para restablecer tu contraseña en Anáhuac EATS.\n\nHaz clic en el siguiente enlace (expira en 1 hora):\n${link}\n\nSi no solicitaste esto, ignora este correo.\n\n© 2026 Antequera Tech`;
 }

@@ -48,7 +48,7 @@ export function verificationEmailHtml(name: string, code: string): string {
           <tr>
             <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
               <p style="margin:0;font-size:12px;color:#525155;">
-                © 2026 Universidad Anáhuac Oaxaca · Este es un correo automático, no respondas a este mensaje.
+                © 2026 Antequera Tech · Este es un correo automático, no respondas a este mensaje.
               </p>
             </td>
           </tr>
@@ -62,5 +62,5 @@ export function verificationEmailHtml(name: string, code: string): string {
 }
 
 export function verificationEmailText(name: string, code: string): string {
-  return `Hola ${name},\n\nTu código de verificación para Anáhuac EATS es: ${code}\n\nExpira en 15 minutos.\n\nSi no creaste esta cuenta, ignora este mensaje.\n\n© 2026 Universidad Anáhuac Oaxaca`;
+  return `Hola ${name},\n\nTu código de verificación para Anáhuac EATS es: ${code}\n\nExpira en 15 minutos.\n\nSi no creaste esta cuenta, ignora este mensaje.\n\n© 2026 Antequera Tech`;
 }
