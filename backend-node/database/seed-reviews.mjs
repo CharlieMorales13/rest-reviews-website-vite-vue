@@ -3,7 +3,7 @@
  * Inserta 100 usuarios estudiantes y 100 reseñas por establecimiento (400 total)
  * directamente en la BD via Prisma — sin pasar por la API HTTP.
  *
- * Uso: node db/seed-reviews.mjs
+ * Uso: node backend-node/database/seed-reviews.mjs
  */
 
 import { createRequire } from 'module';
@@ -14,17 +14,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 
 // ── Cargar .env del backend ──────────────────────────────────────────────────
-const dotenv = require(path.join(__dirname, '../backend-node/node_modules/dotenv'));
-dotenv.config({ path: path.join(__dirname, '../backend-node/.env') });
+const dotenv = require(path.join(__dirname, '../node_modules/dotenv'));
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 // ── Importar Prisma y argon2 desde el backend ────────────────────────────────
-const { PrismaClient } = require(path.join(__dirname, '../backend-node/node_modules/@prisma/client'));
-const argon2 = require(path.join(__dirname, '../backend-node/node_modules/argon2'));
+const { PrismaClient } = require(path.join(__dirname, '../node_modules/@prisma/client'));
+const argon2 = require(path.join(__dirname, '../node_modules/argon2'));
 
 const prisma = new PrismaClient();
 const SEED_PASSWORD = process.env.SEED_PASSWORD;
 if (!SEED_PASSWORD) {
-  console.error('Error: SEED_PASSWORD env var no definida. Usa: SEED_PASSWORD=xxx node scripts/seed-reviews.mjs');
+  console.error('Error: SEED_PASSWORD env var no definida. Usa: SEED_PASSWORD=xxx node backend-node/database/seed-reviews.mjs');
   process.exit(1);
 }
 
