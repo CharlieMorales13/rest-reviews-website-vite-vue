@@ -166,7 +166,7 @@ npm test                  # vitest
 npm run test:coverage     # con reporte lcov
 ```
 
-**100+ tests unitarios e integración** en 39 archivos. Cobertura mínima: **80% statements/lines, 75% branches, 80% functions**.
+**220 tests unitarios e integración** en 36 archivos. Cobertura mínima: **80% statements/lines, 75% branches, 80% functions**.
 
 Áreas cubiertas: domain entities, use cases (auth, reviews, metrics, notifications, uploads), controllers, middlewares (auth, rate limit, error), DTOs (Zod schemas), integración HTTP.
 

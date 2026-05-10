@@ -21,7 +21,9 @@ Plataforma de reseñas de restaurantes universitarios para el campus Anáhuac Oa
 - **Panel de administración** — Gestión de usuarios, establecimientos y pipeline ML completo.
 - **Perfil de usuario** — Avatar, bio, carrera, historial de reseñas propias.
 - **PWA** — Instalable como app nativa, caché offline de assets, service worker auto-actualizable.
+- **QR code para gerentes** — Cada establecimiento tiene su QR estilizado descargable; redirige a crear reseña o al login según autenticación.
 - **Verificación de correo** — OTP de 6 dígitos requerido al registrarse (Resend).
+- **Recuperación de contraseña** — Flujo completo forgot/reset vía email (enlace con token de 1 hora).
 
 ---
 
@@ -185,7 +187,7 @@ cd backend-analytics && source venv/bin/activate && pytest tests/ -v
 cd frontend && npm test
 ```
 
-**~260+ tests en total:** ~135 analytics · ~100+ Node (39 archivos) · ~35 frontend (13 archivos).
+**~470+ tests en total:** ~135 analytics · 220 Node (36 archivos) · 113 frontend (13 archivos).
 
 Cobertura mínima exigida: **80%** en backend-node (vitest) y backend-analytics (pytest-cov).
 
@@ -217,7 +219,7 @@ Schema en `backend-node/prisma/schema.prisma`. Referencia SQL en `backend-node/d
 
 ## Seguridad
 
-- **JWT** con access token (1h) + refresh token persistido en `userSession`. Secret obligatorio sin fallback.
+- **JWT** con access token (configurable, ej. 24h) + refresh token de 30 días (rolling) persistido en `userSession`. Secret obligatorio sin fallback.
 - **Argon2id** para hashing de contraseñas
 - **Email verification** — OTP de 6 dígitos requerido antes del primer login
 - **Helmet** — headers de seguridad HTTP

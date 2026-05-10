@@ -70,7 +70,7 @@ src/
 
 ---
 
-## Rutas (13 rutas)
+## Rutas (16 rutas)
 
 | Ruta | Componente | Acceso |
 |---|---|---|
@@ -135,8 +135,21 @@ Gestiona el ciclo de vida de autenticación completo:
 | `ReviewLightbox` | Carrusel de imágenes con navegación por teclado (Esc, flechas) |
 | `OtpInput` | Input de 6 dígitos para verificación de email |
 | `QrCodeCard` | QR estilizado con isotipo en el centro, descargable en PNG |
-| `StarRating` | Visualización de calificación con estrellas |
-| `StarRatingInput` | Input interactivo de estrellas para formularios |
+| `StarRating` | Visualización de calificación con estrellas (`role="img"`, aria-label para lectores de pantalla) |
+| `StarRatingInput` | Input interactivo de estrellas para formularios (`aria-pressed`, `role="group"`) |
+
+---
+
+## Accesibilidad (WCAG 2.1 AA)
+
+| Componente | Implementación |
+|---|---|
+| `BaseModal` | `role="dialog"` + `aria-modal="true"` + `aria-labelledby`; focus trap con Tab/Shift+Tab; restaura foco al cerrar; Escape cierra el modal |
+| `StarRating` | `role="img"` + `aria-label` descriptivo; estrellas con `aria-hidden` |
+| `StarRatingInput` | `role="group"` + `aria-pressed` en cada estrella |
+| Botones ojo (contraseña) | `aria-label` dinámico "Mostrar/Ocultar contraseña" |
+| `NotificationBell` | `aria-label="Notificaciones"` |
+| Botón cerrar modal | `aria-label="Cerrar"` |
 
 ---
 
@@ -173,7 +186,7 @@ npm test
 npm run test:coverage
 ```
 
-**~35 tests** en 13 archivos (Vitest + Vue Test Utils + jsdom). Áreas cubiertas: `authStore` (flujo completo auth/register/verify/refresh), `httpClient` (interceptors, error handling), `extractError` (utilidades), componentes UI (ReviewCard, NotificationPanel, EstablishmentsPage, LoginPage).
+**113 tests** en 13 archivos (Vitest + Vue Test Utils + jsdom). Áreas cubiertas: `authStore` (flujo completo auth/register/verify/refresh/forgot-password), `httpClient` (interceptors, error handling), `extractError` (utilidades), componentes UI (ReviewCard, NotificationPanel, EstablishmentsPage, LoginPage, VerifyEmailPage, QrRedirectPage, QrCodeCard).
 
 ---
 
