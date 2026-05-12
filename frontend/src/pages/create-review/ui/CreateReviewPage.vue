@@ -3,7 +3,6 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { uploadImage } from '@/shared/api/uploadImage';
 import { ReviewService } from '@/entities/review/api/ReviewService';
-import { useToast } from '@/shared/lib/useToast';
 
 const route = useRoute();
 const router = useRouter();
@@ -34,7 +33,6 @@ const loading = ref(false);
 const success = ref(false);
 const error = ref<string | null>(null);
 const showTips = ref(false);
-const toast = useToast();
 
 const TITLE_MIN = 5;
 const TITLE_MAX = 100;
@@ -129,8 +127,7 @@ const submitReview = async () => {
       imageUrl,
     });
     success.value = true;
-    toast.success('¡Evaluación enviada con éxito!');
-    setTimeout(() => router.push(`/establishments/${establishmentSlug}`), 1800);
+    setTimeout(() => router.push(`/establishments/${establishmentSlug}`), 2000);
   } catch (e: unknown) {
     if (e && typeof e === 'object' && 'response' in e) {
       const axiosErr = e as { response?: { status?: number; data?: { message?: string } } };
@@ -167,7 +164,7 @@ const hoveredPrice = ref(0);
       <div class="p-8 md:p-12">
         <div class="flex items-center gap-4 mb-8">
           <button @click="router.back()" class="w-10 h-10 bg-black/5 hover:bg-black/10 rounded-full transition-colors flex items-center justify-center">
-             <span class="material-symbols-outlined text-[#0e0e10]">arrow_back</span>
+              <span class="material-symbols-outlined text-[#0e0e10]">arrow_back</span>
           </button>
           <div class="flex-1">
             <p class="text-xs text-orange-500 uppercase font-bold tracking-widest mb-1">Evaluación oficial</p>
@@ -206,7 +203,7 @@ const hoveredPrice = ref(0);
                   @click="serviceScore = star"
                   class="focus:outline-none transition-transform hover:scale-110"
                 >
-                   <span class="material-symbols-outlined text-3xl" :style="{ color: renderStars(serviceScore, hoveredService)[star-1] ? '#f97316' : '#d1d1d6', fontVariationSettings: `'FILL' ${renderStars(serviceScore, hoveredService)[star-1] ? 1 : 0}` }">star</span>
+                    <span class="material-symbols-outlined text-3xl" :style="{ color: renderStars(serviceScore, hoveredService)[star-1] ? '#f97316' : '#d1d1d6', fontVariationSettings: `'FILL' ${renderStars(serviceScore, hoveredService)[star-1] ? 1 : 0}` }">star</span>
                 </button>
               </div>
             </div>
@@ -222,7 +219,7 @@ const hoveredPrice = ref(0);
                   @click="priceScore = star"
                   class="focus:outline-none transition-transform hover:scale-110"
                 >
-                   <span class="material-symbols-outlined text-3xl" :style="{ color: renderStars(priceScore, hoveredPrice)[star-1] ? '#f97316' : '#d1d1d6', fontVariationSettings: `'FILL' ${renderStars(priceScore, hoveredPrice)[star-1] ? 1 : 0}` }">star</span>
+                    <span class="material-symbols-outlined text-3xl" :style="{ color: renderStars(priceScore, hoveredPrice)[star-1] ? '#f97316' : '#d1d1d6', fontVariationSettings: `'FILL' ${renderStars(priceScore, hoveredPrice)[star-1] ? 1 : 0}` }">star</span>
                 </button>
               </div>
             </div>
@@ -292,7 +289,7 @@ const hoveredPrice = ref(0);
               :maxlength="COMMENT_MAX"
             ></textarea>
             <div class="flex justify-between mt-1">
-              <span v-if="commentTooShort" class="text-xs text-red-500 font-bold">Mínimo {{ COMMENT_MIN }} caracteres ({{ COMMENT_MIN - commentLength }} restantes)</span>
+              <span v-if="commentTooShort" class="text-xs text-red-500 font-bold">Mínimo {{ COMMENT_MIN }} carácteres ({{ COMMENT_MIN - commentLength }} restantes)</span>
               <span v-else class="text-xs text-green-600 font-bold">✓ Listo</span>
               <span class="text-xs text-[#adaaad] font-bold">{{ commentLength }} / {{ COMMENT_MAX }} MAX</span>
             </div>
@@ -300,7 +297,7 @@ const hoveredPrice = ref(0);
 
           <!-- Upload de imagen real -->
           <div>
-            <label class="font-bold text-[#0e0e10] mb-2 block brand">Añadir Evidencia (Opcional)</label>
+            <label class="font-bold text-[#0e0e10] mb-2 block brand">Añadir Fotografías (Opcional)</label>
             <div
               v-if="uploadedImages.length === 0"
               class="border-2 border-dashed border-orange-500/30 rounded-2xl bg-orange-500/5 hover:bg-orange-500/10 transition-colors p-8 text-center cursor-pointer relative"
@@ -365,15 +362,18 @@ const hoveredPrice = ref(0);
               :disabled="!formValid || uploadedImages.some(img => img.uploading) || loading || success"
               class="relative overflow-hidden font-bold text-white shadow-lg transition-all duration-500 flex items-center justify-center disabled:cursor-not-allowed"
               :class="success
-                ? 'w-16 h-16 rounded-full bg-green-500 shadow-green-500/40'
+                ? 'w-full py-5 rounded-2xl bg-green-500 shadow-green-500/40'
                 : loading
                   ? 'w-16 h-16 rounded-full bg-gradient-to-r from-orange-500 to-amber-500'
                   : 'w-full py-5 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:shadow-orange-500/30 hover:-translate-y-1 disabled:opacity-50 disabled:transform-none'"
             >
               <!-- Spinner -->
               <span v-if="loading && !success" class="w-6 h-6 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
-              <!-- Checkmark -->
-              <span v-else-if="success" class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1;">check</span>
+              <!-- Éxito -->
+              <span v-else-if="success" class="flex items-center gap-2">
+                <span class="material-symbols-outlined font-bold" style="font-variation-settings:'FILL' 1;">check_circle</span>
+                ¡RESEÑA PUBLICADA CON ÉXITO!
+              </span>
               <!-- Default -->
               <span v-else class="flex items-center gap-2">
                 <span class="material-symbols-outlined font-bold">send</span>

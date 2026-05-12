@@ -5,6 +5,9 @@ import { authenticateToken } from "../middlewares/AuthMiddleware";
 import {
   loginRateLimiter,
   registerRateLimiter,
+  verifyEmailRateLimiter,
+  resendVerificationRateLimiter,
+  forgotPasswordRateLimiter,
 } from "../middlewares/RateLimitMiddleware";
 
 const authRouter = Router();
@@ -13,6 +16,19 @@ const authController = container.resolve(AuthController);
 authRouter.post("/register", registerRateLimiter, authController.register);
 authRouter.post("/login", loginRateLimiter, authController.login);
 authRouter.post("/refresh", loginRateLimiter, authController.refresh);
+authRouter.post("/logout", authController.logout);
+authRouter.post("/verify", verifyEmailRateLimiter, authController.verifyEmail);
+authRouter.post(
+  "/resend-verification",
+  resendVerificationRateLimiter,
+  authController.resendVerification,
+);
+authRouter.post(
+  "/forgot-password",
+  forgotPasswordRateLimiter,
+  authController.forgotPassword,
+);
+authRouter.post("/reset-password", authController.resetPassword);
 
 /**
  * @swagger

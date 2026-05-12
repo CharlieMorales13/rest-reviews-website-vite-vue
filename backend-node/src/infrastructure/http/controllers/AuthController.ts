@@ -1,15 +1,50 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, CookieOptions } from "express";
 import { RegisterUserUseCase } from "../../../application/use-cases/auth/RegisterUserUseCase";
 import { LoginUserUseCase } from "../../../application/use-cases/auth/LoginUserUseCase";
 import { RefreshTokenUseCase } from "../../../application/use-cases/auth/RefreshTokenUseCase";
 import { ChangePasswordUseCase } from "../../../application/use-cases/auth/ChangePasswordUseCase";
+import { VerifyEmailUseCase } from "../../../application/use-cases/auth/VerifyEmailUseCase";
+import { ResendVerificationUseCase } from "../../../application/use-cases/auth/ResendVerificationUseCase";
+import { ForgotPasswordUseCase } from "../../../application/use-cases/auth/ForgotPasswordUseCase";
+import { ResetPasswordUseCase } from "../../../application/use-cases/auth/ResetPasswordUseCase";
 import {
   RegisterUserSchema,
   LoginUserSchema,
-  RefreshTokenSchema,
   ChangePasswordSchema,
+  VerifyEmailSchema,
+  ResendVerificationSchema,
+  ForgotPasswordSchema,
+  ResetPasswordSchema,
 } from "../../../application/dtos/AuthDTO";
 import { injectable, inject } from "tsyringe";
+import { env } from "../../config/env.config";
+
+// ── Cookie helpers ────────────────────────────────────────────────────────────
+const ACCESS_TTL = 60 * 60 * 1000; // 1 hour
+const REFRESH_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function cookieBase(): CookieOptions {
+  return {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: "strict",
+    ...(env.COOKIE_DOMAIN ? { domain: env.COOKIE_DOMAIN } : {}),
+  };
+}
+
+function setAuthCookies(res: Response, token: string, refreshToken: string) {
+  res.cookie("access_token", token, { ...cookieBase(), maxAge: ACCESS_TTL });
+  res.cookie("refresh_token", refreshToken, {
+    ...cookieBase(),
+    maxAge: REFRESH_TTL,
+  });
+}
+
+function clearAuthCookies(res: Response) {
+  const opts = cookieBase();
+  res.clearCookie("access_token", opts);
+  res.clearCookie("refresh_token", opts);
+}
 
 import { AuthRequest } from "../middlewares/AuthMiddleware";
 import { GetUserUseCase } from "../../../application/use-cases/users/GetUserUseCase";
@@ -28,6 +63,13 @@ export class AuthController {
     @inject(UpdateUserUseCase) private updateUserUseCase: UpdateUserUseCase,
     @inject(ChangePasswordUseCase)
     private changePasswordUseCase: ChangePasswordUseCase,
+    @inject(VerifyEmailUseCase) private verifyEmailUseCase: VerifyEmailUseCase,
+    @inject(ResendVerificationUseCase)
+    private resendVerificationUseCase: ResendVerificationUseCase,
+    @inject(ForgotPasswordUseCase)
+    private forgotPasswordUseCase: ForgotPasswordUseCase,
+    @inject(ResetPasswordUseCase)
+    private resetPasswordUseCase: ResetPasswordUseCase,
   ) {}
 
   /**
@@ -133,11 +175,8 @@ export class AuthController {
   ): Promise<void> => {
     const validatedData = LoginUserSchema.parse(req.body);
     const result = await this.loginUserUseCase.execute(validatedData);
-
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
+    setAuthCookies(res, result.token, result.refreshToken);
+    res.status(200).json({ success: true, data: { user: result.user } });
   };
 
   /**
@@ -186,12 +225,62 @@ export class AuthController {
     res: Response,
     _next: NextFunction,
   ): Promise<void> => {
-    const validatedData = RefreshTokenSchema.parse(req.body);
-    const result = await this.refreshTokenUseCase.execute(validatedData);
+    const refreshToken = (req.cookies as Record<string, string>)?.refresh_token;
+    if (!refreshToken) {
+      res.status(401).json({ success: false, error: "No refresh token" });
+      return;
+    }
+    const result = await this.refreshTokenUseCase.execute({ refreshToken });
+    setAuthCookies(res, result.token, result.refreshToken);
+    res.status(200).json({ success: true });
+  };
 
+  public logout = (_req: Request, res: Response): void => {
+    clearAuthCookies(res);
+    res.status(200).json({ success: true, message: "Logged out" });
+  };
+
+  public verifyEmail = async (
+    req: Request,
+    res: Response,
+    _next: NextFunction,
+  ): Promise<void> => {
+    const validatedData = VerifyEmailSchema.parse(req.body);
+    const result = await this.verifyEmailUseCase.execute(validatedData);
+    setAuthCookies(res, result.token, result.refreshToken);
+    res.status(200).json({ success: true, data: { user: result.user } });
+  };
+
+  public resendVerification = async (
+    req: Request,
+    res: Response,
+    _next: NextFunction,
+  ): Promise<void> => {
+    const { email } = ResendVerificationSchema.parse(req.body);
+    await this.resendVerificationUseCase.execute(email);
+    res.status(200).json({ success: true, message: "Código reenviado" });
+  };
+
+  public forgotPassword = async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+    const { email } = ForgotPasswordSchema.parse(req.body);
+    await this.forgotPasswordUseCase.execute(email);
     res.status(200).json({
       success: true,
-      data: result,
+      message:
+        "Si el correo existe, recibirás un enlace para restablecer tu contraseña.",
+    });
+  };
+
+  public resetPassword = async (req: Request, res: Response): Promise<void> => {
+    const dto = ResetPasswordSchema.parse(req.body);
+    await this.resetPasswordUseCase.execute(dto);
+    res.status(200).json({
+      success: true,
+      message:
+        "Contraseña actualizada correctamente. Inicia sesión con tu nueva contraseña.",
     });
   };
 }

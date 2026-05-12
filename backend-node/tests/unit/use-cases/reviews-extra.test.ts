@@ -10,22 +10,24 @@ import { IAnalyticsService } from '@/domain/services/IAnalyticsService';
 describe('DeleteReviewUseCase', () => {
   const mockRepo = (review: any): IReviewRepository =>
     ({ findById: vi.fn().mockResolvedValue(review), delete: vi.fn().mockResolvedValue(undefined) } as any);
+  const mockAnalytics = (): IAnalyticsService =>
+    ({ runSentimentAnalysis: vi.fn().mockResolvedValue({}), classifyReview: vi.fn() } as any);
 
   it('deletes when user owns the review', async () => {
     const review = { id: 'r1', userId: 'u1' };
     const repo = mockRepo(review);
-    await new DeleteReviewUseCase(repo).execute('r1', 'u1');
+    await new DeleteReviewUseCase(repo, mockAnalytics()).execute('r1', 'u1');
     expect(repo.delete).toHaveBeenCalledWith('r1');
   });
 
   it('throws 404 when review not found', async () => {
     const repo = mockRepo(null);
-    await expect(new DeleteReviewUseCase(repo).execute('r1', 'u1')).rejects.toThrow('Review not found');
+    await expect(new DeleteReviewUseCase(repo, mockAnalytics()).execute('r1', 'u1')).rejects.toThrow('Review not found');
   });
 
   it('throws 403 when user does not own review', async () => {
     const repo = mockRepo({ id: 'r1', userId: 'u2' });
-    await expect(new DeleteReviewUseCase(repo).execute('r1', 'u1')).rejects.toThrow('Forbidden');
+    await expect(new DeleteReviewUseCase(repo, mockAnalytics()).execute('r1', 'u1')).rejects.toThrow('Forbidden');
   });
 });
 

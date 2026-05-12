@@ -33,6 +33,12 @@ export const VerifyEmailSchema = z.object({
 
 export type VerifyEmailDTO = z.infer<typeof VerifyEmailSchema>;
 
+export const ResendVerificationSchema = z.object({
+  email: z.string().email("Invalid email address"),
+});
+
+export type ResendVerificationDTO = z.infer<typeof ResendVerificationSchema>;
+
 export const ChangePasswordSchema = z.object({
   currentPassword: z.string().min(1, "La contraseña actual es requerida"),
   newPassword: z
@@ -41,3 +47,18 @@ export const ChangePasswordSchema = z.object({
 });
 
 export type ChangePasswordDTO = z.infer<typeof ChangePasswordSchema>;
+
+export const ForgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email address"),
+});
+
+export type ForgotPasswordDTO = z.infer<typeof ForgotPasswordSchema>;
+
+export const ResetPasswordSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+  newPassword: z
+    .string()
+    .min(6, "La nueva contraseña debe tener al menos 6 caracteres"),
+});
+
+export type ResetPasswordDTO = z.infer<typeof ResetPasswordSchema>;

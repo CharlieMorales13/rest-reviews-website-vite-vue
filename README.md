@@ -15,11 +15,23 @@ Plataforma de reseñas de restaurantes universitarios para el campus Anáhuac Oa
 - **Reseñas con sentimiento automático** — Cada reseña es analizada por un modelo RoBERTa en español (`robertuito`) al momento de crearse.
 - **IGE (Índice de Experiencia Gastronómica)** — Score 0–100 ponderado: comida 50%, servicio 30%, precio 20%.
 - **Dashboard por rol** — Vistas diferenciadas para estudiante, gerente y administrador.
+<<<<<<< HEAD
 - **Respuestas de gerente** — El manager puede responder reseñas; el estudiante recibe notificación.
 - **Likes en reseñas** — Persistentes, con conteo en tiempo real.
 - **Subida de imágenes con moderación NSFW** — Sightengine filtra contenido antes de subir a Supabase Storage.
 - **Panel de administración** — Gestión de usuarios, establecimientos y pipeline ML completo.
 - **Perfil de usuario** — Avatar, bio, carrera, historial de reseñas propias.
+=======
+- **Respuestas de gerente** — El manager puede responder reseñas; el estudiante recibe notificación en tiempo real.
+- **Likes en reseñas** — Persistentes, con conteo en tiempo real vía Supabase Realtime.
+- **Subida de imágenes con moderación NSFW** — Sightengine filtra contenido antes de subir a Supabase Storage.
+- **Panel de administración** — Gestión de usuarios, establecimientos y pipeline ML completo.
+- **Perfil de usuario** — Avatar, bio, carrera, historial de reseñas propias.
+- **PWA** — Instalable como app nativa, caché offline de assets, service worker auto-actualizable.
+- **QR code para gerentes** — Cada establecimiento tiene su QR estilizado descargable; redirige a crear reseña o al login según autenticación.
+- **Verificación de correo** — OTP de 6 dígitos requerido al registrarse (Resend).
+- **Recuperación de contraseña** — Flujo completo forgot/reset vía email (enlace con token de 1 hora).
+>>>>>>> db1b361bf5318d689558f26c68c65f5e8b49a406
 
 ---
 
@@ -28,14 +40,14 @@ Plataforma de reseñas de restaurantes universitarios para el campus Anáhuac Oa
 ```
 ┌─────────────────────────────────────────────┐
 │              anahuac-eats.com               │
-│           Frontend SPA (Vercel CDN)         │
+│       Frontend SPA + PWA (Vercel CDN)       │
 └─────────────────────┬───────────────────────┘
                       │ HTTPS
           ┌───────────▼───────────┐
           │   api.anahuac-eats.com │
           │  nginx + Let's Encrypt │
           └───────────┬───────────┘
-                      │ HTTP (interna)
+                      │ HTTP (interna Docker)
           ┌───────────▼───────────┐     ┌──────────────────────┐
           │   Backend Node        │────▶│  Backend Analytics   │
           │  Express + TypeScript │ HTTP│  FastAPI + Python    │
@@ -50,7 +62,7 @@ Plataforma de reseñas de restaurantes universitarios para el campus Anáhuac Oa
 
 | Servicio | Tecnología | Docs |
 |---|---|---|
-| Frontend | Vue 3 + Vite + TypeScript + Pinia | [README-frontend.md](frontend/README-frontend.md) |
+| Frontend | Vue 3 + Vite + TypeScript + Pinia + PWA | [README-frontend.md](frontend/README-frontend.md) |
 | Backend Node | Express + TypeScript + Prisma + tsyringe | [README-node.md](backend-node/README-node.md) |
 | Backend Analytics | FastAPI + Python + PyTorch + RoBERTa | [README-analytics.md](backend-analytics/README-analytics.md) |
 | Base de datos | Supabase (PostgreSQL + Storage) | — |
@@ -86,7 +98,14 @@ cp backend-analytics/.env.example backend-analytics/.env
 cp frontend/.env.example          frontend/.env
 ```
 
-**Nunca commitees archivos `.env`.**
+Para desarrollo local, crea además los overrides locales:
+
+```bash
+# backend-node/.env.local — sobreescribe NODE_ENV, ANALYTICS_URL, COOKIE_DOMAIN
+# frontend/.env.local     — sobreescribe VITE_API_URL=http://localhost:3000
+```
+
+**Nunca commitees archivos `.env` ni `.env.local`.**
 
 ---
 
@@ -137,7 +156,11 @@ fix(auth): guard undefined segment en isTokenExpired
 refactor(analytics): extraer SentimentReconciler a capa de dominio
 ```
 
+<<<<<<< HEAD
 Scopes comunes: `auth`, `reviews`, `establishments`, `analytics`, `dashboard`, `profile`, `admin`.
+=======
+Scopes comunes: `auth`, `reviews`, `establishments`, `analytics`, `dashboard`, `profile`, `admin`, `brand`, `frontend`.
+>>>>>>> db1b361bf5318d689558f26c68c65f5e8b49a406
 
 ### Flujo estándar
 
@@ -176,7 +199,13 @@ cd backend-analytics && source venv/bin/activate && pytest tests/ -v
 cd frontend && npm test
 ```
 
+<<<<<<< HEAD
 ~270 tests en total: **~135 analytics**, **~90 Node**, **~45 frontend**.
+=======
+**~470+ tests en total:** ~135 analytics · 220 Node (36 archivos) · 113 frontend (13 archivos).
+
+Cobertura mínima exigida: **80%** en backend-node (vitest) y backend-analytics (pytest-cov).
+>>>>>>> db1b361bf5318d689558f26c68c65f5e8b49a406
 
 ---
 
@@ -186,9 +215,14 @@ GitHub Actions (`.github/workflows/ci.yml`) en cada push a `master`:
 
 | Job | Qué hace |
 |---|---|
+<<<<<<< HEAD
 | `test-analytics` | ruff lint + pytest |
 | `test-node` | eslint + vitest |
 | `docker-build` | build con cache GHA |
+=======
+| `test-analytics` | ruff lint + pytest (cobertura ≥ 80%) |
+| `test-node` | eslint + vitest |
+>>>>>>> db1b361bf5318d689558f26c68c65f5e8b49a406
 | `deploy` | SSH → VM → `git pull` → `docker compose up -d --build` |
 
 El frontend se despliega automáticamente en **Vercel** en cada push a `master`.
@@ -197,7 +231,11 @@ El frontend se despliega automáticamente en **Vercel** en cada push a `master`.
 
 ## Base de datos
 
+<<<<<<< HEAD
 Schema en `backend-node/prisma/schema.prisma`. Referencia SQL en `backend-node/database/sql/`.
+=======
+Schema en `backend-node/prisma/schema.prisma`. Referencia SQL en `backend-node/database/sql/`. Seed de datos en `backend-node/database/seed-reviews.mjs`.
+>>>>>>> db1b361bf5318d689558f26c68c65f5e8b49a406
 
 > **Importante:** `prisma db push` se cuelga con el pooler de Supabase. Flujo correcto para cambios de schema:
 > 1. Aplicar DDL en **Supabase Dashboard → SQL Editor**
@@ -207,6 +245,7 @@ Schema en `backend-node/prisma/schema.prisma`. Referencia SQL en `backend-node/d
 
 ## Seguridad
 
+<<<<<<< HEAD
 - JWT con secret obligatorio (sin fallback)
 - Argon2id para hashing de contraseñas
 - Helmet + CORS con orígenes explícitos
@@ -214,6 +253,18 @@ Schema en `backend-node/prisma/schema.prisma`. Referencia SQL en `backend-node/d
 - Moderación de imágenes NSFW (Sightengine) antes de subir a Supabase Storage
 - `X-API-Key` protege los endpoints de analytics
 - Swagger deshabilitado en producción
+=======
+- **JWT** con access token (configurable, ej. 24h) + refresh token de 30 días (rolling) persistido en `userSession`. Secret obligatorio sin fallback.
+- **Argon2id** para hashing de contraseñas
+- **Email verification** — OTP de 6 dígitos requerido antes del primer login
+- **Helmet** — headers de seguridad HTTP
+- **CORS** con orígenes explícitos en producción (`CORS_ORIGINS`)
+- **Rate limiting** — 11 limiters: 30 req/15 min por IP en login, 10 reseñas/hora y 20 uploads/hora por `userId`
+- **Moderación NSFW** (Sightengine) antes de subir imágenes a Supabase Storage
+- **X-API-Key** protege los endpoints de analytics
+- **Swagger** deshabilitado en producción
+- **Session cleanup** automático cada noche a las 3:00 AM
+>>>>>>> db1b361bf5318d689558f26c68c65f5e8b49a406
 
 ---
 

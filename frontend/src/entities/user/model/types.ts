@@ -27,17 +27,14 @@ export interface RegisterResponse {
   success: boolean;
   message: string;
   data: {
-    user: User;
-    token: string;
+    email: string;
+    maskedEmail: string;
   };
 }
 
 export interface LoginResponse {
   success: boolean;
-  data: {
-    user: User;
-    token: string;
-  };
+  data: { user: User };
 }
 
 export interface VerifyRequest {
@@ -47,8 +44,5 @@ export interface VerifyRequest {
 
 export interface VerifyResponse {
   success: boolean;
-  data: {
-    user: User;
-    token: string;
-  };
+  data: { user: User };
 }

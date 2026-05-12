@@ -57,8 +57,8 @@ watch(mobileMenuOpen, (isOpen) => {
   }
 });
 
-const logout = () => {
-  authStore.logout();
+const logout = async () => {
+  await authStore.logout();
   router.push('/login');
 };
 
@@ -73,8 +73,11 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
       <div class="flex justify-between items-center h-20 md:h-28 px-4 md:px-10">
 
         <!-- Brand -->
-        <router-link to="/dashboard" class="text-2xl md:text-3xl font-black tracking-tighter text-orange-500 brand hover:opacity-80 transition-opacity">
-          Anáhuac EATS
+        <router-link to="/dashboard" class="hover:opacity-80 transition-opacity flex-shrink-0">
+          <div class="flex items-center gap-3">
+            <img src="/assets/images/isotipo.png" alt="Anáhuac EATS" class="h-14 md:h-16 w-auto" />
+            <img src="/assets/images/logotipo.png" alt="Anáhuac EATS" class="hidden md:block h-7 md:h-9 w-auto" />
+          </div>
         </router-link>
 
         <!-- Desktop Nav Links -->
@@ -119,6 +122,14 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
           >
             Mi Establecimiento
           </router-link>
+          <router-link
+            v-if="authStore.user?.role === 'manager'"
+            to="/manager/resenas"
+            class="transition-colors border-b-2 pb-1 text-lg font-semibold"
+            :class="isActive('/manager/resenas') ? 'text-orange-500 font-bold border-orange-500' : 'text-[#adaaad] hover:text-white border-transparent'"
+          >
+            Reseñas
+          </router-link>
         </div>
 
         <!-- Desktop Right Actions -->
@@ -149,6 +160,7 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
                   <p class="text-xs text-[#adaaad] mt-0.5 capitalize">{{ authStore.user?.role || 'student' }}</p>
                 </div>
                 <router-link
+                  v-if="authStore.user?.role !== 'manager'"
                   to="/profile"
                   class="flex items-center gap-3 px-4 py-3 text-sm text-[#adaaad] hover:text-orange-400 hover:bg-white/5 transition-colors"
                   @click="showDropdown = false"
@@ -249,6 +261,16 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
               Mi Establecimiento
             </router-link>
             <router-link
+              v-if="authStore.user?.role === 'manager'"
+              to="/manager/resenas"
+              class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors"
+              :class="isActive('/manager/resenas') ? 'bg-orange-500/10 text-orange-400' : 'text-[#adaaad] hover:bg-white/5 hover:text-white'"
+            >
+              <span class="material-symbols-outlined text-base">rate_review</span>
+              Reseñas
+            </router-link>
+            <router-link
+              v-if="authStore.user?.role !== 'manager'"
               to="/profile"
               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors"
               :class="isActive('/profile') ? 'bg-orange-500/10 text-orange-400' : 'text-[#adaaad] hover:bg-white/5 hover:text-white'"
@@ -287,8 +309,8 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
     <footer class="bg-[#0e0e10] w-full py-10 px-6 md:px-8 text-sm mt-auto border-t border-white/5">
       <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
         <div class="flex flex-col items-center md:items-start gap-1">
-          <div class="text-orange-500 font-bold text-lg brand">Anáhuac EATS</div>
-          <p class="text-[#adaaad] text-xs text-center md:text-left">© 2026 Universidad Anáhuac Oaxaca</p>
+          <img src="/assets/images/logotipo.png" alt="Anáhuac EATS" class="h-8 w-auto" />
+          <p class="text-[#adaaad] text-xs text-center md:text-left">© 2026 Antequera Tech</p>
         </div>
 
         <div class="flex flex-wrap justify-center gap-6">

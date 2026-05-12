@@ -2,6 +2,7 @@ import "reflect-metadata"; // Must be imported before everything else for DI to 
 import express, { Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
+import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import swaggerUi from "swagger-ui-express";
 import cron from "node-cron";
@@ -12,6 +13,7 @@ import { logger } from "../config/logger";
 import { swaggerSpec } from "../config/swagger.config";
 import { container } from "../config/container";
 import { RunAnalyticsUseCase } from "../../application/use-cases/metrics/RunAnalyticsUseCase";
+import prisma from "../database/prisma.service";
 import authRouter from "./routes/auth.routes";
 import reviewRouter from "./routes/review.routes";
 import establishmentRouter from "./routes/establishment.routes";
@@ -35,6 +37,7 @@ const allowedOrigins =
         .filter(Boolean)
     : ["http://localhost:5173", "http://localhost:4173"];
 app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(cookieParser());
 app.use(express.json());
 
 // Replace Morgan with Pino for structured logging
@@ -75,6 +78,21 @@ cron.schedule("0 2 * * *", async () => {
     logger.info({ result }, "[cron] Analytics pipeline completed");
   } catch (err) {
     logger.error({ err }, "[cron] Analytics pipeline failed");
+  }
+});
+
+// Nightly session cleanup — runs at 03:00 AM every day
+cron.schedule("0 3 * * *", async () => {
+  logger.info("[cron] Cleaning up expired/revoked sessions...");
+  try {
+    const { count } = await prisma.userSession.deleteMany({
+      where: {
+        OR: [{ isRevoked: true }, { expiresAt: { lt: new Date() } }],
+      },
+    });
+    logger.info({ count }, "[cron] Session cleanup completed");
+  } catch (err) {
+    logger.error({ err }, "[cron] Session cleanup failed");
   }
 });
 

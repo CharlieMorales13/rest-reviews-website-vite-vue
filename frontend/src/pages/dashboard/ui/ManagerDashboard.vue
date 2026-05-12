@@ -3,6 +3,10 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { httpClient } from '@/shared/api/httpClient';
 import { extractErrorMessage } from '@/shared/lib/extractError';
+import { useAuthStore } from '@/entities/user/model/authStore';
+import QrCodeCard from '@/shared/ui/QrCodeCard.vue';
+
+const authStore = useAuthStore();
 
 const router = useRouter();
 
@@ -109,7 +113,7 @@ function formatDate(iso: string): string {
 
 function goToReview(reviewId: string) {
   showCriticalModal.value = false;
-  router.push(`/manager/mi-establecimiento?highlight=${reviewId}`);
+  router.push({ path: '/manager/resenas', query: { highlight: reviewId } });
 }
 
 const criticalLabel = computed(() => {
@@ -224,6 +228,27 @@ const loadMetrics = async () => {
 };
 
 onMounted(() => loadMetrics());
+
+// ── Reporte de errores por WhatsApp ───────────────────────────────────────────
+const reportReason = ref('');
+
+const openWhatsApp = () => {
+  if (!reportReason.value.trim()) return;
+  const managerName = authStore.user?.name ?? 'Gerente';
+  const estName = establishment.value?.name ?? 'Establecimiento';
+  const now = new Date().toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' });
+  const message = [
+    `Hola Carlos, soy ${managerName} (gerente de ${estName}).`,
+    '',
+    `Se encontró una falla en el sistema con la razón: ${reportReason.value.trim()}`,
+    '',
+    `Información adicional:`,
+    `• Establecimiento: ${estName}`,
+    `• Usuario: ${managerName}`,
+    `• Fecha y hora: ${now}`,
+  ].join('\n');
+  window.open(`https://wa.me/522223359708?text=${encodeURIComponent(message)}`, '_blank');
+};
 </script>
 
 <template>
@@ -521,29 +546,89 @@ onMounted(() => loadMetrics());
             Términos negativos detectados por IA en las reseñas de tu establecimiento
           </p>
 
-          <!-- Empty state -->
+          <!-- Empty state: no reviews yet -->
           <div
-            v-if="sortedNegativeTerms.length === 0 || establishment.reviewCount === 0"
+            v-if="establishment.reviewCount === 0"
             class="flex flex-col items-center justify-center py-10 gap-3 text-center"
           >
             <span class="material-symbols-outlined text-4xl text-[#adaaad]/40" style="font-variation-settings: 'FILL' 1;">psychology</span>
             <p class="text-sm text-[#adaaad] max-w-xs">
-              El modelo aún no ha procesado reseñas. Ejecuta el pipeline desde el panel de administración.
+              Aún no tienes reseñas. Los tópicos aparecerán una vez que los estudiantes dejen sus opiniones.
+            </p>
+          </div>
+
+          <!-- Empty state: pipeline ran but not enough recurring negative terms -->
+          <div
+            v-else-if="sortedNegativeTerms.length === 0"
+            class="flex flex-col items-center justify-center py-10 gap-3 text-center"
+          >
+            <span class="material-symbols-outlined text-4xl text-[#adaaad]/40" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            <p class="text-sm text-[#adaaad] max-w-xs">
+              Sin patrones negativos recurrentes. Los términos aparecerán cuando el modelo detecte frases que se repitan en varias reseñas negativas.
             </p>
           </div>
 
           <!-- Pills -->
           <div v-else class="flex flex-wrap gap-3 mt-4">
-            <span
+            <button
               v-for="term in sortedNegativeTerms"
               :key="term.term"
-              class="px-3 py-1.5 rounded-full inline-flex items-center"
+              class="px-3 py-1.5 rounded-full inline-flex items-center cursor-pointer transition-opacity hover:opacity-75"
               :class="tierClasses[termTier(term.mentions)]"
               :style="{ fontSize: `clamp(0.8rem, ${0.8 + (term.mentions / maxMentions) * 0.8}rem, 1.6rem)` }"
+              @click="router.push({ path: '/manager/resenas', query: { q: term.term } })"
             >
               {{ term.term.toLowerCase() }}<sup class="text-[10px] ml-0.5 opacity-60">{{ term.mentions }}</sup>
-            </span>
+            </button>
           </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+           SECCIÓN 4 — QR + Reportar Error
+      ══════════════════════════════════════════════════════════════════════════ -->
+      <section class="mb-16">
+        <h2 class="text-2xl font-bold tracking-tight text-white mb-6 brand">Herramientas</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+          <!-- QR compacto -->
+          <QrCodeCard v-if="establishment.slug" :slug="establishment.slug" :establishment-name="establishment.name" />
+
+          <!-- Reportar error -->
+          <div class="bg-white/5 backdrop-blur border border-white/10 rounded-[1.5rem] p-6 flex flex-col gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-red-400 text-xl" style="font-variation-settings: 'FILL' 1;">bug_report</span>
+              </div>
+              <div>
+                <p class="text-xs font-bold uppercase tracking-widest text-[#adaaad]">Soporte</p>
+                <h3 class="text-lg font-black text-white brand leading-tight">Reportar Falla</h3>
+              </div>
+            </div>
+
+            <p class="text-sm text-[#adaaad]">
+              Describe qué ocurrió y envía el reporte directamente por WhatsApp.
+            </p>
+
+            <textarea
+              v-model="reportReason"
+              placeholder="Ej: No puedo subir imágenes, el botón no responde..."
+              rows="3"
+              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-[#adaaad]/40 focus:border-red-500/40 focus:outline-none resize-none transition-colors"
+            ></textarea>
+
+            <button
+              @click="openWhatsApp"
+              :disabled="!reportReason.trim()"
+              class="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-sm text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-[#25D366] hover:bg-[#1ebe5d] active:bg-[#17a352]"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 flex-shrink-0">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+              </svg>
+              Enviar reporte por WhatsApp
+            </button>
+          </div>
+
         </div>
       </section>
 

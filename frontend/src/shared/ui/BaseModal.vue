@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch } from 'vue'
+import { watch, ref, nextTick } from 'vue'
 import Icon from './Icon.vue'
 
 const props = withDefaults(defineProps<{
@@ -20,14 +20,44 @@ const emit = defineEmits<{
   close: []
 }>()
 
+const panelRef = ref<HTMLElement | null>(null)
+let previousFocus: HTMLElement | null = null
+
 const close = () => {
   emit('update:modelValue', false)
   emit('close')
 }
 
-// lock body scroll when modal is open
-watch(() => props.modelValue, (open) => {
+function trapFocus(event: KeyboardEvent) {
+  if (event.key === 'Escape' && props.closable) { close(); return }
+  if (event.key !== 'Tab') return
+  const focusable = panelRef.value?.querySelectorAll<HTMLElement>(
+    'button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+  )
+  if (!focusable?.length) return
+  const first = focusable[0]!
+  const last = focusable[focusable.length - 1]!
+  if (event.shiftKey) {
+    if (document.activeElement === first) { last.focus(); event.preventDefault() }
+  } else {
+    if (document.activeElement === last) { first.focus(); event.preventDefault() }
+  }
+}
+
+watch(() => props.modelValue, async (open) => {
   document.body.style.overflow = open ? 'hidden' : ''
+  if (open) {
+    previousFocus = document.activeElement as HTMLElement
+    document.addEventListener('keydown', trapFocus)
+    await nextTick()
+    const first = panelRef.value?.querySelector<HTMLElement>(
+      'button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+    )
+    first?.focus()
+  } else {
+    document.removeEventListener('keydown', trapFocus)
+    previousFocus?.focus()
+  }
 }, { immediate: false })
 
 const sizeMap: Record<string, string> = {
@@ -80,6 +110,10 @@ const footerThemeMap: Record<string, string> = {
         >
           <div
             v-if="modelValue"
+            ref="panelRef"
+            role="dialog"
+            aria-modal="true"
+            :aria-labelledby="title ? 'modal-title' : undefined"
             class="relative w-full rounded-3xl shadow-2xl overflow-hidden flex flex-col"
             :class="[sizeMap[props.size], themeMap[props.theme]]"
           >
@@ -90,11 +124,12 @@ const footerThemeMap: Record<string, string> = {
               :class="headerThemeMap[props.theme]"
             >
               <slot name="header">
-                <h3 class="text-lg font-bold leading-tight brand">{{ title }}</h3>
+                <h3 id="modal-title" class="text-lg font-bold leading-tight brand">{{ title }}</h3>
               </slot>
               <button
                 v-if="closable"
                 @click="close"
+                aria-label="Cerrar"
                 class="w-9 h-9 rounded-full flex items-center justify-center transition-colors ml-4 flex-shrink-0"
                 :class="props.theme === 'dark' ? 'hover:bg-white/10 text-white/40 hover:text-white' : 'hover:bg-black/5 text-[#adaaad] hover:text-black'"
               >

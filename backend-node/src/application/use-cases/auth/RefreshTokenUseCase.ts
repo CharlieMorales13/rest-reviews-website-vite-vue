@@ -59,18 +59,18 @@ export class RefreshTokenUseCase {
     const token = jwt.sign(
       { userId: user.id, role: user.role, email: user.email },
       env.JWT_SECRET,
-      { expiresIn: "24h" },
+      { expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"] },
     );
 
     // Issue a new rotated refresh token
     const newRefreshToken = jwt.sign(
       { userId: user.id, type: "refresh" },
       env.JWT_SECRET,
-      { expiresIn: "7d" },
+      { expiresIn: "30d" },
     );
 
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
+    expiresAt.setDate(expiresAt.getDate() + 30);
 
     await prisma.userSession.create({
       data: {

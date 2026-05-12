@@ -2,8 +2,8 @@ import { z } from "zod";
 import dotenv from "dotenv";
 import path from "path";
 
-// Load variables from .env if needed
 dotenv.config({ path: path.join(process.cwd(), ".env") });
+dotenv.config({ path: path.join(process.cwd(), ".env.local"), override: true });
 
 const envSchema = z.object({
   NODE_ENV: z
@@ -19,6 +19,12 @@ const envSchema = z.object({
   ANALYTICS_API_KEY: z.string().default(""),
   SIGHTENGINE_API_USER: z.string().optional(),
   SIGHTENGINE_API_SECRET: z.string().optional(),
+  RESEND_API_KEY: z
+    .string()
+    .min(1, "RESEND_API_KEY is required for email verification"),
+  EMAIL_FROM: z.string().default("Anáhuac EATS <noreply@anahuac-eats.com>"),
+  COOKIE_DOMAIN: z.string().optional(),
+  FRONTEND_URL: z.string().url().default("http://localhost:5173"),
 });
 
 const parseEnv = () => {

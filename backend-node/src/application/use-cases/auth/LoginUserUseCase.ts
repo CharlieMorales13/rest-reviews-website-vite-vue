@@ -34,6 +34,10 @@ export class LoginUserUseCase {
       throw new AppError("Invalid credentials or inactive account", 401);
     }
 
+    if (!user.isVerified) {
+      throw new AppError("EMAIL_NOT_VERIFIED", 403);
+    }
+
     const isPasswordValid = await argon2.verify(
       user.passwordHash,
       dto.password,
@@ -46,17 +50,17 @@ export class LoginUserUseCase {
     const token = jwt.sign(
       { userId: user.id, role: user.role, email: user.email },
       env.JWT_SECRET,
-      { expiresIn: "24h" },
+      { expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"] },
     );
 
     const refreshToken = jwt.sign(
       { userId: user.id, type: "refresh" },
       env.JWT_SECRET,
-      { expiresIn: "7d" },
+      { expiresIn: "30d" },
     );
 
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
+    expiresAt.setDate(expiresAt.getDate() + 30);
 
     await prisma.userSession.create({
       data: {

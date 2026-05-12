@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useAuthStore } from '@/entities/user/model/authStore';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { CARRERAS } from '@/shared/lib/constants';
 
 const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
 
 const NON_STUDENT_TYPES = [
   { value: 'Colaborador UAO',  label: 'Colaborador', icon: 'badge' },
@@ -58,14 +59,16 @@ const handleRegister = async () => {
   if (!canSubmit.value || loading.value) return;
   loading.value = true;
   try {
-    await authStore.register({
+    const { email: registeredEmail } = await authStore.register({
       name: name.value,
       username: username.value,
       email: email.value,
       password: password.value,
       carrera: resolvedCarrera.value,
     });
-    await router.push('/dashboard');
+    const redirect = route.query.redirect as string | undefined;
+    const verifyUrl = `/verify-email?email=${encodeURIComponent(registeredEmail)}${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ''}`;
+    await router.push(verifyUrl);
   } catch {
     // Error handled by store
   } finally {
@@ -88,8 +91,8 @@ const handleRegister = async () => {
       <div class="bg-white/5 backdrop-blur-2xl border border-white/20 rounded-[32px] p-8 md:p-12 shadow-2xl">
 
         <div class="text-center mb-10">
-          <div class="inline-flex items-center gap-2 px-4 py-2 bg-anahuac-orange/20 border border-anahuac-orange/30 rounded-full mb-6">
-            <span class="text-anahuac-orange font-extrabold text-lg tracking-tight brand">Anáhuac EATS</span>
+          <div class="flex justify-center mb-6">
+            <img src="/assets/images/imagotipo.png" alt="Anáhuac EATS" class="h-24 w-auto" />
           </div>
           <h1 class="text-3xl font-bold tracking-tight text-white mb-2">Únete</h1>
           <p class="text-white/60 text-sm">Crea tu cuenta y empieza a opinar</p>
