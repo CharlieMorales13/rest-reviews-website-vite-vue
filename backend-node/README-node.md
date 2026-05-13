@@ -18,15 +18,9 @@ API REST construida con **TypeScript**, **Express** y **Clean Architecture**. Or
 | Helmet + CORS | Seguridad HTTP |
 | express-rate-limit | Rate limiting por IP y userId |
 | Pino | Logging estructurado (JSON) |
-<<<<<<< HEAD
-| node-cron | Tareas programadas (pipeline 2 AM) |
-| Swagger UI | Documentación (solo en desarrollo) |
-| Vitest | Tests unitarios |
-=======
 | node-cron | Tareas programadas (pipeline 2 AM, cleanup 3 AM) |
 | Swagger UI | Documentación (solo en desarrollo) |
 | Vitest | Tests unitarios e integración |
->>>>>>> db1b361bf5318d689558f26c68c65f5e8b49a406
 
 ---
 
@@ -91,21 +85,14 @@ npm run dev       # ts-node-dev con hot reload
 npm run build     # compila a dist/
 npm run lint      # eslint
 npm test          # vitest
-<<<<<<< HEAD
-=======
 npm run test:coverage  # vitest con reporte de cobertura
->>>>>>> db1b361bf5318d689558f26c68c65f5e8b49a406
 ```
 
 ---
 
 ## Base de datos
 
-<<<<<<< HEAD
-Schema en `prisma/schema.prisma`. Referencia SQL en `database/sql/`.
-=======
 Schema en `prisma/schema.prisma`. Referencia SQL en `database/sql/`. Seed de datos en `database/seed-reviews.mjs`.
->>>>>>> db1b361bf5318d689558f26c68c65f5e8b49a406
 
 > **Importante:** `prisma db push` se cuelga con el pooler de Supabase. Flujo correcto:
 > 1. Aplicar DDL en **Supabase Dashboard → SQL Editor**
@@ -120,14 +107,11 @@ Schema en `prisma/schema.prisma`. Referencia SQL en `database/sql/`. Seed de dat
 | `POST` | `/api/auth/register` | Público |
 | `POST` | `/api/auth/login` | Público |
 | `POST` | `/api/auth/refresh` | Público |
-<<<<<<< HEAD
-=======
 | `POST` | `/api/auth/logout` | Autenticado |
 | `POST` | `/api/auth/verify-email` | Público |
 | `POST` | `/api/auth/resend-verification` | Público |
 | `POST` | `/api/auth/forgot-password` | Público |
 | `POST` | `/api/auth/reset-password` | Público |
->>>>>>> db1b361bf5318d689558f26c68c65f5e8b49a406
 | `GET` | `/api/establishments` | Autenticado |
 | `GET` | `/api/establishments/:slug` | Autenticado |
 | `GET` | `/api/establishments/:slug/reviews` | Autenticado |
@@ -152,16 +136,6 @@ Documentación interactiva en `/api/docs` (solo en desarrollo).
 
 ## Seguridad
 
-<<<<<<< HEAD
-- JWT sin fallback secret — `JWT_SECRET` es obligatorio
-- Argon2id para hashing de contraseñas
-- `userId` en reseñas forzado desde el JWT, nunca del body
-- Rate limiting: 30 req/15 min por IP en login, 10 reseñas/hora y 20 uploads/hora por `userId`
-- Moderación NSFW (Sightengine) antes de subir imágenes a Supabase Storage
-- Helmet con headers de seguridad
-- CORS con orígenes explícitos en producción
-- Swagger deshabilitado en producción
-=======
 - **JWT** sin fallback secret — `JWT_SECRET` obligatorio. Access token (24h) + refresh token persistido en `userSession` con cleanup automático.
 - **Argon2id** para hashing de contraseñas (estándar de la industria 2024)
 - **Email verification** — OTP de 6 dígitos (Resend) requerido antes del primer login
@@ -171,42 +145,28 @@ Documentación interactiva en `/api/docs` (solo en desarrollo).
 - **Helmet** con headers de seguridad estándar
 - **CORS** con orígenes explícitos en producción; localhost permitido en desarrollo
 - **Swagger** deshabilitado en producción
->>>>>>> db1b361bf5318d689558f26c68c65f5e8b49a406
 
 ---
 
 ## Tareas programadas (node-cron)
 
-<<<<<<< HEAD
-El pipeline de analytics corre automáticamente cada noche a las **2:00 AM** vía `node-cron`. También puede ejecutarse manualmente desde el panel de admin (`POST /api/metrics/run`).
-=======
 | Hora | Tarea |
 |---|---|
 | 02:00 AM | Pipeline de analytics — clasifica reseñas y genera snapshots IGE |
 | 03:00 AM | Limpieza de sesiones expiradas o revocadas |
 
 También ejecutables manualmente: pipeline vía `POST /api/metrics/run` (admin).
->>>>>>> db1b361bf5318d689558f26c68c65f5e8b49a406
 
 ---
 
 ## Tests
 
 ```bash
-<<<<<<< HEAD
-npm test
-```
-
-~90 tests unitarios + integración (vitest). Cobertura: domain entities, use cases, controllers, middlewares, DTOs.
-=======
 npm test                  # vitest
 npm run test:coverage     # con reporte lcov
 ```
 
-**220 tests unitarios e integración** en 36 archivos. Cobertura mínima: **80% statements/lines, 75% branches, 80% functions**.
-
-Áreas cubiertas: domain entities, use cases (auth, reviews, metrics, notifications, uploads), controllers, middlewares (auth, rate limit, error), DTOs (Zod schemas), integración HTTP.
->>>>>>> db1b361bf5318d689558f26c68c65f5e8b49a406
+**~90 tests unitarios e integración** (vitest). Cobertura: domain entities, use cases, controllers, middlewares, DTOs.
 
 ```typescript
 // Mockear env.config en tests de middleware para evitar process.exit(1)
@@ -219,7 +179,6 @@ vi.mock('@/infrastructure/config/env.config', () => ({
 
 ## Git workflow
 
-<<<<<<< HEAD
 Ver [flujo completo en el README raíz](../README.md#git-workflow). Resumen para este servicio:
 
 ```bash
@@ -230,6 +189,3 @@ git push origin feat/node-mi-feature
 ```
 
 Scopes frecuentes en Node: `auth`, `reviews`, `establishments`, `metrics`, `notifications`, `admin`, `upload`.
-=======
-Ver [flujo completo en el README raíz](../README.md#git-workflow). Scopes frecuentes: `auth`, `reviews`, `establishments`, `metrics`, `notifications`, `admin`, `upload`.
->>>>>>> db1b361bf5318d689558f26c68c65f5e8b49a406
