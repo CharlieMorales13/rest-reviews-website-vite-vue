@@ -1,4 +1,9 @@
+function esc(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 export function verificationEmailHtml(name: string, code: string): string {
+  const safeName = esc(name);
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -23,7 +28,7 @@ export function verificationEmailHtml(name: string, code: string): string {
           <tr>
             <td style="padding:40px 40px 32px;">
               <p style="margin:0 0 8px;font-size:22px;font-weight:800;color:#f9f5f8;letter-spacing:-0.5px;">
-                Hola, ${name} 👋
+                Hola, ${safeName} 👋
               </p>
               <p style="margin:0 0 32px;font-size:15px;color:#adaaad;line-height:1.6;">
                 Usa este código de 6 dígitos para verificar tu correo electrónico y activar tu cuenta.

@@ -44,12 +44,12 @@ Plataforma de reseñas de restaurantes universitarios para el campus Anáhuac Oa
           │   Backend Node        │────▶│  Backend Analytics   │
           │  Express + TypeScript │ HTTP│  FastAPI + Python    │
           │   Clean Architecture  │     │  RoBERTa transformer │
-          └───────────┬───────────┘     └──────────────────────┘
-                      │
-          ┌───────────▼───────────┐
-          │    Supabase Cloud      │
-          │  PostgreSQL + Storage  │
-          └───────────────────────┘
+          └───────────┬───────────┘     └───────────┬──────────┘
+                      │                             │ SQL
+          ┌───────────▼─────────────────────────────▼──────────┐
+          │                   Supabase Cloud                   │
+          │                PostgreSQL + Storage                │
+          └────────────────────────────────────────────────────┘
 ```
 
 | Servicio | Tecnología | Docs |

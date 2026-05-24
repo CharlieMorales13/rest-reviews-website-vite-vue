@@ -35,6 +35,9 @@ describe("AuthController", () => {
         {} as any,
         {} as any,
         {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
       );
 
       const req = {
@@ -70,6 +73,84 @@ describe("AuthController", () => {
           data: expect.objectContaining({ user: fakeUser }),
         }),
       );
+    });
+  });
+
+  describe("logout", () => {
+    it("calls logoutUserUseCase if refresh token is present, clears cookies and returns 200", async () => {
+      const mockLogoutUseCase = {
+        execute: vi.fn().mockResolvedValue(undefined),
+      } as any;
+
+      const controller = new AuthController(
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        mockLogoutUseCase,
+      );
+
+      const req = {
+        cookies: { refresh_token: "existing-refresh-token" },
+      } as unknown as Request;
+
+      const res = {
+        status: vi.fn().mockReturnThis(),
+        json: vi.fn(),
+        clearCookie: vi.fn(),
+      } as unknown as Response;
+
+      await controller.logout(req, res);
+
+      expect(mockLogoutUseCase.execute).toHaveBeenCalledWith("existing-refresh-token");
+      expect(res.clearCookie).toHaveBeenCalledWith("access_token", expect.any(Object));
+      expect(res.clearCookie).toHaveBeenCalledWith("refresh_token", expect.any(Object));
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({ success: true, message: "Logged out" });
+    });
+
+    it("does not crash and still clears cookies if logoutUserUseCase throws error", async () => {
+      const mockLogoutUseCase = {
+        execute: vi.fn().mockRejectedValue(new Error("DB error")),
+      } as any;
+
+      const controller = new AuthController(
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        mockLogoutUseCase,
+      );
+
+      const req = {
+        cookies: { refresh_token: "existing-refresh-token" },
+      } as unknown as Request;
+
+      const res = {
+        status: vi.fn().mockReturnThis(),
+        json: vi.fn(),
+        clearCookie: vi.fn(),
+      } as unknown as Response;
+
+      await controller.logout(req, res);
+
+      expect(mockLogoutUseCase.execute).toHaveBeenCalledWith("existing-refresh-token");
+      expect(res.clearCookie).toHaveBeenCalledWith("access_token", expect.any(Object));
+      expect(res.clearCookie).toHaveBeenCalledWith("refresh_token", expect.any(Object));
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({ success: true, message: "Logged out" });
     });
   });
 });

@@ -1,4 +1,10 @@
+function esc(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 export function passwordResetEmailHtml(name: string, link: string): string {
+  const safeName = esc(name);
+  const safeLink = esc(link);
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -19,7 +25,7 @@ export function passwordResetEmailHtml(name: string, link: string): string {
           <tr>
             <td style="padding:40px 40px 32px;">
               <p style="margin:0 0 8px;font-size:22px;font-weight:800;color:#f9f5f8;letter-spacing:-0.5px;">
-                Hola, ${name} 👋
+                Hola, ${safeName} 👋
               </p>
               <p style="margin:0 0 32px;font-size:15px;color:#adaaad;line-height:1.6;">
                 Recibimos una solicitud para restablecer la contraseña de tu cuenta.
@@ -27,13 +33,13 @@ export function passwordResetEmailHtml(name: string, link: string): string {
                 Si no solicitaste esto, ignora este correo.
               </p>
               <div style="text-align:center;margin-bottom:32px;">
-                <a href="${link}" style="display:inline-block;background:#f97316;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:16px 40px;border-radius:14px;letter-spacing:-0.3px;">
+                <a href="${safeLink}" style="display:inline-block;background:#f97316;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:16px 40px;border-radius:14px;letter-spacing:-0.3px;">
                   Restablecer contraseña
                 </a>
               </div>
               <p style="margin:0;font-size:12px;color:#525155;word-break:break-all;">
                 O copia este enlace en tu navegador:<br/>
-                <span style="color:#adaaad;">${link}</span>
+                <span style="color:#adaaad;">${safeLink}</span>
               </p>
             </td>
           </tr>

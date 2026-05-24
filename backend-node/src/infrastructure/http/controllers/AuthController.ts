@@ -7,6 +7,7 @@ import { VerifyEmailUseCase } from "../../../application/use-cases/auth/VerifyEm
 import { ResendVerificationUseCase } from "../../../application/use-cases/auth/ResendVerificationUseCase";
 import { ForgotPasswordUseCase } from "../../../application/use-cases/auth/ForgotPasswordUseCase";
 import { ResetPasswordUseCase } from "../../../application/use-cases/auth/ResetPasswordUseCase";
+import { LogoutUserUseCase } from "../../../application/use-cases/auth/LogoutUserUseCase";
 import {
   RegisterUserSchema,
   LoginUserSchema,
@@ -70,6 +71,8 @@ export class AuthController {
     private forgotPasswordUseCase: ForgotPasswordUseCase,
     @inject(ResetPasswordUseCase)
     private resetPasswordUseCase: ResetPasswordUseCase,
+    @inject(LogoutUserUseCase)
+    private logoutUserUseCase: LogoutUserUseCase,
   ) {}
 
   /**
@@ -235,7 +238,15 @@ export class AuthController {
     res.status(200).json({ success: true });
   };
 
-  public logout = (_req: Request, res: Response): void => {
+  public logout = async (req: Request, res: Response): Promise<void> => {
+    const refreshToken = (req.cookies as Record<string, string>)?.refresh_token;
+    if (refreshToken) {
+      try {
+        await this.logoutUserUseCase.execute(refreshToken);
+      } catch (err) {
+        // Silently fail DB revocation to ensure logout finishes (best effort)
+      }
+    }
     clearAuthCookies(res);
     res.status(200).json({ success: true, message: "Logged out" });
   };
