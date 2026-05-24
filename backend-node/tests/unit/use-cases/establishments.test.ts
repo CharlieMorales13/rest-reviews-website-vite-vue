@@ -33,15 +33,67 @@ describe('Establishments Use Cases', () => {
                 findById: vi.fn().mockResolvedValue({
                     id: 'e-1',
                     name: 'Old Name',
-                    updateName: vi.fn(),
-                    updateDescription: vi.fn(),
-                    updateCategory: vi.fn()
+                    managerId: 'm-1',
+                    isActive: true,
                  }),
                 update: vi.fn().mockImplementation((e) => Promise.resolve(e))
             } as any;
 
             const useCase = new UpdateEstablishmentUseCase(repo);
             const result = await useCase.execute('e-1', { name: 'New Name' });
+            expect(result).toBeDefined();
+            expect(repo.update).toHaveBeenCalled();
+        });
+
+        it('should block manager from changing managerId', async () => {
+            const repo: IEstablishmentRepository = {
+                findById: vi.fn().mockResolvedValue({
+                    id: 'e-1',
+                    name: 'Old Name',
+                    managerId: 'm-1',
+                    isActive: true,
+                 }),
+            } as any;
+
+            const useCase = new UpdateEstablishmentUseCase(repo);
+            await expect(
+                useCase.execute('e-1', { managerId: 'm-2' }, { id: 'm-1', role: 'manager' })
+            ).rejects.toThrow('Only administrators can change the manager');
+        });
+
+        it('should block manager from changing isActive status', async () => {
+            const repo: IEstablishmentRepository = {
+                findById: vi.fn().mockResolvedValue({
+                    id: 'e-1',
+                    name: 'Old Name',
+                    managerId: 'm-1',
+                    isActive: true,
+                 }),
+            } as any;
+
+            const useCase = new UpdateEstablishmentUseCase(repo);
+            await expect(
+                useCase.execute('e-1', { isActive: false }, { id: 'm-1', role: 'manager' })
+            ).rejects.toThrow('Only administrators can change the active state');
+        });
+
+        it('should allow admin to change managerId and isActive status', async () => {
+            const repo: IEstablishmentRepository = {
+                findById: vi.fn().mockResolvedValue({
+                    id: 'e-1',
+                    name: 'Old Name',
+                    managerId: 'm-1',
+                    isActive: true,
+                 }),
+                update: vi.fn().mockImplementation((e) => Promise.resolve(e))
+            } as any;
+
+            const useCase = new UpdateEstablishmentUseCase(repo);
+            const result = await useCase.execute(
+                'e-1',
+                { managerId: 'm-2', isActive: false },
+                { id: 'admin-1', role: 'admin' }
+            );
             expect(result).toBeDefined();
             expect(repo.update).toHaveBeenCalled();
         });

@@ -33,6 +33,22 @@ export class UpdateEstablishmentUseCase {
       );
     }
 
+    // Role-based Field Restriction: Only admin can change managerId or isActive status
+    if (requester && requester.role !== "admin") {
+      if (dto.managerId !== undefined && dto.managerId !== existing.managerId) {
+        throw new AppError(
+          "Only administrators can change the manager of an establishment",
+          403,
+        );
+      }
+      if (dto.isActive !== undefined && dto.isActive !== existing.isActive) {
+        throw new AppError(
+          "Only administrators can change the active state of an establishment",
+          403,
+        );
+      }
+    }
+
     const establishment = Establishment.create({
       id: id,
       name: dto.name ?? existing.name,
