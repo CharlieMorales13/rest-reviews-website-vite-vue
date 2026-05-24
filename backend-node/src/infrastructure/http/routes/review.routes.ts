@@ -7,6 +7,8 @@ import {
   reviewMutationRateLimiter,
   likeRateLimiter,
   replyRateLimiter,
+  publicReadRateLimiter,
+  authenticatedReadRateLimiter,
 } from "../middlewares/RateLimitMiddleware";
 
 const reviewRouter = Router();
@@ -15,8 +17,8 @@ const reviewRouter = Router();
 const reviewController = container.resolve(ReviewController);
 
 // Routes
-reviewRouter.get("/", reviewController.getAll);
-reviewRouter.get("/my", authenticateToken, reviewController.getMyReviews);
+reviewRouter.get("/", publicReadRateLimiter, reviewController.getAll);
+reviewRouter.get("/my", authenticateToken, authenticatedReadRateLimiter, reviewController.getMyReviews);
 
 /**
  * @swagger

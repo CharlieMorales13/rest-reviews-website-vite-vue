@@ -8,6 +8,8 @@ import {
   verifyEmailRateLimiter,
   resendVerificationRateLimiter,
   forgotPasswordRateLimiter,
+  authenticatedReadRateLimiter,
+  managerWriteRateLimiter,
 } from "../middlewares/RateLimitMiddleware";
 
 const authRouter = Router();
@@ -16,7 +18,7 @@ const authController = container.resolve(AuthController);
 authRouter.post("/register", registerRateLimiter, authController.register);
 authRouter.post("/login", loginRateLimiter, authController.login);
 authRouter.post("/refresh", loginRateLimiter, authController.refresh);
-authRouter.post("/logout", authController.logout);
+authRouter.post("/logout", loginRateLimiter, authController.logout);
 authRouter.post("/verify", verifyEmailRateLimiter, authController.verifyEmail);
 authRouter.post(
   "/resend-verification",
@@ -28,7 +30,7 @@ authRouter.post(
   forgotPasswordRateLimiter,
   authController.forgotPassword,
 );
-authRouter.post("/reset-password", authController.resetPassword);
+authRouter.post("/reset-password", forgotPasswordRateLimiter, authController.resetPassword);
 
 /**
  * @swagger
@@ -39,11 +41,12 @@ authRouter.post("/reset-password", authController.resetPassword);
  *     security:
  *       - bearerAuth: []
  */
-authRouter.get("/me", authenticateToken, authController.getMe);
-authRouter.patch("/me", authenticateToken, authController.updateMe);
+authRouter.get("/me", authenticateToken, authenticatedReadRateLimiter, authController.getMe);
+authRouter.patch("/me", authenticateToken, managerWriteRateLimiter, authController.updateMe);
 authRouter.patch(
   "/me/password",
   authenticateToken,
+  forgotPasswordRateLimiter,
   authController.changePassword,
 );
 
