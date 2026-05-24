@@ -31,7 +31,9 @@ export const registerRateLimiter = rateLimit({
 export const verifyEmailRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
-  keyGenerator: (req) => (req.body?.email as string)?.toLowerCase().trim() ?? ipKeyGenerator(req.ip ?? 'unknown'),
+  keyGenerator: (req) =>
+    (req.body?.email as string)?.toLowerCase().trim() ??
+    ipKeyGenerator(req.ip ?? "unknown"),
   message: {
     success: false,
     error: "Too many verification attempts. Try again in 15 minutes.",
@@ -44,7 +46,9 @@ export const verifyEmailRateLimiter = rateLimit({
 export const resendVerificationRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 3,
-  keyGenerator: (req) => (req.body?.email as string)?.toLowerCase().trim() ?? ipKeyGenerator(req.ip ?? 'unknown'),
+  keyGenerator: (req) =>
+    (req.body?.email as string)?.toLowerCase().trim() ??
+    ipKeyGenerator(req.ip ?? "unknown"),
   message: {
     success: false,
     error: "Too many resend requests. Try again in 1 hour.",

@@ -166,9 +166,7 @@ npm test                  # vitest
 npm run test:coverage     # con reporte lcov
 ```
 
-**220 tests unitarios e integración** en 36 archivos. Cobertura mínima: **80% statements/lines, 75% branches, 80% functions**.
-
-Áreas cubiertas: domain entities, use cases (auth, reviews, metrics, notifications, uploads), controllers, middlewares (auth, rate limit, error), DTOs (Zod schemas), integración HTTP.
+**~90 tests unitarios e integración** (vitest). Cobertura: domain entities, use cases, controllers, middlewares, DTOs.
 
 ```typescript
 // Mockear env.config en tests de middleware para evitar process.exit(1)
@@ -181,4 +179,13 @@ vi.mock('@/infrastructure/config/env.config', () => ({
 
 ## Git workflow
 
-Ver [flujo completo en el README raíz](../README.md#git-workflow). Scopes frecuentes: `auth`, `reviews`, `establishments`, `metrics`, `notifications`, `admin`, `upload`.
+Ver [flujo completo en el README raíz](../README.md#git-workflow). Resumen para este servicio:
+
+```bash
+git checkout -b feat/node-mi-feature
+# desarrollar + tests en el mismo commit
+git commit -m "feat(reviews): agregar endpoint de likes"
+git push origin feat/node-mi-feature
+```
+
+Scopes frecuentes en Node: `auth`, `reviews`, `establishments`, `metrics`, `notifications`, `admin`, `upload`.

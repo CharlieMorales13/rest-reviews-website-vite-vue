@@ -30,7 +30,11 @@ authRouter.post(
   forgotPasswordRateLimiter,
   authController.forgotPassword,
 );
-authRouter.post("/reset-password", forgotPasswordRateLimiter, authController.resetPassword);
+authRouter.post(
+  "/reset-password",
+  forgotPasswordRateLimiter,
+  authController.resetPassword,
+);
 
 /**
  * @swagger
@@ -41,8 +45,18 @@ authRouter.post("/reset-password", forgotPasswordRateLimiter, authController.res
  *     security:
  *       - bearerAuth: []
  */
-authRouter.get("/me", authenticateToken, authenticatedReadRateLimiter, authController.getMe);
-authRouter.patch("/me", authenticateToken, managerWriteRateLimiter, authController.updateMe);
+authRouter.get(
+  "/me",
+  authenticateToken,
+  authenticatedReadRateLimiter,
+  authController.getMe,
+);
+authRouter.patch(
+  "/me",
+  authenticateToken,
+  managerWriteRateLimiter,
+  authController.updateMe,
+);
 authRouter.patch(
   "/me/password",
   authenticateToken,

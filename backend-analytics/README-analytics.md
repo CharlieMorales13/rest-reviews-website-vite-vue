@@ -149,7 +149,11 @@ Protegido por `X-API-Key`. Llamado automáticamente por el backend Node en cada 
 
 ### `POST /train`
 
+<<<<<<< HEAD
+Protegido por `X-API-Key`. Pipeline completo: evalúa el modelo, clasifica todas las reseñas y genera snapshots IGE. Llamado por admin vía `POST /api/metrics/run` en el backend Node, y automáticamente cada noche a las 2:00 AM.
+=======
 Protegido por `X-API-Key`. Pipeline completo: evalúa el modelo, clasifica todas las reseñas, extrae términos negativos y genera snapshots IGE. Llamado por admin vía `POST /api/metrics/run` en el backend Node, y automáticamente cada noche a las 2:00 AM.
+>>>>>>> db1b361bf5318d689558f26c68c65f5e8b49a406
 
 ```json
 // Response
@@ -174,6 +178,16 @@ python -m pytest tests/ -v
 
 # Windows
 venv\Scripts\python -m pytest tests/ -v
+<<<<<<< HEAD
+```
+
+~135 tests (unitarios + API). Sin dependencias externas — DB y HuggingFace mockeados.
+
+| Directorio | Qué cubre |
+|---|---|
+| `tests/unit/` | Dominio, use cases, ML pipeline |
+| `tests/api/` | Endpoints FastAPI |
+=======
 
 # Con cobertura
 python -m pytest tests/ --cov --cov-report=term-missing
@@ -185,6 +199,7 @@ python -m pytest tests/ --cov --cov-report=term-missing
 |---|---|
 | `tests/unit/` | Entidades de dominio, value objects, SentimentReconciler, IGECalculator, TransformerPipeline, use cases |
 | `tests/api/` | Endpoints FastAPI (/predict, /train, /health) |
+>>>>>>> db1b361bf5318d689558f26c68c65f5e8b49a406
 
 **Nota de patching:** HuggingFace `transformers` usa un lazy-loader (`_LazyModule`). Siempre parchear en el sitio de importación:
 
@@ -196,14 +211,30 @@ python -m pytest tests/ --cov --cov-report=term-missing
 @patch("transformers.pipeline")
 ```
 
+<<<<<<< HEAD
+=======
 ```python
 # Simular modelo no cargado
 model.is_loaded.return_value = False   # correcto
 # model._pipeline = None              # incorrecto — el use case usa is_loaded()
 ```
 
+>>>>>>> db1b361bf5318d689558f26c68c65f5e8b49a406
 ---
 
 ## Git workflow
 
+<<<<<<< HEAD
+Ver [flujo completo en el README raíz](../README.md#git-workflow). Resumen para este servicio:
+
+```bash
+git checkout -b feat/analytics-mi-feature
+# desarrollar + tests en el mismo commit
+git commit -m "feat(analytics): agregar endpoint de tendencias temporales"
+git push origin feat/analytics-mi-feature
+```
+
+Scopes frecuentes en analytics: `analytics`, `metrics`, `sentiment`.
+=======
 Ver [flujo completo en el README raíz](../README.md#git-workflow). Scopes frecuentes en analytics: `analytics`, `metrics`, `sentiment`.
+>>>>>>> db1b361bf5318d689558f26c68c65f5e8b49a406

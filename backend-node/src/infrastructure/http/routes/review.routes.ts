@@ -18,7 +18,12 @@ const reviewController = container.resolve(ReviewController);
 
 // Routes
 reviewRouter.get("/", publicReadRateLimiter, reviewController.getAll);
-reviewRouter.get("/my", authenticateToken, authenticatedReadRateLimiter, reviewController.getMyReviews);
+reviewRouter.get(
+  "/my",
+  authenticateToken,
+  authenticatedReadRateLimiter,
+  reviewController.getMyReviews,
+);
 
 /**
  * @swagger
