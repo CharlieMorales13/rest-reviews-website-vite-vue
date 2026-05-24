@@ -114,6 +114,19 @@ describe('CreateReviewSchema', () => {
     const result = CreateReviewSchema.safeParse({ ...validInput, imageUrl: '' });
     expect(result.success).toBe(true);
   });
+
+  it('sanitizes HTML tags in title and comment to prevent Stored XSS', () => {
+    const result = CreateReviewSchema.safeParse({
+      ...validInput,
+      title: '<b>Awesome Tacos</b>',
+      comment: '<script>alert("hack")</script>',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.title).toBe('&lt;b&gt;Awesome Tacos&lt;&#x2F;b&gt;');
+      expect(result.data.comment).toBe('&lt;script&gt;alert(&quot;hack&quot;)&lt;&#x2F;script&gt;');
+    }
+  });
 });
 
 describe('UpdateReviewSchema', () => {
@@ -187,5 +200,16 @@ describe('ReplyReviewSchema', () => {
     const { reply, ...rest } = validReply;
     const result = ReplyReviewSchema.safeParse(rest);
     expect(result.success).toBe(false);
+  });
+
+  it('sanitizes HTML tags in reply to prevent Stored XSS', () => {
+    const result = ReplyReviewSchema.safeParse({
+      ...validReply,
+      reply: '<u>Response containing HTML</u>',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.reply).toBe('&lt;u&gt;Response containing HTML&lt;&#x2F;u&gt;');
+    }
   });
 });

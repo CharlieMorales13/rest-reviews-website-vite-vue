@@ -34,6 +34,12 @@ describe('UploadFileUseCase', () => {
       new UploadFileUseCase(mockStorage()).execute(null as any, 'a.jpg', 'b', 'image/jpeg')
     ).rejects.toThrow('File is required');
   });
+
+  it('throws 400 when extension is not allowed', async () => {
+    await expect(
+      new UploadFileUseCase(mockStorage()).execute(Buffer.from('data'), 'exploit.html', 'bucket', 'image/png')
+    ).rejects.toThrow('Formato de archivo no permitido');
+  });
 });
 
 // ─── ChangePasswordUseCase ────────────────────────────────────────────────────

@@ -22,6 +22,15 @@ export class UploadFileUseCase {
     // Generate a unique file name to avoid collisions
     const parts = originalName.split(".");
     const extension = parts.length > 1 ? parts.pop()!.toLowerCase() : "jpg";
+
+    const allowedExtensions = ["jpg", "jpeg", "png", "webp", "gif"];
+    if (!allowedExtensions.includes(extension)) {
+      throw new AppError(
+        "Formato de archivo no permitido. Solo se admiten imágenes (jpg, jpeg, png, webp, gif).",
+        400,
+      );
+    }
+
     const fileName = `${uuidv4()}.${extension}`;
 
     return await this.storageService.uploadFile(
