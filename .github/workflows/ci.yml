@@ -81,9 +81,10 @@ jobs:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_SSH_KEY }}
+          command_timeout: 30m
           script: |
             set -e
             cd ~/rest-reviews-website-vite-vue
             git fetch origin master
             git reset --hard origin/master
-            docker compose up -d --build backend-node backend-analytics
+            DOCKER_BUILDKIT=1 docker compose up -d --build backend-node backend-analytics

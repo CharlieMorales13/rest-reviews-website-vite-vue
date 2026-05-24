@@ -6,9 +6,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 FROM base AS deps
 COPY requirements.txt .
-RUN pip install --no-cache-dir \
-    torch --extra-index-url https://download.pytorch.org/whl/cpu
-RUN pip install --no-cache-dir -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install torch --index-url https://download.pytorch.org/whl/cpu
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
 
 FROM base AS production
 COPY --from=deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
