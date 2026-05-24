@@ -33,7 +33,11 @@ function cookieBase(): CookieOptions {
   };
 }
 
-function setAuthCookies(res: Response, token: string, refreshToken: string) {
+function setAuthCookies(
+  res: Response,
+  token: string,
+  refreshToken: string,
+): void {
   res.cookie("access_token", token, { ...cookieBase(), maxAge: ACCESS_TTL });
   res.cookie("refresh_token", refreshToken, {
     ...cookieBase(),
@@ -41,7 +45,7 @@ function setAuthCookies(res: Response, token: string, refreshToken: string) {
   });
 }
 
-function clearAuthCookies(res: Response) {
+function clearAuthCookies(res: Response): void {
   const opts = cookieBase();
   res.clearCookie("access_token", opts);
   res.clearCookie("refresh_token", opts);
@@ -243,7 +247,7 @@ export class AuthController {
     if (refreshToken) {
       try {
         await this.logoutUserUseCase.execute(refreshToken);
-      } catch (err) {
+      } catch (_err) {
         // Silently fail DB revocation to ensure logout finishes (best effort)
       }
     }
