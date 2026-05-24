@@ -16,7 +16,9 @@ services:
     restart: unless-stopped
 
   backend-analytics:
-    build: ./backend-analytics
+    build:
+      context: ./backend-analytics
+      network: host
     container_name: uao_eats_analytics
     ports:
       - "8001:8001"
